@@ -10,25 +10,22 @@ import {
   getLiftsFor,
   summarise,
 } from "@/lib/lifters";
+import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
 
-export default function Home() {
+export default function MePage() {
   return (
-    <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-8 px-5 py-10">
-      <header className="flex flex-col gap-2">
-        <Link
-          href="/"
-          className="text-sm text-black/50 hover:text-black dark:text-white/50 dark:hover:text-white"
-        >
-          &larr; Leaderboard
-        </Link>
-        <h1 className="text-3xl font-semibold tracking-tight">Your lifts</h1>
-      </header>
+    <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
+      <Link
+        href="/"
+        className="text-[13px] text-chalk-dim transition-colors hover:text-chalk"
+      >
+        Back to the board
+      </Link>
 
-      {/* Reads the session cookie, so it has to sit behind a boundary:
-          with cacheComponents on, reading cookies() outside one is a
-          build error. */}
-      <Suspense fallback={<p className="text-sm text-black/45">Loading…</p>}>
+      <Suspense
+        fallback={<p className="pt-8 text-sm text-chalk-faint">Loading</p>}
+      >
         <Dashboard />
       </Suspense>
     </main>
@@ -41,16 +38,22 @@ async function Dashboard() {
 
   if (!email) {
     return (
-      <form
-        action={async () => {
-          "use server";
-          await signIn("google", { redirectTo: "/" });
-        }}
-      >
-        <button type="submit" className={primaryButton}>
-          Sign in with Google
-        </button>
-      </form>
+      <div className="pt-8">
+        <h1 className="text-[1.75rem] font-800 leading-none tracking-[-0.03em]">
+          Sign in to add your lifts
+        </h1>
+        <form
+          className="pt-5"
+          action={async () => {
+            "use server";
+            await signIn("google", { redirectTo: "/me" });
+          }}
+        >
+          <button type="submit" className={primary}>
+            Continue with Google
+          </button>
+        </form>
+      </div>
     );
   }
 
@@ -58,12 +61,21 @@ async function Dashboard() {
 
   if (!lifter) {
     return (
-      <ProfileForm
-        defaultName={session?.user?.name ?? ""}
-        heading="Set up your profile"
-        blurb="Bodyweight is needed to score your lifts — it's never shown publicly, only your weight class is."
-        submitLabel="Continue"
-      />
+      <div className="pt-8">
+        <h1 className="text-[1.75rem] font-800 leading-none tracking-[-0.03em]">
+          Set up your profile
+        </h1>
+        <p className="mt-2 text-[13px] leading-relaxed text-chalk-dim">
+          Bodyweight is what makes the scores comparable. It is never shown to
+          anyone — only the class it falls into.
+        </p>
+        <div className="pt-6">
+          <ProfileForm
+            defaultName={session?.user?.name ?? ""}
+            submitLabel="Continue"
+          />
+        </div>
+      </div>
     );
   }
 
@@ -74,120 +86,132 @@ async function Dashboard() {
 function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
   const summary = summarise(lifts, lifter.bodyweightKg);
   const byMovement = new Map(lifts.map((l) => [l.movement, l]));
+  const weightClass = weightClassFor(lifter.bodyweightKg);
+  const plate = plateFor(weightClass);
 
   return (
-    <div className="flex flex-col gap-8">
-      <section className="rounded-2xl border border-black/10 p-5 dark:border-white/15">
-        <p className="text-sm font-medium">{lifter.displayName}</p>
-        <p className="text-xs text-black/50 dark:text-white/50">
-          {weightClassFor(lifter.bodyweightKg)}
-        </p>
+    <div className="pt-8">
+      {/* The one loud thing on the page — this is what gets screenshotted. */}
+      <section>
+        <div
+          aria-hidden
+          className="h-1 w-16 rounded-full"
+          style={{ background: plate }}
+        />
 
-        <div className="mt-4">
-          {summary.dots === null ? (
-            <p className="text-sm text-black/55 dark:text-white/55">
-              Enter{" "}
-              {summary.missingForTotal
-                .map((m) => MOVEMENTS.find((x) => x.id === m)?.label.toLowerCase())
-                .join(", ")}{" "}
-              to get your score.
+        {summary.dots === null ? (
+          <div className="pt-4">
+            <p className="text-[1.5rem] font-800 leading-tight tracking-[-0.02em]">
+              No score yet
             </p>
-          ) : (
-            <>
-              <p className="text-4xl font-semibold tabular-nums">
-                {summary.dots.toFixed(1)}
-              </p>
-              <p className="text-xs text-black/50 dark:text-white/50">
-                pound-for-pound score · {summary.totalKg?.toFixed(1)}kg total
-              </p>
-            </>
-          )}
-        </div>
+            <p className="mt-2 text-[13px] leading-relaxed text-chalk-dim">
+              Enter your{" "}
+              {summary.missingForTotal
+                .map((m) =>
+                  MOVEMENTS.find((x) => x.id === m)?.label.toLowerCase(),
+                )
+                .join(", ")}{" "}
+              to get on the board.
+            </p>
+          </div>
+        ) : (
+          <div className="pt-4">
+            <p className="tnum text-[4.5rem] font-800 leading-[0.85] tracking-[-0.045em]">
+              {summary.dots.toFixed(1)}
+            </p>
+            <p className="mt-3 text-[13px] text-chalk-dim">
+              pound for pound
+              <span className="tnum text-chalk-faint">
+                {" "}
+                · {summary.totalKg?.toFixed(0)} kg total
+              </span>
+            </p>
+          </div>
+        )}
+
+        <p className="mt-4 text-[14px] font-700">
+          {lifter.displayName}
+          <span className="font-400 text-chalk-dim"> · {weightClass}</span>
+        </p>
       </section>
 
-      <section className="flex flex-col gap-5">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
+      <section className="pt-10">
+        <h2 className="border-b border-rule pb-2 text-[13px] font-500 text-chalk-dim">
           Your lifts
         </h2>
 
-        {MOVEMENTS.map((movement) => {
-          const existing = byMovement.get(movement.id);
-          const isPullups = movement.id === "pullups";
+        <div>
+          {MOVEMENTS.map((movement) => {
+            const existing = byMovement.get(movement.id);
+            const isPullups = movement.id === "pullups";
 
-          return (
-            <form
-              key={movement.id}
-              action={saveLiftAction}
-              className="flex flex-col gap-2 rounded-2xl border border-black/10 p-4 dark:border-white/15"
-            >
-              <input type="hidden" name="movement" value={movement.id} />
+            return (
+              <form
+                key={movement.id}
+                action={saveLiftAction}
+                className="flex items-center gap-3 border-b border-rule py-3"
+              >
+                <input type="hidden" name="movement" value={movement.id} />
 
-              <div className="flex items-baseline justify-between">
-                <span className="text-sm font-medium">{movement.label}</span>
-                {existing && (
-                  <span className="text-xs tabular-nums text-black/50 dark:text-white/50">
-                    {isPullups
-                      ? `${existing.reps} reps`
-                      : `est. 1RM ${existing.est1rmKg?.toFixed(1)}kg`}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                {!isPullups && (
-                  <label className="flex-1">
-                    <span className="sr-only">Weight in kg</span>
-                    <input
-                      name="weightKg"
-                      type="number"
-                      inputMode="decimal"
-                      step="0.5"
-                      min="1"
-                      max={movement.maxKg ?? undefined}
-                      required
-                      defaultValue={existing?.weightKg ?? ""}
-                      placeholder="kg"
-                      className={input}
-                    />
+                <div className="min-w-0 flex-1">
+                  <label className="block text-[14px] font-500">
+                    {movement.label}
                   </label>
+                  <span className="tnum text-[11px] text-chalk-faint">
+                    {existing
+                      ? isPullups
+                        ? `${existing.reps} reps`
+                        : `est. 1RM ${existing.est1rmKg?.toFixed(1)} kg`
+                      : isPullups
+                        ? "max reps"
+                        : "weight x reps"}
+                  </span>
+                </div>
+
+                {!isPullups && (
+                  <input
+                    name="weightKg"
+                    type="number"
+                    inputMode="decimal"
+                    step="0.5"
+                    min="1"
+                    max={movement.maxKg ?? undefined}
+                    required
+                    defaultValue={existing?.weightKg ?? ""}
+                    placeholder="kg"
+                    aria-label={`${movement.label} weight in kg`}
+                    className={field}
+                  />
                 )}
 
-                <label className="flex-1">
-                  <span className="sr-only">Reps</span>
-                  <input
-                    name="reps"
-                    type="number"
-                    inputMode="numeric"
-                    step="1"
-                    min="1"
-                    max={isPullups ? 100 : 100}
-                    required
-                    defaultValue={existing?.reps ?? ""}
-                    placeholder="reps"
-                    className={input}
-                  />
-                </label>
+                <input
+                  name="reps"
+                  type="number"
+                  inputMode="numeric"
+                  step="1"
+                  min="1"
+                  max="100"
+                  required
+                  defaultValue={existing?.reps ?? ""}
+                  placeholder="reps"
+                  aria-label={`${movement.label} reps`}
+                  className={field}
+                />
 
-                <button type="submit" className={secondaryButton}>
+                <button type="submit" className={secondary}>
                   Save
                 </button>
-              </div>
-
-              {!isPullups && (
-                <p className="text-xs text-black/40 dark:text-white/40">
-                  Weight x reps from a real set — the 1RM is estimated for you.
-                </p>
-              )}
-            </form>
-          );
-        })}
+              </form>
+            );
+          })}
+        </div>
       </section>
 
-      <details className="rounded-2xl border border-black/10 p-4 dark:border-white/15">
-        <summary className="cursor-pointer text-sm font-medium">
-          Edit profile
+      <details className="pt-8">
+        <summary className="cursor-pointer text-[13px] text-chalk-dim transition-colors hover:text-chalk">
+          Edit name or bodyweight
         </summary>
-        <div className="pt-4">
+        <div className="pt-5">
           <ProfileForm
             defaultName={lifter.displayName}
             defaultBodyweight={lifter.bodyweightKg}
@@ -197,12 +221,16 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
       </details>
 
       <form
+        className="pt-8"
         action={async () => {
           "use server";
           await signOut({ redirectTo: "/" });
         }}
       >
-        <button type="submit" className={secondaryButton}>
+        <button
+          type="submit"
+          className="text-[13px] text-chalk-faint underline underline-offset-2 transition-colors hover:text-chalk"
+        >
           Sign out
         </button>
       </form>
@@ -213,27 +241,16 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
 function ProfileForm({
   defaultName,
   defaultBodyweight,
-  heading,
-  blurb,
   submitLabel,
 }: {
   defaultName: string;
   defaultBodyweight?: number;
-  heading?: string;
-  blurb?: string;
   submitLabel: string;
 }) {
   return (
     <form action={saveProfileAction} className="flex flex-col gap-4">
-      {heading && <h2 className="text-lg font-medium">{heading}</h2>}
-      {blurb && (
-        <p className="text-sm text-black/55 dark:text-white/55">{blurb}</p>
-      )}
-
-      <label className="flex flex-col gap-1">
-        <span className="text-xs text-black/55 dark:text-white/55">
-          Display name
-        </span>
+      <label className="flex flex-col gap-1.5">
+        <span className="text-[12px] text-chalk-dim">Display name</span>
         <input
           name="displayName"
           type="text"
@@ -241,14 +258,12 @@ function ProfileForm({
           maxLength={40}
           required
           defaultValue={defaultName}
-          className={input}
+          className={`${field} w-full text-left`}
         />
       </label>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-xs text-black/55 dark:text-white/55">
-          Bodyweight (kg)
-        </span>
+      <label className="flex flex-col gap-1.5">
+        <span className="text-[12px] text-chalk-dim">Bodyweight in kg</span>
         <input
           name="bodyweightKg"
           type="number"
@@ -258,22 +273,22 @@ function ProfileForm({
           max="250"
           required
           defaultValue={defaultBodyweight ?? ""}
-          className={input}
+          className={`${field} w-full text-left`}
         />
       </label>
 
-      <button type="submit" className={primaryButton}>
+      <button type="submit" className={`${primary} w-fit`}>
         {submitLabel}
       </button>
     </form>
   );
 }
 
-const input =
-  "w-full rounded-lg border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 dark:border-white/20 dark:focus:border-white/50";
+const field =
+  "tnum w-16 shrink-0 rounded-sm border border-rule bg-iron-raised px-2.5 py-2 text-[14px] text-chalk outline-none transition-colors placeholder:text-chalk-faint focus:border-chalk-dim";
 
-const primaryButton =
-  "rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-85";
+const primary =
+  "rounded-sm bg-chalk px-4 py-2.5 text-[13px] font-700 text-iron transition-opacity hover:opacity-85";
 
-const secondaryButton =
-  "rounded-full border border-black/15 px-4 py-2 text-sm font-medium transition-colors hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/10";
+const secondary =
+  "shrink-0 rounded-sm border border-rule px-3 py-2 text-[13px] font-500 text-chalk transition-colors hover:border-chalk-dim";

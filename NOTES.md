@@ -81,3 +81,82 @@ the Postgres version, which is free reconnaissance for anyone probing
 the site.
 
 ---
+
+## 2026-11-14 (evening) — CP2 + CP3: schema, scoring, leaderboard, launch prep
+
+**Done:** schema and migrations, DOTS scoring with tests, profile and lift
+entry, public leaderboard with SQL ranking, privacy/terms, Google OAuth
+published. Build finished 10 days ahead of schedule.
+
+### Build and deploy
+
+- **`next dev` does not type-check the project. `next build` does.** Dev
+  compiles only what you visit. Run `npm run build` before every push —
+  three deploys failed in a row while localhost looked perfect.
+- **A `0 / 1` next to a commit on GitHub means the deployment check
+  failed.** The push succeeded, the build didn't, and the live site stays
+  frozen on the last good build. Check it after pushing.
+- `tsconfig`'s `include: ["**/*.ts"]` means `next build` type-checks files
+  Next never bundles, like test scripts. Importing with an explicit `.ts`
+  extension (which Node needs to run the file directly) requires
+  `"allowImportingTsExtensions": true`.
+- **Vercel shows two different URLs.** *Deployment* is unique per build and
+  changes every push. *Domains* is the stable one. Only ever share the
+  Domains URL — a friend got `redirect_uri_mismatch` from the other one.
+- **Changing the site URL means updating Google in four places:**
+  authorized JavaScript origins, authorized redirect URI, authorized
+  domains, and the three Branding links. Miss one and sign-in breaks for
+  everyone except you on localhost.
+- Google OAuth settings take 5 minutes to a few hours to propagate. A
+  `redirect_uri_mismatch` straight after a change is often just that —
+  wait before changing anything else.
+
+### Google OAuth publishing
+
+- A Testing-mode app only lets manually-listed test users sign in. To go to
+  Production, the Branding page needs a home page URL, a privacy policy URL,
+  a terms URL and an authorized domain. **No privacy page means no public
+  sign-in** — it's a blocker, not paperwork.
+- `vercel.app` is rejected as an authorized domain: "must be a top private
+  domain", because it's shared across everyone's projects. The full
+  subdomain `<project>.vercel.app` is accepted. No custom domain needed.
+
+### Code
+
+- `create-next-app` sets `body { font-family: Arial }` while loading the
+  real font into a CSS variable nothing uses. The whole app rendered in
+  Arial for two days. Check the font you installed is actually applied.
+- Tailwind has no `font-800` utility — weights are named (`font-extrabold`).
+  A wrong utility class fails silently, which is worse than an error.
+- **Postgres returns `numeric` columns as strings** to avoid float precision
+  loss. `"110" + "90"` is `"11090"`. Every numeric read goes through a
+  conversion helper.
+- Next 16 server actions: `refresh()` from `next/cache` updates uncached
+  data after a mutation. `revalidatePath` is for *cached* data — using it
+  here would silently do nothing.
+- The DOTS polynomial exists in both SQL (for ranking) and TypeScript (for
+  display). Two copies of a formula drift, so
+  `scripts/check-scoring-parity.mjs` asserts they agree.
+- Tests assert against *published* DOTS results, not numbers this code
+  produced. A test that only checks the code agrees with itself proves
+  nothing. It caught Epley inflating a true 1-rep max by 3.3%.
+
+### Decisions
+
+- **Five ranked lifts, not eleven.** Machine lifts (lat pulldown, chest fly)
+  aren't comparable between gyms or even between machines, and there's no
+  normalization data to rank them against. Every extra lift also adds
+  signup friction, which is the biggest drop-off point.
+- **Weight class takes its Olympic plate colour** (10kg green, 15kg yellow,
+  20kg blue, 25kg red), ascending the way a loaded bar reads. The colour
+  carries information rather than decorating.
+- Editing a lift clears its verification. A changed number is a new claim.
+- Bodyweight is snapshotted onto each lift, so cutting or bulking later
+  doesn't retroactively rewrite old scores.
+
+### What this cost in time
+
+The app was never the hard part. The build finished 10 days early; what
+remains is getting real people to use it.
+
+---

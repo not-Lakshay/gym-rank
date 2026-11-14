@@ -2,22 +2,19 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { auth, signIn } from "@/auth";
 import { getLeaderboard, type BoardRow } from "@/lib/leaderboard";
+import { plateFor } from "@/lib/plates";
 import { WEIGHT_CLASSES } from "@/lib/scoring";
 
-/**
- * Public leaderboard. Deliberately readable without signing in — a login
- * wall is where visitors leave, and anyone evaluating this (a recruiter,
- * someone at the gym deciding whether to bother) should see a populated
- * board first and sign in second.
- */
 export default function Home() {
   return (
-    <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-8 px-5 py-10">
-      <header className="flex flex-col gap-3">
+    <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
+      <header className="flex items-end justify-between gap-4 border-b border-rule pb-5">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Gym Rank</h1>
-          <p className="text-sm text-black/55 dark:text-white/55">
-            Bodyweight-adjusted lifting leaderboard for the LNMIIT gym.
+          <h1 className="text-[2rem] font-800 leading-none tracking-[-0.03em]">
+            Gym Rank
+          </h1>
+          <p className="mt-1.5 text-[13px] leading-snug text-chalk-dim">
+            LNMIIT gym, scored pound for pound
           </p>
         </div>
         <Suspense fallback={null}>
@@ -25,21 +22,23 @@ export default function Home() {
         </Suspense>
       </header>
 
-      <Suspense fallback={<p className="text-sm text-black/45">Loading board…</p>}>
+      <Suspense
+        fallback={<p className="pt-8 text-sm text-chalk-faint">Loading board</p>}
+      >
         <Boards />
       </Suspense>
 
-      <footer className="flex flex-col gap-2 text-xs leading-relaxed text-black/40 dark:text-white/40">
+      <footer className="mt-14 border-t border-rule pt-5 text-[12px] leading-relaxed text-chalk-faint">
         <p>
-          Scores use DOTS, which adjusts a squat+bench+deadlift total for
-          bodyweight so lifters of different sizes compare fairly. Bodyweight
-          itself is never shown — only the weight class.
+          A score is your squat, bench and deadlift total adjusted for
+          bodyweight using DOTS, so a 60kg lifter and a 90kg lifter can be
+          compared directly. Your bodyweight is never shown — only the class.
         </p>
-        <p className="flex gap-3">
-          <Link href="/privacy" className="underline">
+        <p className="mt-3 flex gap-4">
+          <Link href="/privacy" className="underline underline-offset-2">
             Privacy
           </Link>
-          <Link href="/terms" className="underline">
+          <Link href="/terms" className="underline underline-offset-2">
             Terms
           </Link>
         </p>
@@ -53,7 +52,7 @@ async function AccountLink() {
 
   if (session?.user) {
     return (
-      <Link href="/me" className={primaryButton}>
+      <Link href="/me" className={button}>
         Your lifts
       </Link>
     );
@@ -66,8 +65,8 @@ async function AccountLink() {
         await signIn("google", { redirectTo: "/me" });
       }}
     >
-      <button type="submit" className={primaryButton}>
-        Add your lifts
+      <button type="submit" className={button}>
+        Add yours
       </button>
     </form>
   );
@@ -78,86 +77,125 @@ async function Boards() {
 
   if (rows.length === 0) {
     return (
-      <section className="rounded-2xl border border-dashed border-black/15 p-6 text-center dark:border-white/20">
-        <p className="text-sm font-medium">No scores yet.</p>
-        <p className="mt-1 text-sm text-black/55 dark:text-white/55">
-          A score needs a squat, bench and deadlift entered. Be the first.
+      <section className="pt-10">
+        <p className="text-[15px] font-500">Nobody on the board yet.</p>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-chalk-dim">
+          A score needs a squat, a bench and a deadlift. Enter all three and
+          you are first by default.
         </p>
       </section>
     );
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <Board title="Overall" rows={rows} rankOf={(r) => r.overallRank} />
+    <div className="pt-8">
+      <Board rows={rows} rankOf={(r) => r.overallRank} />
 
-      {WEIGHT_CLASSES.map((weightClass) => {
-        const inClass = rows.filter((r) => r.weightClass === weightClass.label);
-        if (inClass.length === 0) return null;
-        return (
-          <Board
-            key={weightClass.label}
-            title={weightClass.label}
-            rows={inClass}
-            rankOf={(r) => r.classRank}
-          />
-        );
-      })}
+      <div className="mt-12 flex flex-col gap-9">
+        {WEIGHT_CLASSES.map((weightClass) => {
+          const inClass = rows.filter(
+            (r) => r.weightClass === weightClass.label,
+          );
+          if (inClass.length === 0) return null;
+          return (
+            <Board
+              key={weightClass.label}
+              heading={weightClass.label}
+              rows={inClass}
+              rankOf={(r) => r.classRank}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
 
 function Board({
-  title,
+  heading,
   rows,
   rankOf,
 }: {
-  title: string;
+  heading?: string;
   rows: BoardRow[];
   rankOf: (row: BoardRow) => number;
 }) {
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-xs font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
-        {title}
-      </h2>
+    <section>
+      {heading && (
+        <h2 className="mb-2 flex items-center gap-2 text-[13px] font-500 text-chalk-dim">
+          <span
+            aria-hidden
+            className="h-2.5 w-2.5 rounded-full"
+            style={{ background: plateFor(heading) }}
+          />
+          {heading}
+        </h2>
+      )}
 
-      <ol className="flex flex-col gap-1">
-        {rows.map((row) => (
-          <li
-            key={row.id}
-            className="flex items-center gap-3 rounded-xl border border-black/10 px-4 py-3 dark:border-white/15"
-          >
-            <span className="w-6 shrink-0 text-sm tabular-nums text-black/45 dark:text-white/45">
-              {rankOf(row)}
-            </span>
+      <ol>
+        {rows.map((row) => {
+          const rank = rankOf(row);
+          const leading = rank === 1;
 
-            <span className="flex-1 truncate text-sm font-medium">
-              {row.displayName}
-              {row.verifiedCount === 3 && (
+          return (
+            <li
+              key={row.id}
+              className="flex items-center gap-3 border-b border-rule py-3 last:border-b-0"
+            >
+              <span
+                aria-hidden
+                className="h-9 w-[3px] shrink-0 rounded-full"
+                style={{
+                  background: plateFor(row.weightClass),
+                  opacity: leading ? 1 : 0.35,
+                }}
+              />
+
+              <span
+                className={`tnum w-5 shrink-0 text-right ${
+                  leading
+                    ? "text-[15px] font-700 text-chalk"
+                    : "text-[13px] font-400 text-chalk-faint"
+                }`}
+              >
+                {rank}
+              </span>
+
+              <span className="min-w-0 flex-1">
                 <span
-                  className="ml-1.5 text-xs text-black/40 dark:text-white/40"
-                  title="All three lifts co-signed"
+                  className={`block truncate ${
+                    leading ? "text-[15px] font-700" : "text-[14px] font-500"
+                  }`}
                 >
-                  verified
+                  {row.displayName}
                 </span>
-              )}
-            </span>
+                {row.verifiedCount === 3 && (
+                  <span className="text-[11px] text-chalk-faint">
+                    co-signed
+                  </span>
+                )}
+              </span>
 
-            <span className="shrink-0 text-right">
-              <span className="block text-sm font-semibold tabular-nums">
-                {row.dots.toFixed(1)}
+              <span className="shrink-0 text-right">
+                <span
+                  className={`tnum block leading-none ${
+                    leading ? "text-[22px] font-800" : "text-[17px] font-700"
+                  }`}
+                >
+                  {row.dots.toFixed(1)}
+                </span>
+                <span className="tnum mt-1 block text-[11px] text-chalk-faint">
+                  {row.totalKg.toFixed(0)} kg
+                </span>
               </span>
-              <span className="block text-[11px] tabular-nums text-black/40 dark:text-white/40">
-                {row.totalKg.toFixed(0)}kg
-              </span>
-            </span>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ol>
     </section>
   );
 }
 
-const primaryButton =
-  "inline-block w-fit rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-85";
+const button =
+  "shrink-0 rounded-sm bg-chalk px-3.5 py-2 text-[13px] font-700 text-iron transition-opacity hover:opacity-85";
