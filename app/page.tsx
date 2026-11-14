@@ -29,10 +29,20 @@ export default function Home() {
         <Boards />
       </Suspense>
 
-      <footer className="text-xs leading-relaxed text-black/40 dark:text-white/40">
-        Scores use DOTS, which adjusts a squat+bench+deadlift total for
-        bodyweight so lifters of different sizes compare fairly. Bodyweight
-        itself is never shown — only the weight class.
+      <footer className="flex flex-col gap-2 text-xs leading-relaxed text-black/40 dark:text-white/40">
+        <p>
+          Scores use DOTS, which adjusts a squat+bench+deadlift total for
+          bodyweight so lifters of different sizes compare fairly. Bodyweight
+          itself is never shown — only the weight class.
+        </p>
+        <p className="flex gap-3">
+          <Link href="/privacy" className="underline">
+            Privacy
+          </Link>
+          <Link href="/terms" className="underline">
+            Terms
+          </Link>
+        </p>
       </footer>
     </main>
   );

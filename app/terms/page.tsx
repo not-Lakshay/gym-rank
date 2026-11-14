@@ -1,0 +1,81 @@
+import Link from "next/link";
+
+export const metadata = {
+  title: "Terms — Gym Rank",
+  description: "The terms for using Gym Rank.",
+};
+
+export default function TermsPage() {
+  return (
+    <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-6 px-5 py-10">
+      <Link
+        href="/"
+        className="text-sm text-black/50 hover:text-black dark:text-white/50 dark:hover:text-white"
+      >
+        &larr; Gym Rank
+      </Link>
+
+      <h1 className="text-2xl font-semibold tracking-tight">Terms of use</h1>
+
+      <p className={muted}>
+        Gym Rank is a free student project. It is not run by, affiliated with,
+        or endorsed by LNMIIT or its gym.
+      </p>
+
+      <Section title="Use it honestly">
+        <p className={muted}>
+          Every number on the leaderboard is self-reported. Enter lifts you
+          have actually done. Entries that are obviously false may be removed,
+          along with the account that submitted them.
+        </p>
+      </Section>
+
+      <Section title="Lift at your own risk">
+        <p className={muted}>
+          Nothing here is coaching, training advice or medical advice. A
+          leaderboard is a bad reason to attempt a lift you are not ready for.
+          You are responsible for your own training and your own safety.
+        </p>
+      </Section>
+
+      <Section title="No guarantees">
+        <p className={muted}>
+          The service is provided as-is, with no promise that it will be
+          available, accurate, or preserved. It may go offline or be shut down
+          at any time. Keep your own record of anything you care about.
+        </p>
+      </Section>
+
+      <Section title="Your account">
+        <p className={muted}>
+          You can delete your account and data at any time by emailing{" "}
+          <a href="mailto:lakshay2718@gmail.com" className="underline">
+            lakshay2718@gmail.com
+          </a>
+          . See the{" "}
+          <Link href="/privacy" className="underline">
+            privacy page
+          </Link>{" "}
+          for what is stored and what is shown publicly.
+        </p>
+      </Section>
+
+      <p className="text-xs text-black/40 dark:text-white/40">
+        Last updated 14 November 2026.
+      </p>
+    </main>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-2">
+      <h2 className="text-sm font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+const muted = "text-sm leading-relaxed text-black/70 dark:text-white/70";
