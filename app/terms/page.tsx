@@ -7,15 +7,15 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-6 px-5 py-10">
-      <Link
-        href="/"
-        className="text-sm text-black/50 hover:text-black dark:text-white/50 dark:hover:text-white"
-      >
-        &larr; Gym Rank
+    <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-6 px-5 pb-16 pt-10">
+      <Link href="/" className={navButton}>
+        <ChevronLeft />
+        Leaderboard
       </Link>
 
-      <h1 className="text-2xl font-semibold tracking-tight">Terms of use</h1>
+      <h1 className="pt-2 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
+        Terms of use
+      </h1>
 
       <p className={muted}>
         Gym Rank is a free student project. It is not run by, affiliated with,
@@ -49,20 +49,18 @@ export default function TermsPage() {
       <Section title="Your account">
         <p className={muted}>
           You can delete your account and data at any time by emailing{" "}
-          <a href="mailto:lakshay2718@gmail.com" className="underline">
+          <a href="mailto:lakshay2718@gmail.com" className={inlineLink}>
             lakshay2718@gmail.com
           </a>
           . See the{" "}
-          <Link href="/privacy" className="underline">
+          <Link href="/privacy" className={inlineLink}>
             privacy page
           </Link>{" "}
           for what is stored and what is shown publicly.
         </p>
       </Section>
 
-      <p className="text-xs text-black/40 dark:text-white/40">
-        Last updated 14 November 2026.
-      </p>
+      <p className="text-xs text-chalk-faint">Last updated 14 November 2026.</p>
     </main>
   );
 }
@@ -70,7 +68,7 @@ export default function TermsPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="text-sm font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
+      <h2 className="border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
         {title}
       </h2>
       {children}
@@ -78,4 +76,25 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-const muted = "text-sm leading-relaxed text-black/70 dark:text-white/70";
+const muted = "text-[14px] leading-relaxed text-chalk-dim";
+const inlineLink = "text-chalk underline underline-offset-4 decoration-chalk-faint hover:decoration-chalk";
+
+const navButton =
+  "press inline-flex min-h-11 w-fit items-center gap-1.5 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk";
+
+function ChevronLeft() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 16 16"
+      className="h-3.5 w-3.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M10 3 5 8l5 5" />
+    </svg>
+  );
+}

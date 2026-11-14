@@ -114,6 +114,18 @@ async function Profile({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <div className="pt-8">
+      {isOwner && (
+        <Link
+          href="/me"
+          className="mb-6 flex items-center justify-between rounded-sm border border-rule bg-iron-raised px-4 py-3 text-[13px] text-chalk-dim transition-colors hover:border-chalk-faint hover:text-chalk"
+        >
+          <span>
+            You&rsquo;re viewing your public page.{" "}
+            <span className="font-bold text-chalk">Back to your lifts</span>
+          </span>
+          <ChevronRight />
+        </Link>
+      )}
       <section
         className="rise glow"
         style={
@@ -232,10 +244,16 @@ async function Profile({ params }: { params: Promise<{ id: string }> }) {
       )}
 
       {isOwner && (
-        <p className="pt-8 text-[13px] leading-relaxed text-chalk-faint">
-          This is your page as other people see it. Share the link to get a
-          set co-signed.
-        </p>
+        <section className="rise pt-8" style={{ "--i": 2 } as React.CSSProperties}>
+          <p className="text-[13px] leading-relaxed text-chalk-faint">
+            This is your page as other people see it. Share the link to get a
+            set co-signed.
+          </p>
+          <Link href="/me" className={`${navButton} mt-3`}>
+            Your lifts
+            <ChevronRight />
+          </Link>
+        </section>
       )}
     </div>
   );
@@ -257,6 +275,23 @@ function Check() {
       strokeLinejoin="round"
     >
       <path d="m3 8.5 3 3 7-7" />
+    </svg>
+  );
+}
+
+function ChevronRight() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 16 16"
+      className="h-3.5 w-3.5 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m6 3 5 5-5 5" />
     </svg>
   );
 }
