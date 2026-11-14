@@ -10,7 +10,7 @@ export default function Home() {
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
       <header className="flex items-end justify-between gap-4 border-b border-rule pb-5">
         <div>
-          <h1 className="text-[2rem] font-800 leading-none tracking-[-0.03em]">
+          <h1 className="text-[2rem] font-extrabold leading-none tracking-[-0.03em]">
             Gym Rank
           </h1>
           <p className="mt-1.5 text-[13px] leading-snug text-chalk-dim">
@@ -78,7 +78,7 @@ async function Boards() {
   if (rows.length === 0) {
     return (
       <section className="pt-10">
-        <p className="text-[15px] font-500">Nobody on the board yet.</p>
+        <p className="text-[15px] font-medium">Nobody on the board yet.</p>
         <p className="mt-1.5 text-[13px] leading-relaxed text-chalk-dim">
           A score needs a squat, a bench and a deadlift. Enter all three and
           you are first by default.
@@ -123,7 +123,7 @@ function Board({
   return (
     <section>
       {heading && (
-        <h2 className="mb-2 flex items-center gap-2 text-[13px] font-500 text-chalk-dim">
+        <h2 className="mb-2 flex items-center gap-2 text-[13px] font-medium text-chalk-dim">
           <span
             aria-hidden
             className="h-2.5 w-2.5 rounded-full"
@@ -155,8 +155,8 @@ function Board({
               <span
                 className={`tnum w-5 shrink-0 text-right ${
                   leading
-                    ? "text-[15px] font-700 text-chalk"
-                    : "text-[13px] font-400 text-chalk-faint"
+                    ? "text-[15px] font-bold text-chalk"
+                    : "text-[13px] font-normal text-chalk-faint"
                 }`}
               >
                 {rank}
@@ -165,7 +165,7 @@ function Board({
               <span className="min-w-0 flex-1">
                 <span
                   className={`block truncate ${
-                    leading ? "text-[15px] font-700" : "text-[14px] font-500"
+                    leading ? "text-[15px] font-bold" : "text-[14px] font-medium"
                   }`}
                 >
                   {row.displayName}
@@ -180,7 +180,7 @@ function Board({
               <span className="shrink-0 text-right">
                 <span
                   className={`tnum block leading-none ${
-                    leading ? "text-[22px] font-800" : "text-[17px] font-700"
+                    leading ? "text-[22px] font-extrabold" : "text-[17px] font-bold"
                   }`}
                 >
                   {row.dots.toFixed(1)}
@@ -198,4 +198,4 @@ function Board({
 }
 
 const button =
-  "shrink-0 rounded-sm bg-chalk px-3.5 py-2 text-[13px] font-700 text-iron transition-opacity hover:opacity-85";
+  "shrink-0 rounded-sm bg-chalk px-3.5 py-2 text-[13px] font-bold text-iron transition-opacity hover:opacity-85";
