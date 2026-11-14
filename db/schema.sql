@@ -42,6 +42,25 @@ create table if not exists lifts (
 create index if not exists lifts_movement_idx on lifts (movement);
 create index if not exists lifts_lifter_idx   on lifts (lifter_id);
 
+-- Append-only log of every lift ever saved. `lifts` is current state (one
+-- row per lifter per movement, overwritten on save); this table is never
+-- updated or deleted from. It is what makes "since last entry" deltas and
+-- any future progression view possible — without it, every save erases the
+-- number it replaced.
+create table if not exists lift_history (
+  id            bigserial primary key,
+  lifter_id     uuid not null references lifters(id) on delete cascade,
+  movement      text not null,
+  weight_kg     numeric(5,2),
+  reps          int not null,
+  est_1rm_kg    numeric(6,2),
+  bodyweight_kg numeric(5,2) not null,
+  recorded_at   timestamptz not null default now()
+);
+
+create index if not exists lift_history_lifter_movement_idx
+  on lift_history (lifter_id, movement, recorded_at desc);
+
 -- Usage events. This is how the signup/entry/return numbers get reported
 -- at the end of the project; without it there is nothing to measure.
 create table if not exists events (

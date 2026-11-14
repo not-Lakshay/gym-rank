@@ -4,6 +4,12 @@ import { auth, signIn } from "@/auth";
 import { getLeaderboard, type BoardRow } from "@/lib/leaderboard";
 import { plateFor } from "@/lib/plates";
 import { WEIGHT_CLASSES } from "@/lib/scoring";
+import { Calculator } from "./calculator";
+
+// A class board with one or two people isn't a ranking, it's a repeat of
+// the overall board. Classes appear once they have enough lifters to mean
+// something.
+const MIN_CLASS_SIZE = 3;
 
 export default function Home() {
   return (
@@ -14,7 +20,7 @@ export default function Home() {
             Gym Rank
           </h1>
           <p className="mt-1.5 text-[13px] leading-snug text-chalk-dim">
-            LNMIIT gym, scored pound for pound
+            LNMIIT gym, ranked for bodyweight
           </p>
         </div>
         <Suspense fallback={null}>
@@ -33,6 +39,8 @@ export default function Home() {
           A score is your squat, bench and deadlift total adjusted for
           bodyweight using DOTS, so a 60kg lifter and a 90kg lifter can be
           compared directly. Your bodyweight is never shown — only the class.
+          &ldquo;Co-signed&rdquo; means another lifter on the board watched
+          the set.
         </p>
         <p className="-ml-2 mt-1 flex gap-1">
           <Link
@@ -79,7 +87,25 @@ async function AccountLink() {
 }
 
 async function Boards() {
-  const rows = await getLeaderboard();
+  const [rows, session] = await Promise.all([getLeaderboard(), auth()]);
+
+  const calculator = session?.user ? null : (
+    <Calculator
+      boardDots={rows.map((r) => r.dots)}
+      signInForm={
+        <form
+          action={async () => {
+            "use server";
+            await signIn("google", { redirectTo: "/me" });
+          }}
+        >
+          <button type="submit" className={button}>
+            Save it
+          </button>
+        </form>
+      }
+    />
+  );
 
   if (rows.length === 0) {
     return (
@@ -89,6 +115,7 @@ async function Boards() {
           A score needs a squat, a bench and a deadlift. Enter all three and
           you are first by default.
         </p>
+        {calculator}
       </section>
     );
   }
@@ -97,12 +124,14 @@ async function Boards() {
     <div className="pt-8">
       <Board heading="Everyone" rows={rows} rankOf={(r) => r.overallRank} />
 
+      {calculator}
+
       <div className="mt-10 flex flex-col gap-8">
         {WEIGHT_CLASSES.map((weightClass) => {
           const inClass = rows.filter(
             (r) => r.weightClass === weightClass.label,
           );
-          if (inClass.length === 0) return null;
+          if (inClass.length < MIN_CLASS_SIZE) return null;
           return (
             <Board
               key={weightClass.label}
@@ -172,16 +201,19 @@ function Board({
               </span>
 
               <span className="min-w-0 flex-1">
-                <span
-                  className={`block truncate ${
+                <Link
+                  href={`/lifter/${row.id}`}
+                  className={`block truncate hover:underline underline-offset-4 ${
                     leading ? "text-[15px] font-bold" : "text-[14px] font-medium"
                   }`}
                 >
                   {row.displayName}
-                </span>
-                {row.verifiedCount === 3 && (
+                </Link>
+                {row.verifiedCount > 0 && (
                   <span className="text-[11px] text-chalk-faint">
-                    co-signed
+                    {row.verifiedCount === 3
+                      ? "co-signed"
+                      : `${row.verifiedCount}/3 co-signed`}
                   </span>
                 )}
               </span>

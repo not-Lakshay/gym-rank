@@ -75,9 +75,10 @@ otherwise inflate a true single by 3.3%.
 
 Machine lifts (lat pulldown, chest fly) aren't comparable between gyms or
 even between machines, and there's no reference data to normalise them
-against. Every additional field also adds signup friction, which is the
-largest drop-off point in the funnel. Squat, bench, deadlift, overhead press
-and pull-ups.
+against. Every additional field is also one more chance to abandon signup —
+a hypothesis the `events` table is there to test (profile created vs. first
+lift saved vs. all three saved). Squat, bench, deadlift, overhead press and
+pull-ups.
 
 ### Bodyweight is snapshotted per lift
 
@@ -85,17 +86,55 @@ Stored on each `lifts` row rather than read from the lifter's current
 profile, so someone cutting from 90kg to 80kg doesn't retroactively rewrite
 their old scores.
 
-### Verification is a column, not a feature
+### Current state and history are separate tables
+
+`lifts` holds one row per lifter per movement and is overwritten on save —
+that's what the board ranks. `lift_history` is append-only and gets a row on
+every save. Without it, each save erased the number it replaced and there
+was nothing to come back for; with it, the profile page shows "+5.0 kg since
+last entry", and a progression view is a query away rather than a schema
+change. The two writes aren't in one transaction (the Neon HTTP driver
+doesn't offer one here); a failure between them loses a history row, not
+the lift, which is the right direction to fail in.
+
+### Co-signing, by someone else
 
 Every number is self-reported, and a leaderboard nobody believes is a
-leaderboard nobody opens twice. `lifts.verified_by` is nullable: null means
-unverified, a lifter id means someone co-signed it. Editing a lift clears
-it — a changed number is a new claim.
+leaderboard nobody opens twice. The plausibility caps (400/300/450 kg)
+stop joke entries; they do nothing about a plausible lie, and one plausible
+lie at the top kills the board.
+
+So each lifter has a public page (`/lifter/<id>`) listing the sets behind
+their score, and any *other* signed-in lifter can tap "I saw this" on a set
+they watched. That writes their id into `lifts.verified_by`, and their name
+shows next to the lift. The owner can't co-sign their own sets — the server
+checks, not just the UI — and editing a lift clears the co-sign, because a
+changed number is a new claim. The board shows how many of the three total
+lifts are co-signed.
+
+Whether people actually bother to co-sign is an open question; the
+`lift_cosigned` event will answer it.
+
+### Try it before you sign in
+
+Handing over a Google account before you know whether the number is worth
+having is the biggest ask in the funnel. The scoring is pure arithmetic that
+already runs on the server, so the homepage runs it in the browser too:
+bodyweight plus three working sets gives a score and a projected rank
+against the live board, with nothing saved. Sign-in is the step *after* you
+have seen your number.
+
+### Errors are returned, not thrown
+
+A server action that throws renders Next's error boundary — a crash screen —
+which is the wrong answer to someone typing 500 in a kilo box. Actions return
+`{ error }` and the forms show it under the field via `useActionState`.
 
 ### Bodyweight is never shown
 
 It's needed to score and nothing else, so only the weight class band is
-displayed. The palette follows from this: weight classes take their Olympic
+displayed. Class boards appear once a class has three lifters; below that
+they are a repeat of the overall board, not a ranking. The palette follows from this: weight classes take their Olympic
 plate colour (10kg green, 15kg yellow, 20kg blue, 25kg red), ascending the
 way a loaded bar reads, so the colour carries information instead of
 decorating.
@@ -115,8 +154,11 @@ otherwise have surfaced with people waiting to sign up.
 
 ```
 app/
-  page.tsx                  public leaderboard (no sign-in required)
+  page.tsx                  public leaderboard + try-it calculator
+  calculator.tsx            client-side DOTS + projected rank, nothing saved
   me/page.tsx               profile and lift entry
+  lifter/[id]/page.tsx      a lifter's public page; co-signing happens here
+  forms.tsx                 client forms (useActionState for inline errors)
   actions.ts                server actions, validation, plausibility caps
   api/auth/[...nextauth]/   Auth.js route handler
   privacy, terms
@@ -125,8 +167,9 @@ lib/
   scoring.test.ts           tested against published DOTS results
   leaderboard.ts            ranking query (window functions)
   lifters.ts                data access
+  movements.ts              the five movements (no db import; shared with client)
   db.ts                     Neon client
-db/schema.sql               lifters, lifts, events
+db/schema.sql               lifters, lifts, lift_history, events
 scripts/
   migrate.mjs
   check-scoring-parity.mjs  asserts SQL and TypeScript agree
@@ -162,7 +205,8 @@ signups, profile completion, lift entries, return visits._
 |---|---|
 | Signups | |
 | Entered at least one lift | |
-| Completed all five | |
+| Completed squat, bench and deadlift | |
+| Had at least one lift co-signed | |
 | Returned after the first session | |
 
 ---

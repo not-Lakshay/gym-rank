@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { auth, signIn, signOut } from "@/auth";
-import { saveLiftAction, saveProfileAction } from "@/app/actions";
+import { LiftRowForm, ProfileForm, primary } from "@/app/forms";
 import {
   MOVEMENTS,
   type Lift,
@@ -118,7 +118,7 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
               {summary.dots.toFixed(1)}
             </p>
             <p className="mt-3 text-[13px] text-chalk-dim">
-              pound for pound
+              DOTS score
               <span className="tnum text-chalk-faint">
                 {" "}
                 · {summary.totalKg?.toFixed(0)} kg total
@@ -139,70 +139,32 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
         </h2>
 
         <div>
-          {MOVEMENTS.map((movement) => {
-            const existing = byMovement.get(movement.id);
-            const isPullups = movement.id === "pullups";
-
-            return (
-              <form
-                key={movement.id}
-                action={saveLiftAction}
-                className="flex items-center gap-3 border-b border-rule py-3"
-              >
-                <input type="hidden" name="movement" value={movement.id} />
-
-                <div className="min-w-0 flex-1">
-                  <label className="block text-[14px] font-medium">
-                    {movement.label}
-                  </label>
-                  <span className="tnum text-[11px] text-chalk-faint">
-                    {existing
-                      ? isPullups
-                        ? `${existing.reps} reps`
-                        : `est. 1RM ${existing.est1rmKg?.toFixed(1)} kg`
-                      : isPullups
-                        ? "max reps"
-                        : "weight x reps"}
-                  </span>
-                </div>
-
-                {!isPullups && (
-                  <input
-                    name="weightKg"
-                    type="number"
-                    inputMode="decimal"
-                    step="0.5"
-                    min="1"
-                    max={movement.maxKg ?? undefined}
-                    required
-                    defaultValue={existing?.weightKg ?? ""}
-                    placeholder="kg"
-                    aria-label={`${movement.label} weight in kg`}
-                    className={field}
-                  />
-                )}
-
-                <input
-                  name="reps"
-                  type="number"
-                  inputMode="numeric"
-                  step="1"
-                  min="1"
-                  max="100"
-                  required
-                  defaultValue={existing?.reps ?? ""}
-                  placeholder="reps"
-                  aria-label={`${movement.label} reps`}
-                  className={field}
-                />
-
-                <button type="submit" className={secondary}>
-                  Save
-                </button>
-              </form>
-            );
-          })}
+          {MOVEMENTS.map((movement) => (
+            <LiftRowForm
+              key={movement.id}
+              movement={movement}
+              existing={byMovement.get(movement.id)}
+            />
+          ))}
         </div>
+      </section>
+
+      <section className="pt-10">
+        <h2 className="border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
+          Get co-signed
+        </h2>
+        <p className="mt-3 text-[13px] leading-relaxed text-chalk-dim">
+          Numbers here are self-reported. Someone who watched your set can
+          vouch for it from your page — send them this link, or have them
+          open it on your phone right after the set.
+        </p>
+        <Link
+          href={`/lifter/${lifter.id}`}
+          className={`${navButton} mt-3 w-fit`}
+        >
+          Your public page
+          <ChevronRight />
+        </Link>
       </section>
 
       <details className="pt-8">
@@ -234,56 +196,22 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
   );
 }
 
-function ProfileForm({
-  defaultName,
-  defaultBodyweight,
-  submitLabel,
-}: {
-  defaultName: string;
-  defaultBodyweight?: number;
-  submitLabel: string;
-}) {
+function ChevronRight() {
   return (
-    <form action={saveProfileAction} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1.5">
-        <span className="text-[12px] text-chalk-dim">Display name</span>
-        <input
-          name="displayName"
-          type="text"
-          minLength={2}
-          maxLength={40}
-          required
-          defaultValue={defaultName}
-          className={`${field} w-full text-left`}
-        />
-      </label>
-
-      <label className="flex flex-col gap-1.5">
-        <span className="text-[12px] text-chalk-dim">Bodyweight in kg</span>
-        <input
-          name="bodyweightKg"
-          type="number"
-          inputMode="decimal"
-          step="0.1"
-          min="30"
-          max="250"
-          required
-          defaultValue={defaultBodyweight ?? ""}
-          className={`${field} w-full text-left`}
-        />
-      </label>
-
-      <button type="submit" className={`${primary} w-fit`}>
-        {submitLabel}
-      </button>
-    </form>
+    <svg
+      aria-hidden
+      viewBox="0 0 16 16"
+      className="h-3.5 w-3.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m6 3 5 5-5 5" />
+    </svg>
   );
 }
-
-// 16px is deliberate: iOS Safari zooms the page when an input with a smaller
-// font size is focused. min-h-11 keeps the tap target thumb-sized.
-const field =
-  "tnum min-h-11 w-[4.5rem] shrink-0 rounded-sm border border-rule bg-iron-raised px-3 text-[16px] text-chalk outline-none transition-colors placeholder:text-chalk-faint focus:border-chalk-dim";
 
 function ChevronLeft() {
   return (
@@ -302,9 +230,6 @@ function ChevronLeft() {
   );
 }
 
-const primary =
-  "inline-flex min-h-11 items-center justify-center rounded-sm bg-chalk px-5 text-[15px] font-bold text-iron transition-opacity hover:opacity-85";
-
 // Outlined: navigation and account controls. Visibly tappable, but clearly
 // not the main action on the screen.
 const navButton =
@@ -312,6 +237,3 @@ const navButton =
 
 const quietButton =
   "inline-flex min-h-11 items-center rounded-sm border border-rule px-4 text-[15px] text-chalk-faint transition-colors hover:border-chalk-faint hover:text-chalk";
-
-const secondary =
-  "inline-flex min-h-11 shrink-0 items-center justify-center rounded-sm border border-rule px-4 text-[15px] font-medium text-chalk transition-colors hover:border-chalk-dim";

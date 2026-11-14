@@ -1,25 +1,12 @@
 import { sql } from "./db";
 import { dotsScore, estimatedOneRepMax } from "./scoring";
 
-/**
- * The five ranked movements.
- *
- * maxKg is a plausibility cap, not a world record — it exists so a joke
- * entry can't poison the leaderboard. A board nobody believes is a board
- * nobody opens twice.
- */
-export const MOVEMENTS = [
-  { id: "squat", label: "Squat", maxKg: 400 },
-  { id: "bench", label: "Bench press", maxKg: 300 },
-  { id: "deadlift", label: "Deadlift", maxKg: 450 },
-  { id: "overhead_press", label: "Overhead press", maxKg: 220 },
-  { id: "pullups", label: "Pull-ups", maxKg: null },
-] as const;
-
-export type Movement = (typeof MOVEMENTS)[number]["id"];
-
-// The squat/bench/deadlift total is what DOTS is actually defined on.
-const TOTAL_MOVEMENTS: Movement[] = ["squat", "bench", "deadlift"];
+export {
+  MOVEMENTS,
+  TOTAL_MOVEMENTS,
+  type Movement,
+} from "./movements";
+import { TOTAL_MOVEMENTS, type Movement } from "./movements";
 
 export type Lifter = {
   id: string;
@@ -29,12 +16,20 @@ export type Lifter = {
 };
 
 export type Lift = {
+  id: string;
   movement: Movement;
   weightKg: number | null;
   reps: number;
   est1rmKg: number | null;
   bodyweightKg: number;
   verified: boolean;
+  /** Display name of whoever co-signed it, if anyone. */
+  verifiedByName: string | null;
+  /**
+   * The est. 1RM (or reps, for pull-ups) of the entry this one replaced,
+   * from lift_history. Null for a first entry.
+   */
+  previousValue: number | null;
 };
 
 /**
@@ -80,20 +75,89 @@ export async function upsertProfile(
   return { id: rows[0].id as string, isNew: Boolean(rows[0].is_new) };
 }
 
-export async function getLiftsFor(lifterId: string): Promise<Lift[]> {
+export async function getLiftById(
+  liftId: string,
+): Promise<{ id: string; lifterId: string } | null> {
   const rows = await sql`
-    select movement, weight_kg, reps, est_1rm_kg, bodyweight_kg, verified_by
-    from lifts
-    where lifter_id = ${lifterId}
+    select id, lifter_id from lifts where id = ${liftId} limit 1
   `;
-  return rows.map((row) => ({
-    movement: row.movement as Movement,
-    weightKg: row.weight_kg === null ? null : num(row.weight_kg),
-    reps: num(row.reps),
-    est1rmKg: row.est_1rm_kg === null ? null : num(row.est_1rm_kg),
+  if (rows.length === 0) return null;
+  return { id: rows[0].id as string, lifterId: rows[0].lifter_id as string };
+}
+
+export async function getLifterById(id: string): Promise<Lifter | null> {
+  const rows = await sql`
+    select id, email, display_name, bodyweight_kg
+    from lifters
+    where id = ${id}
+    limit 1
+  `;
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return {
+    id: row.id as string,
+    email: row.email as string,
+    displayName: row.display_name as string,
     bodyweightKg: num(row.bodyweight_kg),
-    verified: row.verified_by !== null,
-  }));
+  };
+}
+
+export async function getLiftsFor(lifterId: string): Promise<Lift[]> {
+  // The lateral join pulls the entry this one replaced: the second-newest
+  // history row for the same movement (the newest is the current lift
+  // itself, since every save writes history too).
+  const rows = await sql`
+    select
+      l.id, l.movement, l.weight_kg, l.reps, l.est_1rm_kg, l.bodyweight_kg,
+      l.verified_by,
+      v.display_name as verified_by_name,
+      prev.est_1rm_kg as prev_est_1rm_kg,
+      prev.reps       as prev_reps
+    from lifts l
+    left join lifters v on v.id = l.verified_by
+    left join lateral (
+      select est_1rm_kg, reps
+      from lift_history h
+      where h.lifter_id = l.lifter_id and h.movement = l.movement
+      order by h.recorded_at desc, h.id desc
+      offset 1 limit 1
+    ) prev on true
+    where l.lifter_id = ${lifterId}
+  `;
+  return rows.map((row) => {
+    const movement = row.movement as Movement;
+    const prevRaw =
+      movement === "pullups" ? row.prev_reps : row.prev_est_1rm_kg;
+    return {
+      id: row.id as string,
+      movement,
+      weightKg: row.weight_kg === null ? null : num(row.weight_kg),
+      reps: num(row.reps),
+      est1rmKg: row.est_1rm_kg === null ? null : num(row.est_1rm_kg),
+      bodyweightKg: num(row.bodyweight_kg),
+      verified: row.verified_by !== null,
+      verifiedByName: (row.verified_by_name as string | null) ?? null,
+      previousValue: prevRaw === null || prevRaw === undefined ? null : num(prevRaw),
+    };
+  });
+}
+
+/**
+ * Co-sign a lift. The witness must be a different lifter — self-attestation
+ * is exactly the thing a verified column is meant to rule out. Returns
+ * false if the lift doesn't exist or the witness is its owner.
+ */
+export async function cosignLift(
+  liftId: string,
+  witnessId: string,
+): Promise<boolean> {
+  const rows = await sql`
+    update lifts
+    set verified_by = ${witnessId}
+    where id = ${liftId} and lifter_id <> ${witnessId}
+    returning id
+  `;
+  return rows.length > 0;
 }
 
 export async function saveLift(params: {
@@ -124,6 +188,16 @@ export async function saveLift(params: {
           verified_by   = null,
           recorded_at   = now()
   `;
+
+  // Append-only. The Neon HTTP driver has no multi-statement transaction
+  // here, so a crash between the two writes loses a history row, not the
+  // lift — the acceptable direction to fail in.
+  await sql`
+    insert into lift_history
+      (lifter_id, movement, weight_kg, reps, est_1rm_kg, bodyweight_kg)
+    values
+      (${lifterId}, ${movement}, ${weightKg}, ${reps}, ${est1rm}, ${bodyweightKg})
+  `;
 }
 
 export async function recordEvent(
@@ -133,8 +207,11 @@ export async function recordEvent(
   // Never let analytics break a user action.
   try {
     await sql`insert into events (name, lifter_id) values (${name}, ${lifterId})`;
-  } catch {
-    // swallowed deliberately
+  } catch (err) {
+    // Swallowed so a Neon hiccup can't fail a user's save — but logged,
+    // because these events are the funnel numbers this project reports on
+    // and a silent gap in them is worse than a noisy one.
+    console.error("recordEvent failed", name, err);
   }
 }
 
