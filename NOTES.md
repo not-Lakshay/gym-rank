@@ -160,3 +160,45 @@ The app was never the hard part. The build finished 10 days early; what
 remains is getting real people to use it.
 
 ---
+
+## 2026-11-14 (late) — design pass, first outside user
+
+### Mobile
+
+- **Touch targets need ~44px.** Plain text links read fine with a mouse and
+  are fiddly with a thumb. Found this by opening the app on a phone, which
+  is the only way it shows up.
+- **iOS Safari zooms the whole page when you focus an input with a font
+  size under 16px.** Every form field on a mobile-first app should be 16px.
+- Text alone does not read as tappable on a phone. Navigation and account
+  controls need a visible boundary — but not all the same weight, or you
+  lose the hierarchy that marks the primary action.
+
+### Verifying work
+
+- **A tool reporting success is a claim, not evidence.** Three file writes
+  this session reported "written" and didn't land. Each time the symptom
+  looked like a deployment problem, and each time the change had never
+  reached the disk. Check the file first, then the deploy.
+- `git status` is the cheapest truth: if a change were really on disk there
+  would be something to commit.
+- `npm run build && git add -A && git commit -m "..." && git push` — the
+  `&&` chain means a failing build can't be pushed.
+
+### First outside user
+
+Sarthak signed up and entered his lifts, and immediately exposed two things
+being the only user had hidden:
+
+1. The link shared was Vercel's *Deployment* URL, not the *Domains* URL, so
+   Google returned `redirect_uri_mismatch`.
+2. Changing the domain afterwards broke sign-in again until all four places
+   in the Google config were updated.
+
+He also beat me on the board with a total 57kg lighter than mine, which is
+the bodyweight normalisation working exactly as intended — a raw-total board
+would have told him the app wasn't for him.
+
+**Lesson: every user before the first stranger is free debugging.**
+
+---
