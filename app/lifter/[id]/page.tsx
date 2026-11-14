@@ -2,8 +2,9 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { auth, signIn } from "@/auth";
+import { auth } from "@/auth";
 import { CosignButton } from "@/app/forms";
+import { SignInForm } from "@/app/sign-in";
 import {
   MOVEMENTS,
   getLifterByEmail,
@@ -14,6 +15,7 @@ import {
 import { getRankFor } from "@/lib/leaderboard";
 import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
+import { CountUp } from "@/app/score";
 
 /*
   What a pasted link looks like before anyone clicks it.
@@ -94,7 +96,11 @@ async function Profile({ params }: { params: Promise<{ id: string }> }) {
   const lifter = await getLifterById(id).catch(() => null);
   if (!lifter) notFound();
 
-  const [lifts, session] = await Promise.all([getLiftsFor(lifter.id), auth()]);
+  const [lifts, session, card] = await Promise.all([
+    getLiftsFor(lifter.id),
+    auth(),
+    getRankFor(lifter.id).catch(() => null),
+  ]);
   const viewer = session?.user?.email
     ? await getLifterByEmail(session.user.email)
     : null;
@@ -108,26 +114,66 @@ async function Profile({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <div className="pt-8">
-      <div
-        aria-hidden
-        className="h-1 w-16 rounded-full"
-        style={{ background: plateFor(weightClass) }}
-      />
-      <h1 className="mt-4 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
-        {lifter.displayName}
-      </h1>
-      <p className="mt-2 text-[13px] text-chalk-dim">
-        {weightClass}
-        {summary.dots !== null && (
-          <span className="tnum">
-            {" "}
-            · {summary.dots.toFixed(1)} DOTS · {summary.totalKg?.toFixed(0)} kg
-            total
-          </span>
-        )}
-      </p>
+      <section
+        className="rise glow"
+        style={
+          {
+            "--i": 0,
+            "--glow-color": plateFor(weightClass),
+          } as React.CSSProperties
+        }
+      >
+        <div
+          aria-hidden
+          className="h-1 w-16 rounded-full"
+          style={{ background: plateFor(weightClass) }}
+        />
+        <h1 className="mt-4 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
+          {lifter.displayName}
+        </h1>
+        <p className="mt-2 text-[13px] text-chalk-dim">
+          {weightClass}
+          {summary.totalKg !== null && (
+            <span className="tnum"> · {summary.totalKg.toFixed(0)} kg total</span>
+          )}
+        </p>
 
-      <section className="pt-10">
+        {summary.dots !== null && (
+          <div className="mt-5 flex items-end gap-4">
+            <p className="tnum text-[3.5rem] font-extrabold leading-[0.85] tracking-[-0.045em]">
+              <CountUp value={summary.dots} />
+            </p>
+            <div className="pb-1 text-[13px] leading-tight text-chalk-dim">
+              <p>DOTS</p>
+              {card && (
+                <p className="mt-1 flex items-center gap-1.5 font-bold text-chalk">
+                  {card.overallRank <= 3 && (
+                    <span
+                      className="medal"
+                      style={
+                        {
+                          "--medal": [
+                            "var(--gold)",
+                            "var(--silver)",
+                            "var(--bronze)",
+                          ][card.overallRank - 1],
+                        } as React.CSSProperties
+                      }
+                    >
+                      {card.overallRank}
+                    </span>
+                  )}
+                  <span className="tnum">
+                    #{card.overallRank} of {card.totalLifters}
+                  </span>
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="rise pt-10" style={{ "--i": 1 } as React.CSSProperties}>
         <h2 className="border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
           Lifts
         </h2>
@@ -152,16 +198,15 @@ async function Profile({ params }: { params: Promise<{ id: string }> }) {
                 </p>
               </div>
               {lift.verifiedByName ? (
-                <span className="shrink-0 text-right text-[12px] text-chalk-dim">
-                  co-signed by
-                  <span className="block font-medium text-chalk">
-                    {lift.verifiedByName}
-                  </span>
+                <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[color-mix(in_oklab,var(--plate-10)_50%,transparent)] bg-[color-mix(in_oklab,var(--plate-10)_14%,transparent)] px-2.5 py-1 text-[12px] text-chalk">
+                  <Check />
+                  <span className="text-chalk-dim">by</span>
+                  <span className="font-medium">{lift.verifiedByName}</span>
                 </span>
               ) : canCosign ? (
                 <CosignButton liftId={lift.id} />
               ) : (
-                <span className="shrink-0 text-[12px] text-chalk-faint">
+                <span className="shrink-0 rounded-full border border-rule px-2.5 py-1 text-[12px] text-chalk-faint">
                   unverified
                 </span>
               )}
@@ -171,23 +216,18 @@ async function Profile({ params }: { params: Promise<{ id: string }> }) {
       </section>
 
       {!viewer && lifts.length > 0 && (
-        <section className="pt-8">
+        <section className="rise pt-8" style={{ "--i": 2 } as React.CSSProperties}>
           <p className="text-[13px] leading-relaxed text-chalk-dim">
             Watched one of these sets? Sign in to co-sign it. You need a
             profile of your own first — a co-sign is worth exactly as much as
             the name behind it.
           </p>
-          <form
-            className="pt-3"
-            action={async () => {
-              "use server";
-              await signIn("google", { redirectTo: `/lifter/${id}` });
-            }}
-          >
-            <button type="submit" className={navButton}>
-              Continue with Google
-            </button>
-          </form>
+          <SignInForm
+            redirectTo={`/lifter/${id}`}
+            label="Continue with Google"
+            className={navButton}
+            formClassName="pt-3"
+          />
         </section>
       )}
 
@@ -202,7 +242,24 @@ async function Profile({ params }: { params: Promise<{ id: string }> }) {
 }
 
 const navButton =
-  "inline-flex min-h-11 items-center gap-1.5 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim transition-colors hover:border-chalk-faint hover:text-chalk";
+  "press inline-flex min-h-11 items-center gap-1.5 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk";
+
+function Check() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 16 16"
+      className="h-3 w-3 text-[var(--plate-10)]"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m3 8.5 3 3 7-7" />
+    </svg>
+  );
+}
 
 function ChevronLeft() {
   return (

@@ -22,6 +22,10 @@
   --plate-20: #3f7cc9;
   --plate-25: #d1434d;
 
+  --gold: #e0b14a;
+  --silver: #b9b4ab;
+  --bronze: #b8743f;
+
   --background: var(--iron);
   --foreground: var(--chalk);
 }
@@ -35,6 +39,9 @@
   --color-iron: var(--iron);
   --color-iron-raised: var(--iron-raised);
   --color-rule: var(--rule);
+  --color-gold: var(--gold);
+  --color-silver: var(--silver);
+  --color-bronze: var(--bronze);
   --font-sans: var(--font-archivo);
 }
 
@@ -42,11 +49,140 @@ html {
   color-scheme: dark;
 }
 
+/*
+  Background: a warm glow at the top so the page has a light source, over
+  a faint diagonal knurl — the cross-hatch cut into a barbell's grip. Both
+  sit far below the text contrast floor; they give the iron some grain.
+*/
 body {
-  background: var(--background);
+  background-color: var(--background);
+  background-image:
+    radial-gradient(
+      80rem 40rem at 50% -20rem,
+      rgba(243, 239, 231, 0.07),
+      transparent 60%
+    ),
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 9px,
+      rgba(243, 239, 231, 0.018) 9px 10px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 9px,
+      rgba(243, 239, 231, 0.018) 9px 10px
+    );
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-archivo), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Sections rise in on arrival. --i staggers them; set it inline. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  animation: rise 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+/* One pass of light across the leader's bar, after the bars have grown. */
+@keyframes sheen {
+  from {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  to {
+    transform: translateX(260%) skewX(-18deg);
+  }
+}
+
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(243, 239, 231, 0.35),
+    transparent
+  );
+  animation: sheen 1100ms ease-out 900ms both;
+}
+
+/* The score on a dashboard sits in a pool of its class colour. */
+.glow {
+  position: relative;
+}
+.glow::before {
+  content: "";
+  position: absolute;
+  inset: -3rem -4rem;
+  z-index: -1;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--glow-color, var(--chalk)) 22%, transparent),
+    transparent
+  );
+  filter: blur(12px);
+  pointer-events: none;
+}
+
+/* Interactive things give a little under the thumb. */
+.press {
+  transition:
+    transform 120ms ease,
+    opacity 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    background-color 150ms ease;
+}
+.press:active {
+  transform: scale(0.97);
+}
+
+/* Board rows: the name slides a touch right on hover, the bar brightens. */
+.row {
+  transition: background-color 150ms ease;
+}
+.row .row-name {
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.row:hover .row-name {
+  transform: translateX(3px);
+}
+.row .row-bar {
+  transition: opacity 180ms ease;
+}
+.row:hover .row-bar {
+  opacity: 0.3 !important;
+}
+
+/* Medal rank discs for the top three. */
+.medal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--iron);
+  background: var(--medal);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 0 0 1px color-mix(in oklab, var(--medal) 50%, transparent),
+    0 0 14px color-mix(in oklab, var(--medal) 35%, transparent);
 }
 
 /* Scores are read as quantities, so the digits must line up. */

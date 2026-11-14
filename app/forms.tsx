@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import type { ActionState } from "@/app/actions";
 import {
   cosignLiftAction,
@@ -32,6 +32,22 @@ export function LiftRowForm({
 
   const delta = deltaFor(existing);
 
+  // Save only lights up once a value differs from what is stored. Five
+  // identical Save buttons give no hint which row you touched.
+  const storedKg = existing?.weightKg?.toString() ?? "";
+  const storedReps = existing?.reps?.toString() ?? "";
+  const [kg, setKg] = useState(storedKg);
+  const [reps, setReps] = useState(storedReps);
+  const dirty = (!isPullups && kg !== storedKg) || reps !== storedReps;
+
+  const [dismissedAt, setDismissedAt] = useState(0);
+  const justSaved = !!state.savedAt && state.savedAt > dismissedAt;
+  useEffect(() => {
+    if (!justSaved) return;
+    const t = setTimeout(() => setDismissedAt(state.savedAt!), 1800);
+    return () => clearTimeout(t);
+  }, [justSaved, state.savedAt]);
+
   return (
     <form action={action} className="border-b border-rule py-3">
       <div className="flex items-center gap-3">
@@ -61,7 +77,14 @@ export function LiftRowForm({
           </span>
         </div>
 
-        {!isPullups && (
+        {isPullups ? (
+          <span
+            aria-hidden
+            className="flex min-h-11 w-[4.5rem] shrink-0 items-center justify-center text-[11px] text-chalk-faint"
+          >
+            bodyweight
+          </span>
+        ) : (
           <input
             name="weightKg"
             type="number"
@@ -70,7 +93,8 @@ export function LiftRowForm({
             min="1"
             max={movement.maxKg ?? undefined}
             required
-            defaultValue={existing?.weightKg ?? ""}
+            value={kg}
+            onChange={(e) => setKg(e.target.value)}
             placeholder="kg"
             aria-label={`${movement.label} weight in kg`}
             className={field}
@@ -85,14 +109,25 @@ export function LiftRowForm({
           min="1"
           max="100"
           required
-          defaultValue={existing?.reps ?? ""}
+          value={reps}
+          onChange={(e) => setReps(e.target.value)}
           placeholder="reps"
           aria-label={`${movement.label} reps`}
           className={field}
         />
 
-        <button type="submit" disabled={pending} className={secondary}>
-          {pending ? "…" : "Save"}
+        <button
+          type="submit"
+          disabled={pending || (!dirty && !justSaved)}
+          className={`${secondary} ${
+            justSaved
+              ? "border-[var(--plate-10)] text-[var(--plate-10)]"
+              : dirty
+                ? "border-chalk bg-chalk text-iron hover:opacity-85"
+                : ""
+          }`}
+        >
+          {pending ? "…" : justSaved ? "Saved" : "Save"}
         </button>
       </div>
 
@@ -197,7 +232,7 @@ export const field =
   "tnum min-h-11 w-[4.5rem] shrink-0 rounded-sm border border-rule bg-iron-raised px-3 text-[16px] text-chalk outline-none transition-colors placeholder:text-chalk-faint focus:border-chalk-dim";
 
 export const primary =
-  "inline-flex min-h-11 items-center justify-center rounded-sm bg-chalk px-5 text-[15px] font-bold text-iron transition-opacity hover:opacity-85 disabled:opacity-60";
+  "press inline-flex min-h-11 items-center justify-center rounded-sm bg-chalk px-5 text-[15px] font-bold text-iron hover:opacity-85 disabled:opacity-60";
 
 export const secondary =
-  "inline-flex min-h-11 shrink-0 items-center justify-center rounded-sm border border-rule px-4 text-[15px] font-medium text-chalk transition-colors hover:border-chalk-dim disabled:opacity-60";
+  "press inline-flex min-h-11 shrink-0 items-center justify-center rounded-sm border border-rule px-4 text-[15px] font-medium text-chalk hover:border-chalk-dim disabled:opacity-50";

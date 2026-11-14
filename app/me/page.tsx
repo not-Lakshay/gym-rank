@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { auth, signIn, signOut } from "@/auth";
+import { connection } from "next/server";
+import { auth } from "@/auth";
 import { LiftRowForm, ProfileForm, primary } from "@/app/forms";
+import { SignInForm, SignOutForm } from "@/app/sign-in";
 import {
   MOVEMENTS,
   type Lift,
@@ -36,6 +38,7 @@ export default function MePage() {
 }
 
 async function Dashboard() {
+  await connection();
   const session = await auth();
   const email = session?.user?.email;
 
@@ -45,17 +48,12 @@ async function Dashboard() {
         <h1 className="text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
           Sign in to add your lifts
         </h1>
-        <form
-          className="pt-5"
-          action={async () => {
-            "use server";
-            await signIn("google", { redirectTo: "/me" });
-          }}
-        >
-          <button type="submit" className={primary}>
-            Continue with Google
-          </button>
-        </form>
+        <SignInForm
+          redirectTo="/me"
+          label="Continue with Google"
+          className={primary}
+          formClassName="pt-5"
+        />
       </div>
     );
   }
@@ -109,7 +107,10 @@ function LifterView({
   return (
     <div className="pt-8">
       {/* The one loud thing on the page — this is what gets screenshotted. */}
-      <section>
+      <section
+        className="rise glow"
+        style={{ "--i": 0, "--glow-color": plate } as React.CSSProperties}
+      >
         <div
           aria-hidden
           className="h-1 w-16 rounded-full"
@@ -145,12 +146,28 @@ function LifterView({
             </p>
 
             {card && (
-              <p className="mt-3 text-[15px] font-bold">
-                <span className="tnum">#{card.overallRank}</span> of{" "}
-                <span className="tnum">{card.totalLifters}</span>
-                <span className="font-normal text-chalk-dim">
-                  {" "}
-                  · {ordinal(card.classRank)} in class
+              <p className="mt-3 flex items-center gap-2 text-[15px] font-bold">
+                {card.overallRank <= 3 && (
+                  <span
+                    className="medal"
+                    style={
+                      {
+                        "--medal": ["var(--gold)", "var(--silver)", "var(--bronze)"][
+                          card.overallRank - 1
+                        ],
+                      } as React.CSSProperties
+                    }
+                  >
+                    {card.overallRank}
+                  </span>
+                )}
+                <span>
+                  <span className="tnum">#{card.overallRank}</span> of{" "}
+                  <span className="tnum">{card.totalLifters}</span>
+                  <span className="font-normal text-chalk-dim">
+                    {" "}
+                    · {ordinal(card.classRank)} in class
+                  </span>
                 </span>
               </p>
             )}
@@ -204,7 +221,7 @@ function LifterView({
         )}
       </section>
 
-      <section className="pt-10">
+      <section className="rise pt-10" style={{ "--i": 1 } as React.CSSProperties}>
         <h2 className="border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
           Your lifts
         </h2>
@@ -220,7 +237,7 @@ function LifterView({
         </div>
       </section>
 
-      <section className="pt-10">
+      <section className="rise pt-10" style={{ "--i": 2 } as React.CSSProperties}>
         <h2 className="border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
           Get co-signed
         </h2>
@@ -238,8 +255,8 @@ function LifterView({
         </Link>
       </section>
 
-      <details className="pt-8">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between rounded-sm border border-rule px-4 text-[15px] text-chalk-dim transition-colors hover:border-chalk-faint hover:text-chalk">
+      <details className="rise pt-8" style={{ "--i": 3 } as React.CSSProperties}>
+        <summary className="press flex min-h-11 cursor-pointer list-none items-center justify-between rounded-sm border border-rule px-4 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk">
           Edit name or bodyweight
           <span aria-hidden className="text-chalk-faint">+</span>
         </summary>
@@ -252,17 +269,7 @@ function LifterView({
         </div>
       </details>
 
-      <form
-        className="pt-8"
-        action={async () => {
-          "use server";
-          await signOut({ redirectTo: "/" });
-        }}
-      >
-        <button type="submit" className={quietButton}>
-          Sign out
-        </button>
-      </form>
+      <SignOutForm className={quietButton} formClassName="pt-8" />
     </div>
   );
 }
@@ -304,7 +311,7 @@ function ChevronLeft() {
 // Outlined: navigation and account controls. Visibly tappable, but clearly
 // not the main action on the screen.
 const navButton =
-  "inline-flex min-h-11 items-center gap-1.5 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim transition-colors hover:border-chalk-faint hover:text-chalk";
+  "press inline-flex min-h-11 items-center gap-1.5 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk";
 
 const quietButton =
-  "inline-flex min-h-11 items-center rounded-sm border border-rule px-4 text-[15px] text-chalk-faint transition-colors hover:border-chalk-faint hover:text-chalk";
+  "press inline-flex min-h-11 items-center rounded-sm border border-rule px-4 text-[15px] text-chalk-faint hover:border-chalk-faint hover:text-chalk";

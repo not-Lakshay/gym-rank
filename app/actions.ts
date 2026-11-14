@@ -1,7 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { auth } from "@/auth";
+import { auth, signIn, signOut } from "@/auth";
 import {
   MOVEMENTS,
   type Movement,
@@ -24,6 +24,19 @@ export type ActionState = { error: string | null; savedAt?: number };
 
 const ok = (): ActionState => ({ error: null, savedAt: Date.now() });
 const fail = (error: string): ActionState => ({ error });
+
+// Module-level rather than inline closures in the pages: an inline
+// "use server" action gets its closure encrypted with random bytes at
+// render time, which trips the prerender on routes with cacheComponents.
+export async function signInAction(formData: FormData): Promise<void> {
+  const raw = String(formData.get("redirectTo") ?? "/me");
+  const redirectTo = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/me";
+  await signIn("google", { redirectTo });
+}
+
+export async function signOutAction(): Promise<void> {
+  await signOut({ redirectTo: "/" });
+}
 
 async function requireEmail(): Promise<string | null> {
   const session = await auth();
