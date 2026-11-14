@@ -16,6 +16,7 @@ import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
 import { siteUrl } from "@/lib/site";
 import { ShareButton } from "@/app/share";
+import { CountUp } from "@/app/score";
 
 export default function MePage() {
   return (
@@ -133,7 +134,7 @@ function LifterView({
         ) : (
           <div className="pt-4">
             <p className="tnum text-[4.5rem] font-extrabold leading-[0.85] tracking-[-0.045em]">
-              {summary.dots.toFixed(1)}
+              <CountUp value={summary.dots} />
             </p>
             <p className="mt-3 text-[13px] text-chalk-dim">
               DOTS score
@@ -153,6 +154,35 @@ function LifterView({
                 </span>
               </p>
             )}
+
+            {/*
+              The gap to the person directly above you. "Third" is a fact;
+              "2.3 off Sarthak" is a reason to come back next week, which
+              is the only thing that makes a leaderboard worth keeping.
+            */}
+            {card?.nextUp ? (
+              <div className="mt-5">
+                <p className="text-[13px] text-chalk-dim">
+                  <span className="tnum font-bold text-chalk">
+                    {card.nextUp.dotsAhead.toFixed(1)}
+                  </span>{" "}
+                  to pass {card.nextUp.displayName}
+                </p>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-rule">
+                  <div
+                    className="bar-grow h-full rounded-full"
+                    style={{
+                      width: `${(card.dots / (card.dots + card.nextUp.dotsAhead)) * 100}%`,
+                      background: plate,
+                    }}
+                  />
+                </div>
+              </div>
+            ) : card ? (
+              <p className="mt-5 text-[13px] font-bold">
+                Top of the board. Nobody above you.
+              </p>
+            ) : null}
           </div>
         )}
 

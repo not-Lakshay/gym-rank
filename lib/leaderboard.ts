@@ -98,6 +98,8 @@ export type RankCard = {
   totalLifters: number;
   classRank: number;
   classSize: number;
+  /** The lifter directly above you, and the gap to them. Null at rank 1. */
+  nextUp: { displayName: string; dotsAhead: number } | null;
 };
 
 /**
@@ -126,5 +128,27 @@ export async function getRankFor(lifterId: string): Promise<RankCard | null> {
     totalLifters: board.length,
     classRank: row.classRank,
     classSize: board.filter((r) => r.weightClass === row.weightClass).length,
+    nextUp: nextUpFrom(board, row),
+  };
+}
+
+/**
+ * The nearest lifter above you on the overall board.
+ *
+ * "You are 12.3 off Sarthak" is a reason to come back; "you are third" is
+ * a fact. The board is sorted by DOTS descending, so this is the last row
+ * strictly ahead of you — not simply the previous index, which would be a
+ * tied lifter when two scores match.
+ */
+function nextUpFrom(
+  board: BoardRow[],
+  row: BoardRow,
+): { displayName: string; dotsAhead: number } | null {
+  const ahead = board.filter((r) => r.dots > row.dots);
+  if (ahead.length === 0) return null;
+  const nearest = ahead[ahead.length - 1];
+  return {
+    displayName: nearest.displayName,
+    dotsAhead: nearest.dots - row.dots,
   };
 }

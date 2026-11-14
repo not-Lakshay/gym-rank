@@ -69,6 +69,25 @@ input[type="number"] {
   outline-offset: 2px;
 }
 
+/*
+  The board's strength bars grow from the left on load. Defined here rather
+  than as a Tailwind arbitrary animation so the keyframe is guaranteed to
+  exist, and so the reduced-motion block below switches it off for free.
+*/
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.bar-grow {
+  transform-origin: left;
+  animation: bar-grow 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
