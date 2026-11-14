@@ -27,7 +27,7 @@ export default function Home() {
               Gym Rank
             </h1>
             <p className="mt-2.5 text-[16px] font-bold leading-none tracking-[-0.02em]">
-              Strength, not size.
+              Pound for pound.
             </p>
             <p className="mt-2 text-[13px] leading-snug text-chalk-dim">
               LNMIIT gym · every score adjusted for bodyweight

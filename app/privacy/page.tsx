@@ -18,9 +18,8 @@ export default function PrivacyPage() {
       </h1>
 
       <p className={muted}>
-        Gym Rank is a student project built by Lakshay, a B.Tech student at
-        LNMIIT Jaipur. It is not run by, affiliated with, or endorsed by
-        LNMIIT or its gym.
+        Gym Rank is a student project built at LNMIIT Jaipur. It is not run
+        by, affiliated with, or endorsed by LNMIIT or its gym.
       </p>
 
       <Section title="What is stored">
