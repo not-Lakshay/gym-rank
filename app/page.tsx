@@ -89,9 +89,9 @@ async function Boards() {
 
   return (
     <div className="pt-8">
-      <Board rows={rows} rankOf={(r) => r.overallRank} />
+      <Board heading="Everyone" rows={rows} rankOf={(r) => r.overallRank} />
 
-      <div className="mt-12 flex flex-col gap-9">
+      <div className="mt-10 flex flex-col gap-8">
         {WEIGHT_CLASSES.map((weightClass) => {
           const inClass = rows.filter(
             (r) => r.weightClass === weightClass.label,
@@ -101,6 +101,7 @@ async function Boards() {
             <Board
               key={weightClass.label}
               heading={weightClass.label}
+              plate={plateFor(weightClass.label)}
               rows={inClass}
               rankOf={(r) => r.classRank}
             />
@@ -113,25 +114,27 @@ async function Boards() {
 
 function Board({
   heading,
+  plate,
   rows,
   rankOf,
 }: {
-  heading?: string;
+  heading: string;
+  plate?: string;
   rows: BoardRow[];
   rankOf: (row: BoardRow) => number;
 }) {
   return (
     <section>
-      {heading && (
-        <h2 className="mb-2 flex items-center gap-2 text-[13px] font-medium text-chalk-dim">
+      <h2 className="mb-2 flex items-center gap-2 text-[13px] font-medium text-chalk-dim">
+        {plate && (
           <span
             aria-hidden
             className="h-2.5 w-2.5 rounded-full"
-            style={{ background: plateFor(heading) }}
+            style={{ background: plate }}
           />
-          {heading}
-        </h2>
-      )}
+        )}
+        {heading}
+      </h2>
 
       <ol>
         {rows.map((row) => {
