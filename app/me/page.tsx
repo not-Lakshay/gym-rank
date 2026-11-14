@@ -16,11 +16,9 @@ import { weightClassFor } from "@/lib/scoring";
 export default function MePage() {
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
-      <Link
-        href="/"
-        className="-ml-2 inline-flex min-h-11 items-center rounded-sm px-2 text-[15px] text-chalk-dim transition-colors hover:text-chalk"
-      >
-        Back to the board
+      <Link href="/" className={navButton}>
+        <ChevronLeft />
+        Leaderboard
       </Link>
 
       <Suspense
@@ -208,8 +206,9 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
       </section>
 
       <details className="pt-8">
-        <summary className="-ml-2 inline-flex min-h-11 cursor-pointer items-center rounded-sm px-2 text-[15px] text-chalk-dim transition-colors hover:text-chalk">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between rounded-sm border border-rule px-4 text-[15px] text-chalk-dim transition-colors hover:border-chalk-faint hover:text-chalk">
           Edit name or bodyweight
+          <span aria-hidden className="text-chalk-faint">+</span>
         </summary>
         <div className="pt-5">
           <ProfileForm
@@ -227,10 +226,7 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
           await signOut({ redirectTo: "/" });
         }}
       >
-        <button
-          type="submit"
-          className="-ml-2 inline-flex min-h-11 items-center rounded-sm px-2 text-[15px] text-chalk-faint underline underline-offset-4 transition-colors hover:text-chalk"
-        >
+        <button type="submit" className={quietButton}>
           Sign out
         </button>
       </form>
@@ -289,8 +285,33 @@ function ProfileForm({
 const field =
   "tnum min-h-11 w-[4.5rem] shrink-0 rounded-sm border border-rule bg-iron-raised px-3 text-[16px] text-chalk outline-none transition-colors placeholder:text-chalk-faint focus:border-chalk-dim";
 
+function ChevronLeft() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 16 16"
+      className="h-3.5 w-3.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M10 3 5 8l5 5" />
+    </svg>
+  );
+}
+
 const primary =
   "inline-flex min-h-11 items-center justify-center rounded-sm bg-chalk px-5 text-[15px] font-bold text-iron transition-opacity hover:opacity-85";
+
+// Outlined: navigation and account controls. Visibly tappable, but clearly
+// not the main action on the screen.
+const navButton =
+  "inline-flex min-h-11 items-center gap-1.5 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim transition-colors hover:border-chalk-faint hover:text-chalk";
+
+const quietButton =
+  "inline-flex min-h-11 items-center rounded-sm border border-rule px-4 text-[15px] text-chalk-faint transition-colors hover:border-chalk-faint hover:text-chalk";
 
 const secondary =
   "inline-flex min-h-11 shrink-0 items-center justify-center rounded-sm border border-rule px-4 text-[15px] font-medium text-chalk transition-colors hover:border-chalk-dim";
