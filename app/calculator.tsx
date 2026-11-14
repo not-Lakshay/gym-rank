@@ -6,6 +6,13 @@ import {
   estimatedOneRepMax,
   weightClassFor,
 } from "@/lib/scoring";
+import {
+  MAX_BODYWEIGHT,
+  MAX_SCORED_REPS,
+  MIN_BODYWEIGHT,
+  validateBodyweight,
+  validateLift,
+} from "@/lib/validate";
 import { field } from "./forms";
 
 type Set = { kg: string; reps: string };
@@ -44,7 +51,39 @@ export function Calculator({
     ]),
   ) as Record<(typeof lifts)[number], number>;
   const total = lifts.reduce((sum, m) => sum + oneRm[m], 0);
-  const complete = bodyweight >= 30 && lifts.every((m) => oneRm[m] > 0);
+
+  /*
+    The same rules the server action applies, from the same module. Without
+    this the preview will happily score 500 kg of bodyweight and then the
+    board rejects it on save — the min/max attributes on the inputs below
+    do nothing, because nothing here submits a form.
+
+    Only filled-in fields are judged, so the message appears when someone
+    has typed something wrong, not while they are still typing.
+  */
+  function firstError(): string | null {
+    const bodyweightError =
+      bw.trim() === "" ? null : validateBodyweight(bodyweight);
+    if (bodyweightError) return bodyweightError;
+
+    for (const m of lifts) {
+      if (sets[m].kg.trim() === "" || sets[m].reps.trim() === "") continue;
+      const liftError = validateLift({
+        movement: m,
+        weightKg: Number(sets[m].kg),
+        reps: Number(sets[m].reps),
+        bodyweightKg: bodyweight,
+      });
+      if (liftError) return liftError;
+    }
+    return null;
+  }
+
+  const error = firstError();
+  const complete =
+    error === null &&
+    validateBodyweight(bodyweight) === null &&
+    lifts.every((m) => oneRm[m] > 0);
   const dots = complete ? dotsScore(total, bodyweight) : null;
 
   // rank = 1 + number of lifters strictly ahead
@@ -72,8 +111,8 @@ export function Calculator({
             type="number"
             inputMode="decimal"
             step="0.1"
-            min="30"
-            max="250"
+            min={MIN_BODYWEIGHT}
+            max={MAX_BODYWEIGHT}
             placeholder="kg"
             value={bw}
             onChange={(e) => setBw(e.target.value)}
@@ -115,7 +154,7 @@ export function Calculator({
               inputMode="numeric"
               step="1"
               min="1"
-              max="100"
+              max={MAX_SCORED_REPS}
               placeholder="reps"
               value={sets[id].reps}
               onChange={(e) => update(id, "reps", e.target.value)}
@@ -127,7 +166,14 @@ export function Calculator({
       </div>
 
       <div className="mt-5 flex items-end justify-between gap-4 border-t border-rule pt-4">
-        {dots === null ? (
+        {error ? (
+          <p
+            role="alert"
+            className="text-[13px] leading-relaxed text-[var(--plate-25)]"
+          >
+            {error}
+          </p>
+        ) : dots === null ? (
           <p className="text-[13px] text-chalk-faint">
             Fill in bodyweight and all three lifts.
           </p>

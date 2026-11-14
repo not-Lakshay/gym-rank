@@ -12,10 +12,7 @@ import {
   saveLift,
   upsertProfile,
 } from "@/lib/lifters";
-
-const MIN_BODYWEIGHT = 30;
-const MAX_BODYWEIGHT = 250;
-const MAX_PULLUP_REPS = 100;
+import { validateBodyweight, validateLift } from "@/lib/validate";
 
 /**
  * Every action returns this instead of throwing. A thrown error inside a
@@ -46,15 +43,8 @@ export async function saveProfileAction(
   if (displayName.length < 2 || displayName.length > 40) {
     return fail("Display name must be between 2 and 40 characters.");
   }
-  if (
-    !Number.isFinite(bodyweightKg) ||
-    bodyweightKg < MIN_BODYWEIGHT ||
-    bodyweightKg > MAX_BODYWEIGHT
-  ) {
-    return fail(
-      `Bodyweight must be between ${MIN_BODYWEIGHT} and ${MAX_BODYWEIGHT} kg.`,
-    );
-  }
+  const bodyweightError = validateBodyweight(bodyweightKg);
+  if (bodyweightError) return fail(bodyweightError);
 
   const { id, isNew } = await upsertProfile(email, displayName, bodyweightKg);
   await recordEvent(isNew ? "profile_created" : "profile_updated", id);
@@ -78,28 +68,17 @@ export async function saveLiftAction(
   if (!movement) return fail("Unknown movement.");
 
   const reps = Number(formData.get("reps"));
-  if (!Number.isInteger(reps) || reps < 1) {
-    return fail("Reps must be a whole number of at least 1.");
-  }
+  const weightKg =
+    movement.id === "pullups" ? null : Number(formData.get("weightKg"));
 
-  let weightKg: number | null = null;
-
-  if (movement.id === "pullups") {
-    if (reps > MAX_PULLUP_REPS) {
-      return fail(`${MAX_PULLUP_REPS} pull-ups is the cap.`);
-    }
-  } else {
-    weightKg = Number(formData.get("weightKg"));
-    if (!Number.isFinite(weightKg) || weightKg <= 0) {
-      return fail("Weight must be greater than zero.");
-    }
-    if (movement.maxKg !== null && weightKg > movement.maxKg) {
-      return fail(
-        `${weightKg} kg is above the ${movement.maxKg} kg cap for ${movement.label.toLowerCase()}.`,
-      );
-    }
-    if (reps > 100) return fail("Reps must be 100 or fewer.");
-  }
+  // Same rules the home page calculator applies, from the same module.
+  const liftError = validateLift({
+    movement: movement.id as Movement,
+    weightKg,
+    reps,
+    bodyweightKg: lifter.bodyweightKg,
+  });
+  if (liftError) return fail(liftError);
 
   await saveLift({
     lifterId: lifter.id,
