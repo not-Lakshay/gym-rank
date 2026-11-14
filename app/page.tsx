@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { auth, signIn } from "@/auth";
 import { getLeaderboard, type BoardRow } from "@/lib/leaderboard";
+import { getLifterByEmail } from "@/lib/lifters";
 import { plateFor } from "@/lib/plates";
 import { WEIGHT_CLASSES } from "@/lib/scoring";
 import { Calculator } from "./calculator";
@@ -43,6 +44,12 @@ export default function Home() {
           the set.
         </p>
         <p className="-ml-2 mt-1 flex gap-1">
+          <Link
+            href="/scoring"
+            className="inline-flex min-h-11 items-center rounded-sm px-2 text-[14px] underline underline-offset-4"
+          >
+            How scoring works
+          </Link>
           <Link
             href="/privacy"
             className="inline-flex min-h-11 items-center rounded-sm px-2 text-[14px] underline underline-offset-4"
@@ -89,6 +96,12 @@ async function AccountLink() {
 async function Boards() {
   const [rows, session] = await Promise.all([getLeaderboard(), auth()]);
 
+  // Which row is yours. On a board of forty names, finding yourself is the
+  // thing people do first and it should not require reading.
+  const viewer = session?.user?.email
+    ? await getLifterByEmail(session.user.email).catch(() => null)
+    : null;
+
   const calculator = session?.user ? null : (
     <Calculator
       boardDots={rows.map((r) => r.dots)}
@@ -122,7 +135,12 @@ async function Boards() {
 
   return (
     <div className="pt-8">
-      <Board heading="Everyone" rows={rows} rankOf={(r) => r.overallRank} />
+      <Board
+        heading="Everyone"
+        rows={rows}
+        rankOf={(r) => r.overallRank}
+        viewerId={viewer?.id ?? null}
+      />
 
       {calculator}
 
@@ -139,6 +157,7 @@ async function Boards() {
               plate={plateFor(weightClass.label)}
               rows={inClass}
               rankOf={(r) => r.classRank}
+              viewerId={viewer?.id ?? null}
             />
           );
         })}
@@ -152,11 +171,13 @@ function Board({
   plate,
   rows,
   rankOf,
+  viewerId,
 }: {
   heading: string;
   plate?: string;
   rows: BoardRow[];
   rankOf: (row: BoardRow) => number;
+  viewerId: string | null;
 }) {
   return (
     <section>
@@ -175,6 +196,7 @@ function Board({
         {rows.map((row) => {
           const rank = rankOf(row);
           const leading = rank === 1;
+          const isViewer = row.id === viewerId;
 
           return (
             <li
@@ -201,14 +223,23 @@ function Board({
               </span>
 
               <span className="min-w-0 flex-1">
-                <Link
-                  href={`/lifter/${row.id}`}
-                  className={`block truncate hover:underline underline-offset-4 ${
-                    leading ? "text-[15px] font-bold" : "text-[14px] font-medium"
-                  }`}
-                >
-                  {row.displayName}
-                </Link>
+                <span className="flex items-center gap-1.5">
+                  <Link
+                    href={`/lifter/${row.id}`}
+                    className={`truncate hover:underline underline-offset-4 ${
+                      leading
+                        ? "text-[15px] font-bold"
+                        : "text-[14px] font-medium"
+                    }`}
+                  >
+                    {row.displayName}
+                  </Link>
+                  {isViewer && (
+                    <span className="shrink-0 rounded-sm border border-chalk-faint px-1.5 text-[10px] font-medium uppercase text-chalk-dim">
+                      you
+                    </span>
+                  )}
+                </span>
                 {row.verifiedCount > 0 && (
                   <span className="text-[11px] text-chalk-faint">
                     {row.verifiedCount === 3
