@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo } from "next/font/google";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 /*
@@ -14,8 +15,22 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
+  // Without this, the relative /api/og path in a page's openGraph images
+  // never resolves to an absolute URL and the share preview arrives with
+  // no image at all — the failure is silent, which is why it's worth a
+  // comment rather than a one-liner.
+  metadataBase: new URL(siteUrl),
   title: "Gym Rank",
   description: "Bodyweight-adjusted lifting leaderboard for the LNMIIT gym.",
+  // Every page inherits a preview card, so the bare domain pasted into a
+  // group chat still unfurls as something. With no id, /api/og renders its
+  // generic face; a lifter page overrides this with their own numbers.
+  openGraph: {
+    title: "Gym Rank",
+    description: "Bodyweight-adjusted lifting leaderboard for the LNMIIT gym.",
+    images: [{ url: "/api/og", width: 1200, height: 630 }],
+  },
+  twitter: { card: "summary_large_image", images: ["/api/og"] },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

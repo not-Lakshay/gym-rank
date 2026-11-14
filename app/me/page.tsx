@@ -10,8 +10,12 @@ import {
   getLiftsFor,
   summarise,
 } from "@/lib/lifters";
+import { getRankFor, type RankCard } from "@/lib/leaderboard";
+import { ordinal } from "@/lib/format";
 import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
+import { siteUrl } from "@/lib/site";
+import { ShareButton } from "@/app/share";
 
 export default function MePage() {
   return (
@@ -77,11 +81,25 @@ async function Dashboard() {
     );
   }
 
-  const lifts = await getLiftsFor(lifter.id);
-  return <LifterView lifter={lifter} lifts={lifts} />;
+  // Rank is read alongside the lifts, not after them: it is the thing
+  // people reopen the page for, so it should not wait on a second round
+  // trip to Neon.
+  const [lifts, card] = await Promise.all([
+    getLiftsFor(lifter.id),
+    getRankFor(lifter.id).catch(() => null),
+  ]);
+  return <LifterView lifter={lifter} lifts={lifts} card={card} />;
 }
 
-function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
+function LifterView({
+  lifter,
+  lifts,
+  card,
+}: {
+  lifter: Lifter;
+  lifts: Lift[];
+  card: RankCard | null;
+}) {
   const summary = summarise(lifts, lifter.bodyweightKg);
   const byMovement = new Map(lifts.map((l) => [l.movement, l]));
   const weightClass = weightClassFor(lifter.bodyweightKg);
@@ -124,6 +142,17 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
                 · {summary.totalKg?.toFixed(0)} kg total
               </span>
             </p>
+
+            {card && (
+              <p className="mt-3 text-[15px] font-bold">
+                <span className="tnum">#{card.overallRank}</span> of{" "}
+                <span className="tnum">{card.totalLifters}</span>
+                <span className="font-normal text-chalk-dim">
+                  {" "}
+                  · {ordinal(card.classRank)} in class
+                </span>
+              </p>
+            )}
           </div>
         )}
 
@@ -131,6 +160,18 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
           {lifter.displayName}
           <span className="font-normal text-chalk-dim"> · {weightClass}</span>
         </p>
+
+        {card && (
+          <div className="pt-6">
+            <ShareButton
+              url={`${siteUrl}/lifter/${lifter.id}`}
+              text={`#${card.overallRank} of ${card.totalLifters} at the LNMIIT gym — ${card.dots.toFixed(1)} DOTS.`}
+            />
+            <p className="mt-2 text-[12px] leading-relaxed text-chalk-faint">
+              Sends your page. Whoever opens it sees the board.
+            </p>
+          </div>
+        )}
       </section>
 
       <section className="pt-10">

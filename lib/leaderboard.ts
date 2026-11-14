@@ -88,3 +88,43 @@ export async function getLeaderboard(): Promise<BoardRow[]> {
     classRank: Number(row.class_rank),
   }));
 }
+
+export type RankCard = {
+  displayName: string;
+  weightClass: string;
+  dots: number;
+  totalKg: number;
+  overallRank: number;
+  totalLifters: number;
+  classRank: number;
+  classSize: number;
+};
+
+/**
+ * One lifter's standing, for the share card and their own dashboard.
+ *
+ * This deliberately reads the whole board rather than ranking one lifter in
+ * SQL. A second query with its own window function would be a second place
+ * for the ranking rules to live, and the one thing a share card must never
+ * do is claim a rank the leaderboard disagrees with. The board is at most a
+ * few hundred rows; correctness is worth more than the saved bytes.
+ *
+ * Returns null for a lifter who has no squat/bench/deadlift total yet —
+ * they aren't on the board, so they have no rank to share.
+ */
+export async function getRankFor(lifterId: string): Promise<RankCard | null> {
+  const board = await getLeaderboard();
+  const row = board.find((r) => r.id === lifterId);
+  if (!row) return null;
+
+  return {
+    displayName: row.displayName,
+    weightClass: row.weightClass,
+    dots: row.dots,
+    totalKg: row.totalKg,
+    overallRank: row.overallRank,
+    totalLifters: board.length,
+    classRank: row.classRank,
+    classSize: board.filter((r) => r.weightClass === row.weightClass).length,
+  };
+}

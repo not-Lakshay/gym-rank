@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth, signIn } from "@/auth";
@@ -10,8 +11,51 @@ import {
   getLiftsFor,
   summarise,
 } from "@/lib/lifters";
+import { getRankFor } from "@/lib/leaderboard";
 import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
+
+/*
+  What a pasted link looks like before anyone clicks it.
+
+  This is the whole share mechanism: the image below is fetched and
+  rendered by WhatsApp, Instagram and anything else that unfurls a URL, so
+  one paste into a gym group shows the score to everyone in it. The numbers
+  come from getRankFor, which reads the same board the site does — a card
+  that disagreed with the leaderboard would be worse than no card.
+*/
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const card = await getRankFor(id).catch(() => null);
+  const image = { url: `/api/og?id=${id}`, width: 1200, height: 630 };
+
+  if (!card) {
+    return {
+      title: "Gym Rank",
+      openGraph: { images: [image] },
+      twitter: { card: "summary_large_image", images: [image.url] },
+    };
+  }
+
+  const title = `${card.displayName} · ${card.dots.toFixed(1)} DOTS`;
+  const description = `#${card.overallRank} of ${card.totalLifters} at the LNMIIT gym · ${card.totalKg.toFixed(0)} kg total, ${card.weightClass}.`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, images: [image] },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image.url],
+    },
+  };
+}
 
 /*
   A lifter's public page. Two jobs:
