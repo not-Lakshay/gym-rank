@@ -34,11 +34,17 @@ export default function Home() {
           bodyweight using DOTS, so a 60kg lifter and a 90kg lifter can be
           compared directly. Your bodyweight is never shown — only the class.
         </p>
-        <p className="mt-3 flex gap-4">
-          <Link href="/privacy" className="underline underline-offset-2">
+        <p className="-ml-2 mt-1 flex gap-1">
+          <Link
+            href="/privacy"
+            className="inline-flex min-h-11 items-center rounded-sm px-2 text-[14px] underline underline-offset-4"
+          >
             Privacy
           </Link>
-          <Link href="/terms" className="underline underline-offset-2">
+          <Link
+            href="/terms"
+            className="inline-flex min-h-11 items-center rounded-sm px-2 text-[14px] underline underline-offset-4"
+          >
             Terms
           </Link>
         </p>
@@ -201,4 +207,4 @@ function Board({
 }
 
 const button =
-  "shrink-0 rounded-sm bg-chalk px-3.5 py-2 text-[13px] font-bold text-iron transition-opacity hover:opacity-85";
+  "inline-flex min-h-11 shrink-0 items-center justify-center rounded-sm bg-chalk px-5 text-[15px] font-bold text-iron transition-opacity hover:opacity-85";

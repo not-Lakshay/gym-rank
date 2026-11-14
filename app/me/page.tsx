@@ -18,7 +18,7 @@ export default function MePage() {
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
       <Link
         href="/"
-        className="text-[13px] text-chalk-dim transition-colors hover:text-chalk"
+        className="-ml-2 inline-flex min-h-11 items-center rounded-sm px-2 text-[15px] text-chalk-dim transition-colors hover:text-chalk"
       >
         Back to the board
       </Link>
@@ -39,7 +39,7 @@ async function Dashboard() {
   if (!email) {
     return (
       <div className="pt-8">
-        <h1 className="text-[1.75rem] font-800 leading-none tracking-[-0.03em]">
+        <h1 className="text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
           Sign in to add your lifts
         </h1>
         <form
@@ -62,7 +62,7 @@ async function Dashboard() {
   if (!lifter) {
     return (
       <div className="pt-8">
-        <h1 className="text-[1.75rem] font-800 leading-none tracking-[-0.03em]">
+        <h1 className="text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
           Set up your profile
         </h1>
         <p className="mt-2 text-[13px] leading-relaxed text-chalk-dim">
@@ -101,7 +101,7 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
 
         {summary.dots === null ? (
           <div className="pt-4">
-            <p className="text-[1.5rem] font-800 leading-tight tracking-[-0.02em]">
+            <p className="text-[1.5rem] font-extrabold leading-tight tracking-[-0.02em]">
               No score yet
             </p>
             <p className="mt-2 text-[13px] leading-relaxed text-chalk-dim">
@@ -116,7 +116,7 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
           </div>
         ) : (
           <div className="pt-4">
-            <p className="tnum text-[4.5rem] font-800 leading-[0.85] tracking-[-0.045em]">
+            <p className="tnum text-[4.5rem] font-extrabold leading-[0.85] tracking-[-0.045em]">
               {summary.dots.toFixed(1)}
             </p>
             <p className="mt-3 text-[13px] text-chalk-dim">
@@ -129,14 +129,14 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
           </div>
         )}
 
-        <p className="mt-4 text-[14px] font-700">
+        <p className="mt-4 text-[14px] font-bold">
           {lifter.displayName}
-          <span className="font-400 text-chalk-dim"> · {weightClass}</span>
+          <span className="font-normal text-chalk-dim"> · {weightClass}</span>
         </p>
       </section>
 
       <section className="pt-10">
-        <h2 className="border-b border-rule pb-2 text-[13px] font-500 text-chalk-dim">
+        <h2 className="border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
           Your lifts
         </h2>
 
@@ -154,7 +154,7 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
                 <input type="hidden" name="movement" value={movement.id} />
 
                 <div className="min-w-0 flex-1">
-                  <label className="block text-[14px] font-500">
+                  <label className="block text-[14px] font-medium">
                     {movement.label}
                   </label>
                   <span className="tnum text-[11px] text-chalk-faint">
@@ -208,7 +208,7 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
       </section>
 
       <details className="pt-8">
-        <summary className="cursor-pointer text-[13px] text-chalk-dim transition-colors hover:text-chalk">
+        <summary className="-ml-2 inline-flex min-h-11 cursor-pointer items-center rounded-sm px-2 text-[15px] text-chalk-dim transition-colors hover:text-chalk">
           Edit name or bodyweight
         </summary>
         <div className="pt-5">
@@ -229,7 +229,7 @@ function LifterView({ lifter, lifts }: { lifter: Lifter; lifts: Lift[] }) {
       >
         <button
           type="submit"
-          className="text-[13px] text-chalk-faint underline underline-offset-2 transition-colors hover:text-chalk"
+          className="-ml-2 inline-flex min-h-11 items-center rounded-sm px-2 text-[15px] text-chalk-faint underline underline-offset-4 transition-colors hover:text-chalk"
         >
           Sign out
         </button>
@@ -284,11 +284,13 @@ function ProfileForm({
   );
 }
 
+// 16px is deliberate: iOS Safari zooms the page when an input with a smaller
+// font size is focused. min-h-11 keeps the tap target thumb-sized.
 const field =
-  "tnum w-16 shrink-0 rounded-sm border border-rule bg-iron-raised px-2.5 py-2 text-[14px] text-chalk outline-none transition-colors placeholder:text-chalk-faint focus:border-chalk-dim";
+  "tnum min-h-11 w-[4.5rem] shrink-0 rounded-sm border border-rule bg-iron-raised px-3 text-[16px] text-chalk outline-none transition-colors placeholder:text-chalk-faint focus:border-chalk-dim";
 
 const primary =
-  "rounded-sm bg-chalk px-4 py-2.5 text-[13px] font-700 text-iron transition-opacity hover:opacity-85";
+  "inline-flex min-h-11 items-center justify-center rounded-sm bg-chalk px-5 text-[15px] font-bold text-iron transition-opacity hover:opacity-85";
 
 const secondary =
-  "shrink-0 rounded-sm border border-rule px-3 py-2 text-[13px] font-500 text-chalk transition-colors hover:border-chalk-dim";
+  "inline-flex min-h-11 shrink-0 items-center justify-center rounded-sm border border-rule px-4 text-[15px] font-medium text-chalk transition-colors hover:border-chalk-dim";
