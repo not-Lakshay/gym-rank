@@ -45,3 +45,39 @@ feature is ranking — ordering, partitioning by weight class, percentiles
 — which SQL window functions do in one query and Mongo makes awkward.
 
 ---
+
+## 2026-11-14 — CP1 cont.: Neon Postgres wired up
+
+**Done:** Neon Postgres (Singapore) connected from both localhost and
+production, verified by a temporary `/api/db-test` endpoint.
+
+- **Env files are only read when the dev server starts.** Editing
+  `.env.local` while `npm run dev` is running changes nothing until you
+  stop and restart it.
+- **Vercel env vars only apply to deployments created after you add
+  them.** Add the variable first, then push. Push first and you have to
+  go back and redeploy manually.
+- **A 404 immediately after pushing usually means the build is still
+  running**, not that something is broken. Vercel takes 60-90s from push
+  to live. Check GitHub first: if the commit is there, just wait.
+- Used the **pooled** Neon connection string (hostname contains
+  `-pooler`) with `@neondatabase/serverless`, which talks over HTTP
+  instead of holding a TCP connection. On Vercel every request is a
+  separate short-lived function, so the normal `pg` driver would open a
+  connection per invocation and exhaust the connection limit.
+- **Database region matters.** Picked AWS Asia Pacific 1 (Singapore),
+  ~60-80ms from India. The default US West would have added 250ms+ to
+  every single query, and the leaderboard page will make several.
+- Windows: **Notepad silently appends `.txt` to new files**, so
+  `.env.local` created that way becomes `.env.local.txt` and Next.js
+  ignores it. Create the file with `New-Item` first, then open it.
+- Don't type a secret into a shell command — PowerShell saves command
+  history to disk. Paste it into the file in an editor instead.
+- Verified `.gitignore` covers `.env*` by checking `git status` doesn't
+  list `.env.local`. Worth doing before the first push, not after.
+
+**TODO before launch:** delete `app/api/db-test/`. It publicly reports
+the Postgres version, which is free reconnaissance for anyone probing
+the site.
+
+---
