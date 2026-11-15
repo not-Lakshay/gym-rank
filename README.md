@@ -268,6 +268,17 @@ npm run dev
 
 ---
 
+## Keeping the database awake
+
+Neon's free plan suspends the database after five idle minutes, and the
+next visitor pays a multi-second wake-up. A cron-job.org job hits
+`/api/health` (which runs `select 1`) every four minutes from 06:00 to
+00:00 IST. The hours are limited on purpose: always-on would use ~186 of
+the plan's ~191 compute-hours a month, and running out suspends the
+database outright; 18 hours a day is ~140.
+
+---
+
 ## Adding a college
 
 Add an entry to `db/colleges.json` — slug, full name, short name, city,
