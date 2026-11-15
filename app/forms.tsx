@@ -10,6 +10,7 @@ import {
 } from "@/app/actions";
 import { MOVEMENTS } from "@/lib/movements";
 import type { Lift } from "@/lib/lifters";
+import { siteLabel } from "@/lib/site";
 import {
   USERNAME_MAX,
   USERNAME_MIN,
@@ -248,7 +249,7 @@ function UsernameField({
         {shown.kind === "checking"
           ? "Checking…"
           : shown.kind === "idle"
-            ? "Your link: gymrank/u/your-handle. Letters, numbers, dots, underscores."
+            ? `Your link: ${siteLabel}/u/your-handle. Letters, numbers, dots, underscores.`
             : shown.message}
       </span>
     </label>

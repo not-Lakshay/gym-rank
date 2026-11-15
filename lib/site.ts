@@ -7,7 +7,7 @@
  * the deployment domain changes.
  */
 export const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://lnmgymrank.vercel.app";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://getgymrank.vercel.app";
 
 /** The same origin without the scheme — for printing on the card itself. */
 export const siteLabel = siteUrl.replace(/^https?:\/\//, "");

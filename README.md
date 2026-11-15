@@ -4,7 +4,7 @@ Bodyweight-adjusted lifting leaderboards for college gyms in India — one
 board per college, and a global board for lifters whose numbers have a
 witness.
 
-**Live:** https://lnmgymrank.vercel.app
+**Live:** https://getgymrank.vercel.app
 
 Lifters pick their college (or it's read from their institute email), enter
 a working set for each of five movements, and the app estimates a one-rep
@@ -279,4 +279,4 @@ script. It upserts on slug, so renames and extra domains go the same way.
 ## Privacy
 
 Bodyweight and email address are never shown publicly. Data is deleted on
-request. See [/privacy](https://lnmgymrank.vercel.app/privacy).
+request. See [/privacy](https://getgymrank.vercel.app/privacy).
