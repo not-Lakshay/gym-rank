@@ -137,7 +137,7 @@ export function Board({
               <span className="row-name relative min-w-0 flex-1">
                 <span className="flex items-center gap-1.5">
                   <Link
-                    href={`/lifter/${row.id}`}
+                    href={`/u/${row.username}`}
                     className={`truncate underline-offset-4 hover:underline ${
                       leading
                         ? "text-[15px] font-bold"
@@ -152,23 +152,33 @@ export function Board({
                     </span>
                   )}
                 </span>
-                {showCollege ? (
-                  <Link
-                    href={`/c/${row.collegeSlug}`}
-                    className="block truncate text-[11px] text-chalk-dim underline-offset-4 hover:underline"
-                  >
-                    {row.collegeShort}
-                  </Link>
-                ) : (
-                  row.verifiedCount > 0 && (
-                    <span className="flex items-center gap-1 text-[11px] text-chalk-dim">
-                      <Check />
-                      {row.verifiedCount === 3
-                        ? "all lifts co-signed"
-                        : `${row.verifiedCount} of 3 co-signed`}
-                    </span>
-                  )
-                )}
+                {/* The handle is what tells two Rohans apart. */}
+                <span className="flex min-w-0 items-center gap-1 text-[11px] text-chalk-dim">
+                  <span className="truncate text-chalk-faint">@{row.username}</span>
+                  {showCollege ? (
+                    <>
+                      <span aria-hidden className="text-chalk-faint">·</span>
+                      <Link
+                        href={`/c/${row.collegeSlug}`}
+                        className="truncate underline-offset-4 hover:underline"
+                      >
+                        {row.collegeShort}
+                      </Link>
+                    </>
+                  ) : (
+                    row.verifiedCount > 0 && (
+                      <>
+                        <span aria-hidden className="text-chalk-faint">·</span>
+                        <Check />
+                        <span className="truncate">
+                          {row.verifiedCount === 3
+                            ? "all co-signed"
+                            : `${row.verifiedCount} of 3 co-signed`}
+                        </span>
+                      </>
+                    )
+                  )}
+                </span>
               </span>
 
               <span className="relative shrink-0 text-right">

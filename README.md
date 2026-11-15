@@ -108,7 +108,7 @@ leaderboard nobody opens twice. The plausibility caps (400/300/450 kg)
 stop joke entries; they do nothing about a plausible lie, and one plausible
 lie at the top kills the board.
 
-So each lifter has a public page (`/lifter/<id>`) listing the sets behind
+So each lifter has a public page (`/u/<username>`) listing the sets behind
 their score, and any *other* signed-in lifter can tap "I saw this" on a set
 they watched. That writes their id into `lifts.verified_by`, and their name
 shows next to the lift. The owner can't co-sign their own sets — the server

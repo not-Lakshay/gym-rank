@@ -85,6 +85,42 @@ if (moved.length > 0) {
   console.log(`Moved ${moved.length} lifter(s) without a college onto LNMIIT.`);
 }
 
+// Lifters from before usernames existed get one derived from their display
+// name, the same way the sign-up form suggests it. The rules live in
+// lib/username.ts, which this script can't import (TypeScript), so this is
+// a deliberate, minimal copy: keep the two in step.
+const withoutUsername = await sql`
+  select id, display_name from lifters where username is null order by created_at
+`;
+for (const lifter of withoutUsername) {
+  const words = lifter.display_name
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+  let base = words.slice(0, 2).join(".");
+  if (base.length < 3) base = (base + ".lifter").slice(0, 20);
+  if (base.length > 20) base = base.slice(0, 20).replace(/\.$/, "");
+
+  for (let n = 1; n < 100; n++) {
+    const suffix = n === 1 ? "" : String(n);
+    const candidate = base.slice(0, 20 - suffix.length).replace(/\.$/, "") + suffix;
+    const taken = await sql`
+      select 1 from lifters where lower(username) = ${candidate} limit 1
+    `;
+    if (taken.length === 0) {
+      await sql`update lifters set username = ${candidate} where id = ${lifter.id}`;
+      console.log(`  ${lifter.display_name} → @${candidate}`);
+      break;
+    }
+  }
+}
+if (withoutUsername.length > 0) {
+  console.log(`Gave ${withoutUsername.length} lifter(s) a username.`);
+}
+await sql`alter table lifters alter column username set not null`;
+
 const tables = await sql`
   select table_name from information_schema.tables
   where table_schema = 'public' order by table_name

@@ -3,12 +3,19 @@
 import { useActionState, useEffect, useState } from "react";
 import type { ActionState } from "@/app/actions";
 import {
+  checkUsernameAction,
   cosignLiftAction,
   saveLiftAction,
   saveProfileAction,
 } from "@/app/actions";
 import { MOVEMENTS } from "@/lib/movements";
 import type { Lift } from "@/lib/lifters";
+import {
+  USERNAME_MAX,
+  USERNAME_MIN,
+  normalizeUsername,
+  validateUsername,
+} from "@/lib/username";
 
 const initial: ActionState = { error: null };
 
@@ -154,13 +161,111 @@ function deltaFor(lift: Lift | undefined) {
   };
 }
 
+type Availability =
+  | { kind: "idle" }
+  | { kind: "checking" }
+  | { kind: "ok"; message: string }
+  | { kind: "bad"; message: string };
+
+/*
+  The username field checks itself as you type: local rules instantly, then
+  the server for "is it taken" after a pause. Nobody should learn their
+  handle is gone from the error after pressing Save.
+*/
+function UsernameField({
+  defaultUsername,
+  current,
+}: {
+  defaultUsername: string;
+  /** The handle already saved, if editing — always reported as yours. */
+  current: string | null;
+}) {
+  const [value, setValue] = useState(defaultUsername);
+  const [status, setStatus] = useState<Availability>({ kind: "idle" });
+  const username = normalizeUsername(value);
+
+  useEffect(() => {
+    if (username === "" || username === current) return;
+    const local = validateUsername(username);
+    // Local failures are shown synchronously below; only a locally valid
+    // handle is worth a round trip.
+    if (local) return;
+    const t = setTimeout(async () => {
+      setStatus({ kind: "checking" });
+      try {
+        const result = await checkUsernameAction(username);
+        setStatus({ kind: result.ok ? "ok" : "bad", message: result.message });
+      } catch {
+        setStatus({ kind: "idle" });
+      }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [username, current]);
+
+  const local = username === "" ? null : validateUsername(username);
+  const shown: Availability =
+    username === current && current !== null
+      ? { kind: "ok", message: `@${current} is yours.` }
+      : local
+        ? { kind: "bad", message: local }
+        : status;
+
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="text-[12px] text-chalk-dim">Username</span>
+      <span className="relative block">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-chalk-faint"
+        >
+          @
+        </span>
+        <input
+          name="username"
+          type="text"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          minLength={USERNAME_MIN}
+          maxLength={USERNAME_MAX}
+          required
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className={`${field} w-full pl-7 text-left`}
+          aria-describedby="username-status"
+        />
+      </span>
+      <span
+        id="username-status"
+        className={`min-h-4 text-[12px] ${
+          shown.kind === "bad"
+            ? "text-[var(--plate-25)]"
+            : shown.kind === "ok"
+              ? "text-[var(--plate-10)]"
+              : "text-chalk-faint"
+        }`}
+      >
+        {shown.kind === "checking"
+          ? "Checking…"
+          : shown.kind === "idle"
+            ? "Your link: gymrank/u/your-handle. Letters, numbers, dots, underscores."
+            : shown.message}
+      </span>
+    </label>
+  );
+}
+
 export function ProfileForm({
   defaultName,
+  defaultUsername,
+  currentUsername = null,
   defaultBodyweight,
   submitLabel,
   college,
 }: {
   defaultName: string;
+  defaultUsername: string;
+  currentUsername?: string | null;
   defaultBodyweight?: number;
   submitLabel: string;
   /** Rendered by the server (a CollegeField); the form just hosts it. */
@@ -184,6 +289,8 @@ export function ProfileForm({
           className={`${field} w-full text-left`}
         />
       </label>
+
+      <UsernameField defaultUsername={defaultUsername} current={currentUsername} />
 
       <label className="flex flex-col gap-1.5">
         <span className="text-[12px] text-chalk-dim">Bodyweight in kg</span>

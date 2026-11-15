@@ -12,6 +12,8 @@ import { TOTAL_MOVEMENTS, type Movement } from "./movements";
 export type Lifter = {
   id: string;
   email: string;
+  /** The handle: unique, lowercase, what /u/… and @mentions key on. */
+  username: string;
   displayName: string;
   bodyweightKg: number;
   /** Null until they pick one; a lifter with no college is on no board. */
@@ -20,7 +22,7 @@ export type Lifter = {
 
 // A constant column list, not user input — the one case sql.unsafe is for.
 const lifterColumns = sql.unsafe(`
-  lf.id, lf.email, lf.display_name, lf.bodyweight_kg,
+  lf.id, lf.email, lf.username, lf.display_name, lf.bodyweight_kg,
   c.id as college_id, c.slug as college_slug, c.name as college_name,
   c.short_name as college_short, c.city as college_city, c.state as college_state
 `);
@@ -29,6 +31,7 @@ function lifterFromRow(row: Record<string, unknown>): Lifter {
   return {
     id: row.id as string,
     email: row.email as string,
+    username: row.username as string,
     displayName: row.display_name as string,
     bodyweightKg: num(row.bodyweight_kg),
     college:
@@ -82,23 +85,69 @@ export async function getLifterByEmail(email: string): Promise<Lifter | null> {
   return rows.length === 0 ? null : lifterFromRow(rows[0]);
 }
 
-export async function upsertProfile(
-  email: string,
-  displayName: string,
-  bodyweightKg: number,
-  collegeId: number,
-): Promise<{ id: string; isNew: boolean }> {
+export async function getLifterByUsername(
+  username: string,
+): Promise<Lifter | null> {
   const rows = await sql`
-    insert into lifters (email, display_name, bodyweight_kg, college_id)
-    values (${email}, ${displayName}, ${bodyweightKg}, ${collegeId})
-    on conflict (email) do update
-      set display_name  = excluded.display_name,
-          bodyweight_kg = excluded.bodyweight_kg,
-          college_id    = excluded.college_id,
-          updated_at    = now()
-    returning id, (xmax = 0) as is_new
+    select ${lifterColumns}
+    from lifters lf
+    left join colleges c on c.id = lf.college_id
+    where lower(lf.username) = ${username.toLowerCase()}
+    limit 1
   `;
-  return { id: rows[0].id as string, isNew: Boolean(rows[0].is_new) };
+  return rows.length === 0 ? null : lifterFromRow(rows[0]);
+}
+
+/** Is this handle used by anyone other than `exceptEmail`'s own account? */
+export async function isUsernameTaken(
+  username: string,
+  exceptEmail: string | null = null,
+): Promise<boolean> {
+  const rows = await sql`
+    select 1 from lifters
+    where lower(username) = ${username.toLowerCase()}
+      and (${exceptEmail}::text is null or email <> ${exceptEmail}::text)
+    limit 1
+  `;
+  return rows.length > 0;
+}
+
+/**
+ * Throws UsernameTakenError when the unique index rejects the handle — the
+ * action checks first, but two people can pass the check at once and only
+ * the index is the truth.
+ */
+export class UsernameTakenError extends Error {}
+
+export async function upsertProfile(params: {
+  email: string;
+  username: string;
+  displayName: string;
+  bodyweightKg: number;
+  collegeId: number;
+}): Promise<{ id: string; isNew: boolean }> {
+  const { email, username, displayName, bodyweightKg, collegeId } = params;
+  try {
+    const rows = await sql`
+      insert into lifters (email, username, display_name, bodyweight_kg, college_id)
+      values (${email}, ${username}, ${displayName}, ${bodyweightKg}, ${collegeId})
+      on conflict (email) do update
+        set username      = excluded.username,
+            display_name  = excluded.display_name,
+            bodyweight_kg = excluded.bodyweight_kg,
+            college_id    = excluded.college_id,
+            updated_at    = now()
+      returning id, (xmax = 0) as is_new
+    `;
+    return { id: rows[0].id as string, isNew: Boolean(rows[0].is_new) };
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    const constraint = (err as { constraint?: string }).constraint ?? "";
+    if (code === "23505" && constraint.includes("username")) {
+      throw new UsernameTakenError();
+    }
+    throw err;
+  }
 }
 
 export async function getLiftById(liftId: string): Promise<{

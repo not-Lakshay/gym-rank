@@ -17,8 +17,10 @@ import {
   type Lifter,
   getLifterByEmail,
   getLiftsFor,
+  isUsernameTaken,
   summarise,
 } from "@/lib/lifters";
+import { suggestUsername, usernameCandidates } from "@/lib/username";
 import {
   getGlobalRankFor,
   getRankFor,
@@ -101,6 +103,11 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
   );
 
   if (!lifter || !lifter.college) {
+    // First free handle derived from the Google name, so the field arrives
+    // filled in and most people never think about it.
+    const suggested =
+      lifter?.username ??
+      (await firstFreeUsername(session?.user?.name ?? "lifter"));
     return (
       <div>
         <Link href="/" className={navButton}>
@@ -119,6 +126,8 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
           <div className="pt-6">
             <ProfileForm
               defaultName={lifter?.displayName ?? session?.user?.name ?? ""}
+              defaultUsername={suggested}
+              currentUsername={lifter?.username ?? null}
               defaultBodyweight={lifter?.bodyweightKg}
               submitLabel="Continue"
               college={collegeField}
@@ -156,6 +165,14 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
       collegeField={collegeField}
     />
   );
+}
+
+async function firstFreeUsername(displayName: string): Promise<string> {
+  const candidates = usernameCandidates(suggestUsername(displayName), 20);
+  for (const candidate of candidates) {
+    if (!(await isUsernameTaken(candidate))) return candidate;
+  }
+  return candidates[0];
 }
 
 function LifterView({
@@ -307,13 +324,16 @@ function LifterView({
 
         <p className="mt-4 text-[14px] font-bold">
           {lifter.displayName}
-          <span className="font-normal text-chalk-dim"> · {weightClass}</span>
+          <span className="font-normal text-chalk-dim">
+            {" "}
+            · @{lifter.username} · {weightClass}
+          </span>
         </p>
 
         {card && (
           <div className="pt-6">
             <ShareButton
-              url={`${siteUrl}/lifter/${lifter.id}`}
+              url={`${siteUrl}/u/${lifter.username}`}
               text={`#${card.overallRank} of ${card.totalLifters} at ${college.shortName} — ${card.dots.toFixed(1)} DOTS.`}
             />
             <p className="mt-2 text-[12px] leading-relaxed text-chalk-faint">
@@ -382,23 +402,25 @@ function LifterView({
           watched your set can vouch for it from your page — send them this
           link, or have them open it on your phone right after the set.
         </p>
-        <Link
-          href={`/lifter/${lifter.id}`}
-          className={`${navButton} mt-3 w-fit`}
-        >
+        <Link href={`/u/${lifter.username}`} className={`${navButton} mt-3 w-fit`}>
           Your public page
           <ChevronRight />
         </Link>
+        <p className="tnum mt-2 text-[12px] text-chalk-faint">
+          {siteUrl.replace(/^https?:\/\//, "")}/u/{lifter.username}
+        </p>
       </section>
 
       <details className="rise pt-8" style={{ "--i": 4 } as React.CSSProperties}>
         <summary className="press flex min-h-11 cursor-pointer list-none items-center justify-between rounded-sm border border-rule px-4 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk">
-          Edit name, bodyweight or college
+          Edit profile
           <span aria-hidden className="text-chalk-faint">+</span>
         </summary>
         <div className="pt-5">
           <ProfileForm
             defaultName={lifter.displayName}
+            defaultUsername={lifter.username}
+            currentUsername={lifter.username}
             defaultBodyweight={lifter.bodyweightKg}
             submitLabel="Save profile"
             college={collegeField}
@@ -413,12 +435,13 @@ function LifterView({
 }
 
 function NoticeText({ notice }: { notice: Notification }) {
-  const who = notice.actorId ? (
+  const who = notice.actorUsername ? (
     <Link
-      href={`/lifter/${notice.actorId}`}
+      href={`/u/${notice.actorUsername}`}
       className="font-bold text-chalk underline-offset-4 hover:underline"
     >
       {notice.actorName ?? "Someone"}
+      <span className="font-normal text-chalk-dim"> @{notice.actorUsername}</span>
     </Link>
   ) : (
     <span className="font-bold text-chalk">Someone</span>

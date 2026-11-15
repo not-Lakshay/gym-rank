@@ -6,6 +6,7 @@ export type Notification = {
   id: number;
   kind: "cosign" | "passed";
   actorName: string | null;
+  actorUsername: string | null;
   actorId: string | null;
   movement: Movement | null;
   createdAt: Date;
@@ -27,7 +28,7 @@ export async function getNotificationsFor(
 ): Promise<Notification[]> {
   const rows = await sql`
     select n.id, n.kind, n.actor_id, n.movement, n.created_at, n.seen_at,
-           a.display_name as actor_name
+           a.display_name as actor_name, a.username as actor_username
     from notifications n
     left join lifters a on a.id = n.actor_id
     where n.lifter_id = ${lifterId}
@@ -39,6 +40,7 @@ export async function getNotificationsFor(
     id: Number(row.id),
     kind: row.kind as Notification["kind"],
     actorName: (row.actor_name as string | null) ?? null,
+    actorUsername: (row.actor_username as string | null) ?? null,
     actorId: (row.actor_id as string | null) ?? null,
     movement: (row.movement as Movement | null) ?? null,
     createdAt: new Date(row.created_at as string),

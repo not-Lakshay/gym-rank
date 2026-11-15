@@ -2,6 +2,7 @@ import { sql } from "./db";
 
 export type BoardRow = {
   id: string;
+  username: string;
   displayName: string;
   weightClass: string;
   totalKg: number;
@@ -41,6 +42,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
     with sbd as (
       select
         lf.id,
+        lf.username,
         lf.display_name,
         lf.bodyweight_kg,
         c.slug       as college_slug,
@@ -52,7 +54,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
       join lifts l on l.lifter_id = lf.id
       where l.movement in ('squat', 'bench', 'deadlift')
         and (${collegeId}::int is null or lf.college_id = ${collegeId}::int)
-      group by lf.id, lf.display_name, lf.bodyweight_kg, c.slug, c.short_name
+      group by lf.id, lf.username, lf.display_name, lf.bodyweight_kg, c.slug, c.short_name
       having count(*) = 3
         and (
           not ${verifiedOnly}::boolean
@@ -62,6 +64,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
     scored as (
       select
         id,
+        username,
         display_name,
         college_slug,
         college_short,
@@ -90,6 +93,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
     )
     select
       id,
+      username,
       display_name,
       college_slug,
       college_short,
@@ -105,6 +109,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
 
   return rows.map((row) => ({
     id: row.id as string,
+    username: row.username as string,
     displayName: row.display_name as string,
     weightClass: row.weight_class as string,
     totalKg: Number(row.total_kg),
@@ -118,6 +123,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
 }
 
 export type RankCard = {
+  username: string;
   displayName: string;
   weightClass: string;
   dots: number;
@@ -170,6 +176,7 @@ function cardFrom(board: BoardRow[], lifterId: string): RankCard | null {
   if (!row) return null;
 
   return {
+    username: row.username,
     displayName: row.displayName,
     weightClass: row.weightClass,
     dots: row.dots,

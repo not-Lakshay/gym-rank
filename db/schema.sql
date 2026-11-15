@@ -33,6 +33,13 @@ create table if not exists lifters (
 alter table lifters add column if not exists college_id int references colleges(id);
 create index if not exists lifters_college_idx on lifters (college_id);
 
+-- The handle: what URLs and @mentions key on. Display names stay free-form
+-- and can repeat; this cannot. Stored lowercase, unique case-insensitively
+-- anyway so a race between two casings can't produce a pair. Nullable at
+-- creation only so the migrate script can backfill before it's required.
+alter table lifters add column if not exists username text;
+create unique index if not exists lifters_username_idx on lifters (lower(username));
+
 create table if not exists lifts (
   id            uuid primary key default gen_random_uuid(),
   lifter_id     uuid not null references lifters(id) on delete cascade,

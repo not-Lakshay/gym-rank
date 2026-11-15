@@ -7,14 +7,17 @@ import { getRankFor } from "@/lib/leaderboard";
 import {
   MOVEMENTS,
   type Movement,
+  UsernameTakenError,
   cosignLift,
   getLifterByEmail,
   getLiftById,
+  isUsernameTaken,
   recordEvent,
   saveLift,
   upsertProfile,
 } from "@/lib/lifters";
 import { notifyCosigned, notifyPassed } from "@/lib/notifications";
+import { normalizeUsername, validateUsername } from "@/lib/username";
 import { validateBodyweight, validateLift } from "@/lib/validate";
 
 /**
@@ -59,6 +62,25 @@ async function quietly(work: () => Promise<void>): Promise<void> {
   }
 }
 
+/**
+ * Live availability for the username field. Returns the message to show,
+ * or null when the handle is valid and free. Your own current handle counts
+ * as free, so editing your profile without changing it never complains.
+ */
+export async function checkUsernameAction(
+  raw: string,
+): Promise<{ ok: boolean; message: string }> {
+  const username = normalizeUsername(raw);
+  const error = validateUsername(username);
+  if (error) return { ok: false, message: error };
+
+  const email = await requireEmail();
+  if (await isUsernameTaken(username, email)) {
+    return { ok: false, message: `@${username} is taken.` };
+  }
+  return { ok: true, message: `@${username} is yours.` };
+}
+
 export async function saveProfileAction(
   _prev: ActionState,
   formData: FormData,
@@ -67,10 +89,16 @@ export async function saveProfileAction(
   if (!email) return fail("You are signed out. Sign in again.");
 
   const displayName = String(formData.get("displayName") ?? "").trim();
+  const username = normalizeUsername(String(formData.get("username") ?? ""));
   const bodyweightKg = Number(formData.get("bodyweightKg"));
 
   if (displayName.length < 2 || displayName.length > 40) {
     return fail("Display name must be between 2 and 40 characters.");
+  }
+  const usernameError = validateUsername(username);
+  if (usernameError) return fail(`Username: ${usernameError}`);
+  if (await isUsernameTaken(username, email)) {
+    return fail(`@${username} is taken.`);
   }
   const bodyweightError = validateBodyweight(bodyweightKg);
   if (bodyweightError) return fail(bodyweightError);
@@ -87,12 +115,20 @@ export async function saveProfileAction(
   const existing = await getLifterByEmail(email);
   const before = existing ? (await getRankFor(existing.id))?.dots ?? null : null;
 
-  const { id, isNew } = await upsertProfile(
-    email,
-    displayName,
-    bodyweightKg,
-    college.id,
-  );
+  let saved: { id: string; isNew: boolean };
+  try {
+    saved = await upsertProfile({
+      email,
+      username,
+      displayName,
+      bodyweightKg,
+      collegeId: college.id,
+    });
+  } catch (err) {
+    if (err instanceof UsernameTakenError) return fail(`@${username} is taken.`);
+    throw err;
+  }
+  const { id, isNew } = saved;
   await recordEvent(isNew ? "profile_created" : "profile_updated", id);
 
   if (!isNew && existing?.college?.id === college.id) {
