@@ -72,9 +72,9 @@ export default function PrivacyPage() {
           and your account and all your lifts will be deleted.
         </p>
         <p className={muted}>
-          This is a time-limited project. When it ends, the personal data is
-          deleted and only anonymous totals — how many people signed up, how
-          many lifts were entered — are kept.
+          If the project is ever shut down, the personal data is deleted and
+          only anonymous totals — how many people signed up, how many lifts
+          were entered — are kept.
         </p>
       </Section>
 
