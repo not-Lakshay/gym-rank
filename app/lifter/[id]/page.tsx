@@ -44,7 +44,7 @@ export async function generateMetadata({
   }
 
   const title = `${card.displayName} · ${card.dots.toFixed(1)} DOTS`;
-  const description = `#${card.overallRank} of ${card.totalLifters} at the LNMIIT gym · ${card.totalKg.toFixed(0)} kg total, ${card.weightClass}.`;
+  const description = `#${card.overallRank} of ${card.totalLifters} at ${card.collegeShort} · ${card.totalKg.toFixed(0)} kg total, ${card.weightClass}.`;
 
   return {
     title,
@@ -78,10 +78,6 @@ export default function LifterPage({
 }) {
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
-      <Link href="/" className={navButton}>
-        <ChevronLeft />
-        Leaderboard
-      </Link>
       <Suspense
         fallback={<p className="pt-8 text-sm text-chalk-faint">Loading</p>}
       >
@@ -106,14 +102,23 @@ async function Profile({ params }: { params: Promise<{ id: string }> }) {
     : null;
 
   const isOwner = viewer?.id === lifter.id;
-  const canCosign = viewer !== null && !isOwner;
+  // A co-sign is "I was in the room", so it has to come from the same gym.
+  const sameCollege =
+    viewer?.college != null && viewer.college.id === lifter.college?.id;
+  const canCosign = viewer !== null && !isOwner && sameCollege;
 
   const summary = summarise(lifts, lifter.bodyweightKg);
   const byMovement = new Map(lifts.map((l) => [l.movement, l]));
   const weightClass = weightClassFor(lifter.bodyweightKg);
+  const boardHref = lifter.college ? `/c/${lifter.college.slug}` : "/";
 
   return (
-    <div className="pt-8">
+    <div>
+      <Link href={boardHref} className={navButton}>
+        <ChevronLeft />
+        {lifter.college ? `${lifter.college.shortName} board` : "All colleges"}
+      </Link>
+      <div className="pt-8">
       {isOwner && (
         <Link
           href="/me"
@@ -144,6 +149,7 @@ async function Profile({ params }: { params: Promise<{ id: string }> }) {
           {lifter.displayName}
         </h1>
         <p className="mt-2 text-[13px] text-chalk-dim">
+          {lifter.college && <span>{lifter.college.shortName} · </span>}
           {weightClass}
           {summary.totalKg !== null && (
             <span className="tnum"> · {summary.totalKg.toFixed(0)} kg total</span>
@@ -243,6 +249,15 @@ async function Profile({ params }: { params: Promise<{ id: string }> }) {
         </section>
       )}
 
+      {viewer && !isOwner && !sameCollege && lifts.length > 0 && (
+        <section className="rise pt-8" style={{ "--i": 2 } as React.CSSProperties}>
+          <p className="text-[13px] leading-relaxed text-chalk-faint">
+            Co-signs come from lifters at the same college — someone who
+            could have been in the room.
+          </p>
+        </section>
+      )}
+
       {isOwner && (
         <section className="rise pt-8" style={{ "--i": 2 } as React.CSSProperties}>
           <p className="text-[13px] leading-relaxed text-chalk-faint">
@@ -255,6 +270,7 @@ async function Profile({ params }: { params: Promise<{ id: string }> }) {
           </Link>
         </section>
       )}
+      </div>
     </div>
   );
 }

@@ -49,6 +49,42 @@ for (const [i, statement] of statements.entries()) {
   }
 }
 
+/*
+  Colleges are data, not schema, but they ship with the code: the list is
+  the product's idea of "which colleges exist", and a board for a college
+  nobody can select is unreachable. Upserting on slug means editing a name
+  or adding a domain in the JSON and re-running this is the whole process.
+*/
+const colleges = JSON.parse(
+  readFileSync(new URL("../db/colleges.json", import.meta.url), "utf8"),
+);
+for (const c of colleges) {
+  await sql`
+    insert into colleges (slug, name, short_name, city, state, domains)
+    values (${c.slug}, ${c.name}, ${c.short}, ${c.city}, ${c.state}, ${c.domains})
+    on conflict (slug) do update
+      set name       = excluded.name,
+          short_name = excluded.short_name,
+          city       = excluded.city,
+          state      = excluded.state,
+          domains    = excluded.domains
+  `;
+}
+console.log(`\nSeeded ${colleges.length} colleges.`);
+
+// Every lifter who signed up before colleges existed was at the LNMIIT gym,
+// where the project started. A null college after this point means a new
+// sign-up who hasn't picked one yet.
+const moved = await sql`
+  update lifters
+  set college_id = (select id from colleges where slug = 'lnmiit')
+  where college_id is null
+  returning id
+`;
+if (moved.length > 0) {
+  console.log(`Moved ${moved.length} lifter(s) without a college onto LNMIIT.`);
+}
+
 const tables = await sql`
   select table_name from information_schema.tables
   where table_schema = 'public' order by table_name

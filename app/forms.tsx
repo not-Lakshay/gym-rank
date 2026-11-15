@@ -158,15 +158,20 @@ export function ProfileForm({
   defaultName,
   defaultBodyweight,
   submitLabel,
+  college,
 }: {
   defaultName: string;
   defaultBodyweight?: number;
   submitLabel: string;
+  /** Rendered by the server (a CollegeField); the form just hosts it. */
+  college: React.ReactNode;
 }) {
   const [state, action, pending] = useActionState(saveProfileAction, initial);
 
   return (
     <form action={action} className="flex flex-col gap-4">
+      {college}
+
       <label className="flex flex-col gap-1.5">
         <span className="text-[12px] text-chalk-dim">Display name</span>
         <input

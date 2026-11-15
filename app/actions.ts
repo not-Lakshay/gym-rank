@@ -2,6 +2,8 @@
 
 import { refresh } from "next/cache";
 import { auth, signIn, signOut } from "@/auth";
+import { collegeForEmail, getCollegeBySlug } from "@/lib/colleges";
+import { getRankFor } from "@/lib/leaderboard";
 import {
   MOVEMENTS,
   type Movement,
@@ -12,6 +14,7 @@ import {
   saveLift,
   upsertProfile,
 } from "@/lib/lifters";
+import { notifyCosigned, notifyPassed } from "@/lib/notifications";
 import { validateBodyweight, validateLift } from "@/lib/validate";
 
 /**
@@ -43,6 +46,19 @@ async function requireEmail(): Promise<string | null> {
   return session?.user?.email ?? null;
 }
 
+/**
+ * Notifications are a side effect of a save, never a reason for one to
+ * fail. A Neon hiccup while working out who got passed must not turn a
+ * saved lift into an error message.
+ */
+async function quietly(work: () => Promise<void>): Promise<void> {
+  try {
+    await work();
+  } catch (err) {
+    console.error("notification failed", err);
+  }
+}
+
 export async function saveProfileAction(
   _prev: ActionState,
   formData: FormData,
@@ -59,8 +75,31 @@ export async function saveProfileAction(
   const bodyweightError = validateBodyweight(bodyweightKg);
   if (bodyweightError) return fail(bodyweightError);
 
-  const { id, isNew } = await upsertProfile(email, displayName, bodyweightKg);
+  // An institute email decides the college; the form's value is ignored.
+  // That is the only check the app has that someone is where they say.
+  const detected = await collegeForEmail(email);
+  const college =
+    detected ??
+    (await getCollegeBySlug(String(formData.get("collegeSlug") ?? "")));
+  if (!college) return fail("Pick your college.");
+
+  // Bodyweight moves the score, so a profile edit can pass people too.
+  const existing = await getLifterByEmail(email);
+  const before = existing ? (await getRankFor(existing.id))?.dots ?? null : null;
+
+  const { id, isNew } = await upsertProfile(
+    email,
+    displayName,
+    bodyweightKg,
+    college.id,
+  );
   await recordEvent(isNew ? "profile_created" : "profile_updated", id);
+
+  if (!isNew && existing?.college?.id === college.id) {
+    await quietly(() =>
+      notifyPassed({ lifterId: id, collegeId: college.id, dotsBefore: before }),
+    );
+  }
 
   refresh();
   return ok();
@@ -75,6 +114,7 @@ export async function saveLiftAction(
 
   const lifter = await getLifterByEmail(email);
   if (!lifter) return fail("Set up your profile first.");
+  if (!lifter.college) return fail("Pick your college first.");
 
   const movementId = String(formData.get("movement") ?? "");
   const movement = MOVEMENTS.find((m) => m.id === movementId);
@@ -93,6 +133,8 @@ export async function saveLiftAction(
   });
   if (liftError) return fail(liftError);
 
+  const before = (await getRankFor(lifter.id))?.dots ?? null;
+
   await saveLift({
     lifterId: lifter.id,
     movement: movement.id as Movement,
@@ -102,13 +144,19 @@ export async function saveLiftAction(
   });
   await recordEvent(`lift_saved:${movement.id}`, lifter.id);
 
+  const collegeId = lifter.college.id;
+  await quietly(() =>
+    notifyPassed({ lifterId: lifter.id, collegeId, dotsBefore: before }),
+  );
+
   refresh();
   return ok();
 }
 
 /**
  * Co-sign someone else's lift. The server re-checks that the witness is a
- * different lifter; hiding the button on your own page is not security.
+ * different lifter at the same college; hiding the button on your own page
+ * is not security.
  */
 export async function cosignLiftAction(
   _prev: ActionState,
@@ -126,11 +174,23 @@ export async function cosignLiftAction(
   if (lift.lifterId === witness.id) {
     return fail("You can't co-sign your own lift.");
   }
+  // A co-sign means "I was in the room". Across colleges it means nothing.
+  if (!witness.college || lift.collegeId !== witness.college.id) {
+    return fail("Co-signs come from lifters at the same college.");
+  }
 
   const done = await cosignLift(liftId, witness.id);
   if (!done) return fail("Couldn't co-sign that lift.");
 
   await recordEvent("lift_cosigned", witness.id);
+  await quietly(() =>
+    notifyCosigned({
+      lifterId: lift.lifterId,
+      witnessId: witness.id,
+      movement: lift.movement,
+    }),
+  );
+
   refresh();
   return ok();
 }

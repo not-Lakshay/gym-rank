@@ -1,4 +1,5 @@
 import { sql } from "./db";
+import type { College } from "./colleges";
 import { dotsScore, estimatedOneRepMax } from "./scoring";
 
 export {
@@ -13,7 +14,36 @@ export type Lifter = {
   email: string;
   displayName: string;
   bodyweightKg: number;
+  /** Null until they pick one; a lifter with no college is on no board. */
+  college: College | null;
 };
+
+// A constant column list, not user input — the one case sql.unsafe is for.
+const lifterColumns = sql.unsafe(`
+  lf.id, lf.email, lf.display_name, lf.bodyweight_kg,
+  c.id as college_id, c.slug as college_slug, c.name as college_name,
+  c.short_name as college_short, c.city as college_city, c.state as college_state
+`);
+
+function lifterFromRow(row: Record<string, unknown>): Lifter {
+  return {
+    id: row.id as string,
+    email: row.email as string,
+    displayName: row.display_name as string,
+    bodyweightKg: num(row.bodyweight_kg),
+    college:
+      row.college_id === null
+        ? null
+        : {
+            id: Number(row.college_id),
+            slug: row.college_slug as string,
+            name: row.college_name as string,
+            shortName: row.college_short as string,
+            city: row.college_city as string,
+            state: row.college_state as string,
+          },
+  };
+}
 
 export type Lift = {
   id: string;
@@ -43,63 +73,65 @@ function num(value: unknown): number {
 
 export async function getLifterByEmail(email: string): Promise<Lifter | null> {
   const rows = await sql`
-    select id, email, display_name, bodyweight_kg
-    from lifters
-    where email = ${email}
+    select ${lifterColumns}
+    from lifters lf
+    left join colleges c on c.id = lf.college_id
+    where lf.email = ${email}
     limit 1
   `;
-  if (rows.length === 0) return null;
-  const row = rows[0];
-  return {
-    id: row.id as string,
-    email: row.email as string,
-    displayName: row.display_name as string,
-    bodyweightKg: num(row.bodyweight_kg),
-  };
+  return rows.length === 0 ? null : lifterFromRow(rows[0]);
 }
 
 export async function upsertProfile(
   email: string,
   displayName: string,
   bodyweightKg: number,
+  collegeId: number,
 ): Promise<{ id: string; isNew: boolean }> {
   const rows = await sql`
-    insert into lifters (email, display_name, bodyweight_kg)
-    values (${email}, ${displayName}, ${bodyweightKg})
+    insert into lifters (email, display_name, bodyweight_kg, college_id)
+    values (${email}, ${displayName}, ${bodyweightKg}, ${collegeId})
     on conflict (email) do update
       set display_name  = excluded.display_name,
           bodyweight_kg = excluded.bodyweight_kg,
+          college_id    = excluded.college_id,
           updated_at    = now()
     returning id, (xmax = 0) as is_new
   `;
   return { id: rows[0].id as string, isNew: Boolean(rows[0].is_new) };
 }
 
-export async function getLiftById(
-  liftId: string,
-): Promise<{ id: string; lifterId: string } | null> {
+export async function getLiftById(liftId: string): Promise<{
+  id: string;
+  lifterId: string;
+  movement: Movement;
+  collegeId: number | null;
+} | null> {
   const rows = await sql`
-    select id, lifter_id from lifts where id = ${liftId} limit 1
+    select l.id, l.lifter_id, l.movement, lf.college_id
+    from lifts l
+    join lifters lf on lf.id = l.lifter_id
+    where l.id = ${liftId}
+    limit 1
   `;
   if (rows.length === 0) return null;
-  return { id: rows[0].id as string, lifterId: rows[0].lifter_id as string };
+  return {
+    id: rows[0].id as string,
+    lifterId: rows[0].lifter_id as string,
+    movement: rows[0].movement as Movement,
+    collegeId: rows[0].college_id === null ? null : Number(rows[0].college_id),
+  };
 }
 
 export async function getLifterById(id: string): Promise<Lifter | null> {
   const rows = await sql`
-    select id, email, display_name, bodyweight_kg
-    from lifters
-    where id = ${id}
+    select ${lifterColumns}
+    from lifters lf
+    left join colleges c on c.id = lf.college_id
+    where lf.id = ${id}
     limit 1
   `;
-  if (rows.length === 0) return null;
-  const row = rows[0];
-  return {
-    id: row.id as string,
-    email: row.email as string,
-    displayName: row.display_name as string,
-    bodyweightKg: num(row.bodyweight_kg),
-  };
+  return rows.length === 0 ? null : lifterFromRow(rows[0]);
 }
 
 export async function getLiftsFor(lifterId: string): Promise<Lift[]> {

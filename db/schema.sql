@@ -1,5 +1,23 @@
 -- Gym Rank schema.
 -- Run with:  node --env-file=.env.local scripts/migrate.mjs
+--
+-- The migrate script also seeds `colleges` from db/colleges.json and moves
+-- any lifter without a college onto the original one (LNMIIT).
+
+-- One row per college. A board is scoped to a college; the global board is
+-- the union. `domains` are the email domains the college issues, so a
+-- sign-in from an institute address lands on the right board without a
+-- picker, and is light proof the person belongs there.
+create table if not exists colleges (
+  id          serial primary key,
+  slug        text not null unique,
+  name        text not null,
+  short_name  text not null,
+  city        text not null,
+  state       text not null,
+  domains     text[] not null default '{}',
+  created_at  timestamptz not null default now()
+);
 
 create table if not exists lifters (
   id            uuid primary key default gen_random_uuid(),
@@ -9,6 +27,11 @@ create table if not exists lifters (
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
+
+-- Nullable only so the column can be added to an existing table; the app
+-- treats a null as "hasn't picked a college yet" and asks.
+alter table lifters add column if not exists college_id int references colleges(id);
+create index if not exists lifters_college_idx on lifters (college_id);
 
 create table if not exists lifts (
   id            uuid primary key default gen_random_uuid(),
@@ -71,3 +94,27 @@ create table if not exists events (
 );
 
 create index if not exists events_name_created_idx on events (name, created_at);
+
+-- Things that happened to a lifter while they were away: someone co-signed
+-- a set, someone passed them on the board. Shown on /me, marked seen once
+-- rendered. `actor_id` is who did it; `movement` is set for co-signs only.
+create table if not exists notifications (
+  id         bigserial primary key,
+  lifter_id  uuid not null references lifters(id) on delete cascade,
+  actor_id   uuid references lifters(id) on delete cascade,
+  kind       text not null check (kind in ('cosign', 'passed')),
+  movement   text,
+  created_at timestamptz not null default now(),
+  seen_at    timestamptz
+);
+
+create index if not exists notifications_lifter_created_idx
+  on notifications (lifter_id, created_at desc);
+
+-- Someone re-saving a lift five times in a minute passes the same person
+-- five times. One notice per actor, per kind, per movement, per day.
+create unique index if not exists notifications_daily_dedupe_idx
+  on notifications (
+    lifter_id, actor_id, kind, coalesce(movement, ''),
+    ((created_at at time zone 'utc')::date)
+  );

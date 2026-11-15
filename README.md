@@ -1,15 +1,19 @@
 # Gym Rank
 
-A bodyweight-adjusted lifting leaderboard for the LNMIIT Jaipur campus gym.
+Bodyweight-adjusted lifting leaderboards for college gyms in India — one
+board per college, and a global board for lifters whose numbers have a
+witness.
 
 **Live:** https://lnmgymrank.vercel.app
 
-Lifters enter a working set for each of five movements. The app estimates a
-one-rep max, adjusts the squat/bench/deadlift total for bodyweight using
-DOTS, and ranks everyone — overall and within weight classes — so a 60kg
-lifter and a 90kg lifter can be compared fairly.
+Lifters pick their college (or it's read from their institute email), enter
+a working set for each of five movements, and the app estimates a one-rep
+max, adjusts the squat/bench/deadlift total for bodyweight using DOTS, and
+ranks everyone — overall and within weight classes — so a 60kg lifter and a
+90kg lifter can be compared fairly.
 
-Built as a student project. Not affiliated with or endorsed by LNMIIT.
+It started as the board for one gym (LNMIIT Jaipur). Built as a student
+project; not affiliated with or endorsed by any college.
 
 ---
 
@@ -115,6 +119,38 @@ lifts are co-signed.
 Whether people actually bother to co-sign is an open question; the
 `lift_cosigned` event will answer it.
 
+### One board per college, and a global one that costs something
+
+A board only works when the people on it know each other: a campus board
+polices itself because everyone knows who actually squats 200. So the unit
+is the college. `lifters.college_id` scopes every query, co-signing is
+restricted to lifters at the same college (a co-sign means "I was in the
+room"), and a college's board lives at `/c/<slug>`.
+
+The college comes from the sign-in email when it can — `@iitd.ac.in` is IIT
+Delhi, matched on domain suffix so `student.iitd.ac.in` works too — and the
+profile form locks it when it does. That's the only verification the app
+has that someone is where they say. Gmail sign-ins pick from the list in
+`db/colleges.json`, which is seeded on migrate; adding a college is a line
+of JSON.
+
+The global board (`/global`) is every college together, but it admits only
+lifters whose three lifts are all co-signed. A global board of strangers'
+self-reported numbers becomes a liars' board within a week; this one is
+the reward for getting co-signed, and the one board where every number has
+a witness.
+
+### Notifications are rows, not emails
+
+`/me` shows what happened while you were away: who co-signed a set, who
+passed your score. "Passed" isn't stored anywhere as a rank — the board
+computes ranks on every read — so it's detected at save time by comparing
+DOTS before and after: anyone on the same board whose score sits in
+`(before, after]` was just passed. A unique index on (recipient, actor,
+kind, movement, day) means re-saving a lift five times doesn't notify the
+same person five times. Email is a delivery mechanism and can come later;
+the fact being delivered lives here.
+
 ### Try it before you sign in
 
 Handing over a Google account before you know whether the number is worth
@@ -154,24 +190,33 @@ otherwise have surfaced with people waiting to sign up.
 
 ```
 app/
-  page.tsx                  public leaderboard + try-it calculator
+  page.tsx                  landing: college search + global preview
+  c/[slug]/page.tsx         one college's board + try-it calculator
+  global/page.tsx           every college, co-signed lifters only
+  board.tsx                 the board component, stats strip, shared chrome
+  college-picker.tsx        college search (landing links / profile field)
   calculator.tsx            client-side DOTS + projected rank, nothing saved
-  me/page.tsx               profile and lift entry
+  me/page.tsx               profile, lift entry, notifications
   lifter/[id]/page.tsx      a lifter's public page; co-signing happens here
   forms.tsx                 client forms (useActionState for inline errors)
-  actions.ts                server actions, validation, plausibility caps
+  actions.ts                server actions, validation, notifications
+  api/og/route.tsx          the share card, as a PNG
   api/auth/[...nextauth]/   Auth.js route handler
-  privacy, terms
+  privacy, terms, scoring
 lib/
   scoring.ts                Epley 1RM, DOTS, weight classes
   scoring.test.ts           tested against published DOTS results
-  leaderboard.ts            ranking query (window functions)
+  leaderboard.ts            ranking query (window functions), college/global scope
+  colleges.ts               college lookup, email-domain detection
+  notifications.ts          co-sign and passed-you rows
   lifters.ts                data access
   movements.ts              the five movements (no db import; shared with client)
   db.ts                     Neon client
-db/schema.sql               lifters, lifts, lift_history, events
+db/
+  schema.sql                colleges, lifters, lifts, lift_history, events, notifications
+  colleges.json             the seed list: slug, names, city, email domains
 scripts/
-  migrate.mjs
+  migrate.mjs               applies schema.sql, seeds colleges
   check-scoring-parity.mjs  asserts SQL and TypeScript agree
 ```
 
@@ -220,6 +265,14 @@ node --env-file=.env.local scripts/migrate.mjs
 node lib/scoring.test.ts
 npm run dev
 ```
+
+---
+
+## Adding a college
+
+Add an entry to `db/colleges.json` — slug, full name, short name, city,
+state, and the email domains the college issues — and re-run the migrate
+script. It upserts on slug, so renames and extra domains go the same way.
 
 ---
 

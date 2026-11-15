@@ -39,7 +39,7 @@ export function estimatedOneRepMax(weightKg: number, reps: number): number {
 
 // Published IPF DOTS coefficients (2019), P(x) = a + bx + cx^2 + dx^3 + ex^4.
 // Verified against published worked examples — see scoring.test.mjs.
-// The LNMIIT gym is male-only so nothing calls this with "female" today,
+// Nothing calls this with "female" today — the first gym was male-only —
 // but the coefficients stay so the maths is correct if that ever changes.
 const DOTS_COEFFICIENTS: Record<Sex, [number, number, number, number, number]> = {
   male: [-307.75076, 24.0900756, -0.1918759221, 0.0007391293, -0.000001093],

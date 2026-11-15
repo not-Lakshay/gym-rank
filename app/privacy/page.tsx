@@ -10,7 +10,7 @@ export default function PrivacyPage() {
     <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-6 px-5 pb-16 pt-10">
       <Link href="/" className={navButton}>
         <ChevronLeft />
-        Leaderboard
+        Gym Rank
       </Link>
 
       <h1 className="pt-2 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
@@ -18,18 +18,26 @@ export default function PrivacyPage() {
       </h1>
 
       <p className={muted}>
-        Gym Rank is a student project built at LNMIIT Jaipur. It is not run
-        by, affiliated with, or endorsed by LNMIIT or its gym.
+        Gym Rank is an independent student project. It is not run by,
+        affiliated with, or endorsed by any college or college gym.
       </p>
 
       <Section title="What is stored">
         <ul className={list}>
           <li>Your email address and name, from Google sign-in</li>
           <li>The display name you choose</li>
+          <li>
+            Your college — read from your email domain if it is an institute
+            address, otherwise the one you pick
+          </li>
           <li>Your bodyweight in kilograms</li>
           <li>
             The lifts you enter — the weight, the reps, and your bodyweight at
             the time you entered them
+          </li>
+          <li>
+            Things that happened to you on the board — who co-signed a lift,
+            who passed your score — so your own page can show them
           </li>
           <li>
             Basic usage events, such as when an account is created or a lift is
@@ -40,7 +48,8 @@ export default function PrivacyPage() {
 
       <Section title="What other people can see">
         <p className={muted}>
-          Your display name, your weight class, your lifts and your score.
+          Your display name, your college, your weight class, your lifts and
+          your score.
         </p>
         <p className={muted}>
           <strong className="font-medium text-chalk">
@@ -50,8 +59,10 @@ export default function PrivacyPage() {
           class band it falls into is displayed.
         </p>
         <p className={muted}>
-          The leaderboard is public — anyone with the link can read it without
+          Every board is public — anyone with the link can read it without
           signing in. Choose a display name you are comfortable with that.
+          Your college board shows everyone at your college; the global board
+          shows only lifters whose three lifts are all co-signed.
         </p>
       </Section>
 
@@ -86,7 +97,7 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
-      <p className="text-xs text-chalk-faint">Last updated 14 November 2026.</p>
+      <p className="text-xs text-chalk-faint">Last updated 15 November 2026.</p>
     </main>
   );
 }

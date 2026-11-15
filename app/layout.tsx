@@ -21,13 +21,15 @@ export const metadata: Metadata = {
   // comment rather than a one-liner.
   metadataBase: new URL(siteUrl),
   title: "Gym Rank",
-  description: "Bodyweight-adjusted lifting leaderboard for the LNMIIT gym.",
+  description:
+    "Bodyweight-adjusted lifting leaderboards for college gyms across India.",
   // Every page inherits a preview card, so the bare domain pasted into a
   // group chat still unfurls as something. With no id, /api/og renders its
   // generic face; a lifter page overrides this with their own numbers.
   openGraph: {
     title: "Gym Rank",
-    description: "Bodyweight-adjusted lifting leaderboard for the LNMIIT gym.",
+    description:
+      "Bodyweight-adjusted lifting leaderboards for college gyms across India.",
     images: [{ url: "/api/og", width: 1200, height: 630 }],
   },
   twitter: { card: "summary_large_image", images: ["/api/og"] },

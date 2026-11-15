@@ -75,7 +75,7 @@ export async function GET(request: Request) {
           }}
         >
           <div style={{ display: "flex", fontSize: 30, color: CHALK_DIM }}>
-            LNMIIT gym · bodyweight-adjusted
+            {card ? `${card.collegeShort} gym` : "College gyms"} · bodyweight-adjusted
           </div>
 
           {card ? (

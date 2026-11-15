@@ -9,7 +9,18 @@ export type BoardRow = {
   verifiedCount: number;
   overallRank: number;
   classRank: number;
+  collegeSlug: string;
+  collegeShort: string;
 };
+
+/**
+ * Which board. A college board is everyone at that college with a full
+ * total. The global board is every college together, but only lifters whose
+ * three lifts are all co-signed: a campus board polices itself because
+ * everyone knows who actually squats 200, and a board of strangers'
+ * self-reported numbers does not. Co-signing is the price of entry.
+ */
+export type BoardScope = { collegeId: number } | { global: true };
 
 /**
  * The DOTS polynomial, as a SQL fragment.
@@ -22,25 +33,38 @@ export type BoardRow = {
  * bw is cast to double precision so the arithmetic matches JavaScript's
  * floats exactly rather than Postgres's arbitrary-precision numerics.
  */
-export async function getLeaderboard(): Promise<BoardRow[]> {
+export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
+  const collegeId = "collegeId" in scope ? scope.collegeId : null;
+  const verifiedOnly = "global" in scope;
+
   const rows = await sql`
     with sbd as (
       select
         lf.id,
         lf.display_name,
         lf.bodyweight_kg,
+        c.slug       as college_slug,
+        c.short_name as college_short,
         sum(l.est_1rm_kg) as total_kg,
         count(*) filter (where l.verified_by is not null) as verified_count
       from lifters lf
+      join colleges c on c.id = lf.college_id
       join lifts l on l.lifter_id = lf.id
       where l.movement in ('squat', 'bench', 'deadlift')
-      group by lf.id, lf.display_name, lf.bodyweight_kg
+        and (${collegeId}::int is null or lf.college_id = ${collegeId}::int)
+      group by lf.id, lf.display_name, lf.bodyweight_kg, c.slug, c.short_name
       having count(*) = 3
+        and (
+          not ${verifiedOnly}::boolean
+          or count(*) filter (where l.verified_by is not null) = 3
+        )
     ),
     scored as (
       select
         id,
         display_name,
+        college_slug,
+        college_short,
         verified_count,
         total_kg::double precision as total_kg,
         least(greatest(bodyweight_kg, 40), 201.9)::double precision as bw,
@@ -67,6 +91,8 @@ export async function getLeaderboard(): Promise<BoardRow[]> {
     select
       id,
       display_name,
+      college_slug,
+      college_short,
       weight_class,
       total_kg,
       dots,
@@ -86,6 +112,8 @@ export async function getLeaderboard(): Promise<BoardRow[]> {
     verifiedCount: Number(row.verified_count),
     overallRank: Number(row.overall_rank),
     classRank: Number(row.class_rank),
+    collegeSlug: row.college_slug as string,
+    collegeShort: row.college_short as string,
   }));
 }
 
@@ -94,28 +122,50 @@ export type RankCard = {
   weightClass: string;
   dots: number;
   totalKg: number;
+  verifiedCount: number;
   overallRank: number;
   totalLifters: number;
   classRank: number;
   classSize: number;
+  collegeSlug: string;
+  collegeShort: string;
   /** The lifter directly above you, and the gap to them. Null at rank 1. */
   nextUp: { displayName: string; dotsAhead: number } | null;
 };
 
 /**
- * One lifter's standing, for the share card and their own dashboard.
+ * One lifter's standing on their college board, for the share card and
+ * their own dashboard.
  *
  * This deliberately reads the whole board rather than ranking one lifter in
  * SQL. A second query with its own window function would be a second place
  * for the ranking rules to live, and the one thing a share card must never
- * do is claim a rank the leaderboard disagrees with. The board is at most a
+ * do is claim a rank the leaderboard disagrees with. A board is at most a
  * few hundred rows; correctness is worth more than the saved bytes.
  *
- * Returns null for a lifter who has no squat/bench/deadlift total yet —
- * they aren't on the board, so they have no rank to share.
+ * Returns null for a lifter who has no squat/bench/deadlift total yet, or
+ * no college — they aren't on a board, so they have no rank to share.
  */
 export async function getRankFor(lifterId: string): Promise<RankCard | null> {
-  const board = await getLeaderboard();
+  const rows = await sql`
+    select college_id from lifters where id = ${lifterId} limit 1
+  `;
+  const collegeId = rows[0]?.college_id;
+  if (collegeId === null || collegeId === undefined) return null;
+
+  const board = await getLeaderboard({ collegeId: Number(collegeId) });
+  return cardFrom(board, lifterId);
+}
+
+/** The same lifter's standing across every college. Null unless fully co-signed. */
+export async function getGlobalRankFor(
+  lifterId: string,
+): Promise<RankCard | null> {
+  const board = await getLeaderboard({ global: true });
+  return cardFrom(board, lifterId);
+}
+
+function cardFrom(board: BoardRow[], lifterId: string): RankCard | null {
   const row = board.find((r) => r.id === lifterId);
   if (!row) return null;
 
@@ -124,10 +174,13 @@ export async function getRankFor(lifterId: string): Promise<RankCard | null> {
     weightClass: row.weightClass,
     dots: row.dots,
     totalKg: row.totalKg,
+    verifiedCount: row.verifiedCount,
     overallRank: row.overallRank,
     totalLifters: board.length,
     classRank: row.classRank,
     classSize: board.filter((r) => r.weightClass === row.weightClass).length,
+    collegeSlug: row.collegeSlug,
+    collegeShort: row.collegeShort,
     nextUp: nextUpFrom(board, row),
   };
 }
