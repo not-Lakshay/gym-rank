@@ -152,14 +152,23 @@ export type RankCard = {
  * Returns null for a lifter who has no squat/bench/deadlift total yet, or
  * no college — they aren't on a board, so they have no rank to share.
  */
-export async function getRankFor(lifterId: string): Promise<RankCard | null> {
-  const rows = await sql`
-    select college_id from lifters where id = ${lifterId} limit 1
-  `;
-  const collegeId = rows[0]?.college_id;
-  if (collegeId === null || collegeId === undefined) return null;
+export async function getRankFor(
+  lifterId: string,
+  // Pass it when the caller already has the lifter loaded: saves the
+  // round trip that looks it up, which on a page that makes six is real.
+  knownCollegeId?: number,
+): Promise<RankCard | null> {
+  let collegeId = knownCollegeId;
+  if (collegeId === undefined) {
+    const rows = await sql`
+      select college_id from lifters where id = ${lifterId} limit 1
+    `;
+    const found = rows[0]?.college_id;
+    if (found === null || found === undefined) return null;
+    collegeId = Number(found);
+  }
 
-  const board = await getLeaderboard({ collegeId: Number(collegeId) });
+  const board = await getLeaderboard({ collegeId });
   return cardFrom(board, lifterId);
 }
 

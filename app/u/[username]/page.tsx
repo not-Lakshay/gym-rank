@@ -3,7 +3,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
-import { Check, ChevronLeft, ChevronRight, navButton } from "@/app/board";
+import {
+  Bone,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ProfileSkeleton,
+  navButton,
+} from "@/app/board";
 import { CosignButton } from "@/app/forms";
 import { lifterMetadata } from "@/app/lifter-metadata";
 import { SignInForm } from "@/app/sign-in";
@@ -50,7 +57,12 @@ export default function LifterPage({ params }: { params: Params }) {
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
       <Suspense
-        fallback={<p className="pt-8 text-sm text-chalk-faint">Loading</p>}
+        fallback={
+          <>
+            <Bone className="h-11 w-36" />
+            <ProfileSkeleton />
+          </>
+        }
       >
         <Profile params={params} />
       </Suspense>

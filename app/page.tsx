@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { getCollegeOptions } from "@/lib/colleges";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { getLifterByEmail } from "@/lib/lifters";
-import { Board, Footer, button, navButton } from "./board";
+import { Board, Bone, Footer, button, navButton } from "./board";
 import { CollegePicker } from "./college-picker";
 import { SignInForm } from "./sign-in";
 
@@ -39,7 +39,22 @@ export default function Home() {
       </header>
 
       <Suspense
-        fallback={<p className="pt-2 text-sm text-chalk-faint">Loading</p>}
+        fallback={
+          <div role="status" aria-label="Loading">
+            <Bone className="h-3 w-24" />
+            <Bone className="mt-3 h-11 w-full" />
+            <Bone className="mt-3 h-3 w-36" />
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex items-center justify-between border-b border-rule py-3">
+                <span>
+                  <Bone className="h-4 w-28" />
+                  <Bone className="mt-1.5 h-3 w-44" />
+                </span>
+                <Bone className="h-3 w-14" />
+              </div>
+            ))}
+          </div>
+        }
       >
         <Landing />
       </Suspense>

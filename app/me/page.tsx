@@ -5,7 +5,14 @@ import { auth } from "@/auth";
 import { LiftRowForm, ProfileForm, primary } from "@/app/forms";
 import { SignInForm, SignOutForm } from "@/app/sign-in";
 import { CollegeField } from "@/app/college-picker";
-import { Check, ChevronLeft, ChevronRight, navButton } from "@/app/board";
+import {
+  Bone,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ProfileSkeleton,
+  navButton,
+} from "@/app/board";
 import {
   collegeForEmail,
   getCollegeOptions,
@@ -44,7 +51,12 @@ export default function MePage({ searchParams }: { searchParams: SearchParams })
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
       <Suspense
-        fallback={<p className="pt-8 text-sm text-chalk-faint">Loading</p>}
+        fallback={
+          <>
+            <Bone className="h-11 w-36" />
+            <ProfileSkeleton />
+          </>
+        }
       >
         <Dashboard searchParams={searchParams} />
       </Suspense>
@@ -81,33 +93,15 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
 
   const lifter = await getLifterByEmail(email);
 
-  // The college field is decided here, once, and handed to both profile
-  // forms: an institute email locks it, anything else gets the picker,
-  // preselected from ?college= when they arrived via a college's board.
-  const [detected, colleges, { college: fromUrl }] = await Promise.all([
-    collegeForEmail(email),
-    getCollegeOptions(),
-    searchParams,
-  ]);
-  const collegeField = (
-    <CollegeField
-      colleges={colleges}
-      defaultSlug={
-        lifter?.college?.slug ??
-        (colleges.some((c) => c.slug === fromUrl) ? fromUrl! : null)
-      }
-      locked={
-        detected ? { shortName: detected.shortName, name: detected.name } : null
-      }
-    />
-  );
-
   if (!lifter || !lifter.college) {
-    // First free handle derived from the Google name, so the field arrives
-    // filled in and most people never think about it.
-    const suggested =
-      lifter?.username ??
-      (await firstFreeUsername(session?.user?.name ?? "lifter"));
+    // First-time setup needs the college list and a free handle; the
+    // dashboard below does not, so this is the only branch that pays for
+    // them. All of it in one round trip.
+    const { college: fromUrl } = await searchParams;
+    const [collegeField, suggested] = await Promise.all([
+      buildCollegeField(email, lifter, fromUrl ?? null),
+      lifter?.username ?? firstFreeUsername(session?.user?.name ?? "lifter"),
+    ]);
     return (
       <div>
         <Link href="/" className={navButton}>
@@ -138,12 +132,12 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
     );
   }
 
-  // Rank is read alongside the lifts, not after them: it is the thing
-  // people reopen the page for, so it should not wait on a second round
-  // trip to Neon.
+  // Everything the dashboard shows, in one round trip. The database is a
+  // region away and each sequential stage is ~80 ms of nothing, so the
+  // whole page is two stages: who you are, then everything about you.
   const [lifts, card, globalCard, notifications] = await Promise.all([
     getLiftsFor(lifter.id),
-    getRankFor(lifter.id).catch(() => null),
+    getRankFor(lifter.id, lifter.college.id).catch(() => null),
     getGlobalRankFor(lifter.id).catch(() => null),
     getNotificationsFor(lifter.id).catch(() => [] as Notification[]),
   ]);
@@ -162,7 +156,53 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
       card={card}
       globalCard={globalCard}
       notifications={notifications}
-      collegeField={collegeField}
+      editForm={
+        // Collapsed by default and needs the 159-college list, so it
+        // streams in behind the dashboard instead of holding it up.
+        <Suspense fallback={<Bone className="h-11 w-full" />}>
+          <EditProfile lifter={lifter} email={email} />
+        </Suspense>
+      }
+    />
+  );
+}
+
+/**
+ * The college field: an institute email locks it, anything else gets the
+ * picker, preselected from ?college= when they arrived via a college's
+ * board. Fetches the two things it needs in parallel.
+ */
+async function buildCollegeField(
+  email: string,
+  lifter: Lifter | null,
+  fromUrl: string | null = null,
+) {
+  const [detected, colleges] = await Promise.all([
+    collegeForEmail(email),
+    getCollegeOptions(),
+  ]);
+  const urlSlug = colleges.some((c) => c.slug === fromUrl) ? fromUrl : null;
+  return (
+    <CollegeField
+      colleges={colleges}
+      defaultSlug={lifter?.college?.slug ?? urlSlug}
+      locked={
+        detected ? { shortName: detected.shortName, name: detected.name } : null
+      }
+    />
+  );
+}
+
+async function EditProfile({ lifter, email }: { lifter: Lifter; email: string }) {
+  const collegeField = await buildCollegeField(email, lifter);
+  return (
+    <ProfileForm
+      defaultName={lifter.displayName}
+      defaultUsername={lifter.username}
+      currentUsername={lifter.username}
+      defaultBodyweight={lifter.bodyweightKg}
+      submitLabel="Save profile"
+      college={collegeField}
     />
   );
 }
@@ -182,7 +222,7 @@ function LifterView({
   card,
   globalCard,
   notifications,
-  collegeField,
+  editForm,
 }: {
   lifter: Lifter;
   college: College;
@@ -190,7 +230,7 @@ function LifterView({
   card: RankCard | null;
   globalCard: RankCard | null;
   notifications: Notification[];
-  collegeField: React.ReactNode;
+  editForm: React.ReactNode;
 }) {
   const summary = summarise(lifts, lifter.bodyweightKg);
   const byMovement = new Map(lifts.map((l) => [l.movement, l]));
@@ -416,16 +456,7 @@ function LifterView({
           Edit profile
           <span aria-hidden className="text-chalk-faint">+</span>
         </summary>
-        <div className="pt-5">
-          <ProfileForm
-            defaultName={lifter.displayName}
-            defaultUsername={lifter.username}
-            currentUsername={lifter.username}
-            defaultBodyweight={lifter.bodyweightKg}
-            submitLabel="Save profile"
-            college={collegeField}
-          />
-        </div>
+        <div className="pt-5">{editForm}</div>
       </details>
 
       <SignOutForm className={quietButton} formClassName="pt-8" />

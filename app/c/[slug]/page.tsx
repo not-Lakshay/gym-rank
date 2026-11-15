@@ -11,6 +11,8 @@ import { plateFor } from "@/lib/plates";
 import { WEIGHT_CLASSES } from "@/lib/scoring";
 import {
   Board,
+  BoardSkeleton,
+  Bone,
   ChevronLeft,
   Footer,
   MIN_CLASS_SIZE,
@@ -53,7 +55,14 @@ export default function CollegePage({ params }: { params: Params }) {
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
       <Suspense
-        fallback={<p className="pt-2 text-sm text-chalk-faint">Loading board</p>}
+        fallback={
+          <>
+            <Bone className="h-11 w-36" />
+            <Bone className="mt-6 h-9 w-40" />
+            <Bone className="mt-3 h-4 w-32" />
+            <BoardSkeleton />
+          </>
+        }
       >
         <CollegeBoard params={params} />
       </Suspense>

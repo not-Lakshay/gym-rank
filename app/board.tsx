@@ -265,6 +265,76 @@ export const navButton =
 export const footerLink =
   "press inline-flex min-h-11 items-center rounded-sm border border-rule px-3.5 text-[14px] text-chalk-dim hover:border-chalk-faint hover:text-chalk";
 
+/*
+  What a page looks like while its data is on the way. The same wait reads
+  as half as long when the page is visibly arriving rather than a word on
+  a blank screen — and with the database a region away and asleep between
+  visits, the wait is sometimes seconds.
+*/
+export function Bone({ className }: { className: string }) {
+  return (
+    <span
+      aria-hidden
+      className={`block animate-pulse rounded-sm bg-iron-raised ${className}`}
+    />
+  );
+}
+
+export function BoardSkeleton({ rows = 5 }: { rows?: number }) {
+  return (
+    <div role="status" aria-label="Loading board" className="pt-6">
+      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-sm border border-rule bg-rule">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="bg-iron px-3 py-2.5">
+            <Bone className="h-5 w-10" />
+            <Bone className="mt-2 h-3 w-16" />
+          </div>
+        ))}
+      </div>
+      <Bone className="mt-6 h-3 w-20" />
+      <ol className="mt-3">
+        {Array.from({ length: rows }, (_, i) => (
+          <li key={i} className="flex items-center gap-3 border-b border-rule py-3">
+            <Bone className="h-9 w-[3px]" />
+            <Bone className="h-4 w-6" />
+            <span className="flex-1">
+              <Bone className="h-4 w-32" />
+              <Bone className="mt-1.5 h-3 w-20" />
+            </span>
+            <span className="text-right">
+              <Bone className="ml-auto h-5 w-14" />
+              <Bone className="ml-auto mt-1.5 h-3 w-10" />
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+export function ProfileSkeleton() {
+  return (
+    <div role="status" aria-label="Loading" className="pt-8">
+      <Bone className="h-1 w-16" />
+      <Bone className="mt-4 h-8 w-48" />
+      <Bone className="mt-3 h-3 w-40" />
+      <Bone className="mt-6 h-14 w-36" />
+      <Bone className="mt-4 h-4 w-28" />
+      <Bone className="mt-10 h-3 w-16" />
+      {[0, 1, 2, 3, 4].map((i) => (
+        <div key={i} className="flex items-center gap-3 border-b border-rule py-3">
+          <span className="flex-1">
+            <Bone className="h-4 w-28" />
+            <Bone className="mt-1.5 h-3 w-24" />
+          </span>
+          <Bone className="h-11 w-[4.5rem]" />
+          <Bone className="h-11 w-[4.5rem]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function Footer({ i = 6, home = true }: { i?: number; home?: boolean }) {
   return (
     <footer

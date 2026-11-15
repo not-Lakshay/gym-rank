@@ -8,6 +8,7 @@ import { plateFor } from "@/lib/plates";
 import { WEIGHT_CLASSES } from "@/lib/scoring";
 import {
   Board,
+  BoardSkeleton,
   ChevronLeft,
   Footer,
   MIN_CLASS_SIZE,
@@ -46,9 +47,7 @@ export default function GlobalPage() {
         </p>
       </header>
 
-      <Suspense
-        fallback={<p className="pt-8 text-sm text-chalk-faint">Loading board</p>}
-      >
+      <Suspense fallback={<BoardSkeleton />}>
         <GlobalBoard />
       </Suspense>
 
