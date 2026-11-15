@@ -1,7 +1,21 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { connection } from "next/server";
+import { lifterMetadata } from "@/app/lifter-metadata";
 import { getLifterById } from "@/lib/lifters";
+
+// The redirect happens after the shell streams, so link previewers that
+// don't run scripts read this page's metadata, not /u/…'s. Same card.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const lifter = await getLifterById(id).catch(() => null);
+  return lifterMetadata(lifter);
+}
 
 /*
   The old address of a lifter's page. Every link shared before usernames
