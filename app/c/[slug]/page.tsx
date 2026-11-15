@@ -11,10 +11,12 @@ import { plateFor } from "@/lib/plates";
 import { WEIGHT_CLASSES } from "@/lib/scoring";
 import {
   Board,
+  ChevronLeft,
   Footer,
   MIN_CLASS_SIZE,
   Stats,
   button,
+  navButton,
   shortClass,
 } from "@/app/board";
 import { Calculator } from "@/app/calculator";
@@ -170,13 +172,11 @@ function Header({
 }) {
   return (
     <header className="rise pb-5" style={{ "--i": 0 } as React.CSSProperties}>
-      <Link
-        href="/"
-        className="inline-flex min-h-8 items-center text-[12px] font-medium text-chalk-dim underline-offset-4 hover:text-chalk hover:underline"
-      >
-        ‹ Gym Rank · all colleges
+      <Link href="/" className={navButton}>
+        <ChevronLeft />
+        All colleges
       </Link>
-      <div className="mt-2 flex items-start justify-between gap-4">
+      <div className="mt-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-[2.25rem] font-extrabold leading-[0.9] tracking-[-0.04em]">
             {college.shortName}

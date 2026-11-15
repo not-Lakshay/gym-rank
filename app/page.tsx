@@ -44,7 +44,7 @@ export default function Home() {
         <Landing />
       </Suspense>
 
-      <Footer />
+      <Footer home={false} />
     </main>
   );
 }

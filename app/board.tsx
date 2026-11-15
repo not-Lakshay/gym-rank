@@ -250,19 +250,23 @@ export const button =
 export const navButton =
   "press inline-flex min-h-11 w-fit items-center gap-1.5 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk";
 
+// Footer navigation as real buttons: on a phone a row of underlined words
+// reads as prose, and these are the only way off the page.
 export const footerLink =
-  "inline-flex min-h-11 items-center rounded-sm px-2 text-[14px] underline decoration-chalk-faint underline-offset-4 transition-colors hover:text-chalk";
+  "press inline-flex min-h-11 items-center rounded-sm border border-rule px-3.5 text-[14px] text-chalk-dim hover:border-chalk-faint hover:text-chalk";
 
-export function Footer({ i = 6 }: { i?: number }) {
+export function Footer({ i = 6, home = true }: { i?: number; home?: boolean }) {
   return (
     <footer
-      className="rise mt-14 border-t border-rule pt-2"
+      className="rise mt-14 border-t border-rule pt-5"
       style={{ "--i": i } as React.CSSProperties}
     >
-      <p className="-ml-2 flex flex-wrap gap-1 text-chalk-dim">
-        <Link href="/" className={footerLink}>
-          All colleges
-        </Link>
+      <p className="flex flex-wrap gap-2">
+        {home && (
+          <Link href="/" className={footerLink}>
+            All colleges
+          </Link>
+        )}
         <Link href="/global" className={footerLink}>
           Global board
         </Link>
