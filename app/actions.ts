@@ -16,6 +16,7 @@ import {
   saveLift,
   upsertProfile,
 } from "@/lib/lifters";
+import { sendWelcome } from "@/lib/mail";
 import { notifyCosigned, notifyPassed } from "@/lib/notifications";
 import { normalizeUsername, validateUsername } from "@/lib/username";
 import { validateBodyweight, validateLift } from "@/lib/validate";
@@ -130,6 +131,20 @@ export async function saveProfileAction(
   }
   const { id, isNew } = saved;
   await recordEvent(isNew ? "profile_created" : "profile_updated", id);
+
+  // The one email the app sends, on the first save only. Awaited inside
+  // quietly() so a Brevo outage can't fail the save, but not deferred:
+  // a serverless function may be frozen the moment the response goes out.
+  if (isNew) {
+    await quietly(() =>
+      sendWelcome({
+        email,
+        displayName,
+        username,
+        collegeShort: college.shortName,
+      }),
+    );
+  }
 
   if (!isNew && existing?.college?.id === college.id) {
     await quietly(() =>

@@ -74,6 +74,15 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
+      <Section title="Email">
+        <p className={muted}>
+          One email, when you first create your profile, with your public link
+          and how co-signing works. It is sent through Brevo, which sees your
+          email address and name for that purpose. Nothing else is sent — no
+          newsletters, no reminders.
+        </p>
+      </Section>
+
       <Section title="Deleting your data">
         <p className={muted}>
           Email{" "}
