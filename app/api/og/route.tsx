@@ -4,6 +4,7 @@ import { getLifterById } from "@/lib/lifters";
 import { plateHexFor } from "@/lib/plates";
 import { siteLabel } from "@/lib/site";
 import { ordinal } from "@/lib/format";
+import { isUuid } from "@/lib/validate";
 
 /*
   The share card, rendered as a real PNG.
@@ -33,7 +34,9 @@ const CHALK_FAINT = "#6b6459";
 const SIZE = { width: 1200, height: 630 };
 
 export async function GET(request: Request) {
-  const id = new URL(request.url).searchParams.get("id");
+  const raw = new URL(request.url).searchParams.get("id");
+  // Junk ids never reach the database; they get the generic card.
+  const id = raw && isUuid(raw) ? raw : null;
 
   let card: RankCard | null = null;
   let fallbackName: string | null = null;

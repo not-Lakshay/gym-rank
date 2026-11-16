@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { after, connection } from "next/server";
 import { auth } from "@/auth";
-import { LiftRowForm, ProfileForm, primary } from "@/app/forms";
+import { DeleteAccountButton, LiftRowForm, ProfileForm, primary } from "@/app/forms";
 import { SignInForm, SignOutForm } from "@/app/sign-in";
 import { CollegeField } from "@/app/college-picker";
 import {
@@ -470,6 +470,10 @@ function LifterView({
       </details>
 
       <SignOutForm className={quietButton} formClassName="pt-8" />
+
+      <div className="mt-10 border-t border-rule pt-6">
+        <DeleteAccountButton />
+      </div>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import type { ActionState } from "@/app/actions";
 import {
   checkUsernameAction,
   cosignLiftAction,
+  deleteMyAccountAction,
   saveLiftAction,
   saveProfileAction,
 } from "@/app/actions";
@@ -372,3 +373,51 @@ export const primary =
 
 export const secondary =
   "press inline-flex min-h-11 shrink-0 items-center justify-center rounded-sm border border-rule px-4 text-[15px] font-medium text-chalk hover:border-chalk-dim disabled:opacity-50";
+
+
+
+/*
+  Delete your own account. Two taps: the first arms the button and says
+  what will happen, the second does it. Nothing modal.
+*/
+export function DeleteAccountButton() {
+  const [state, action, pending] = useActionState(deleteMyAccountAction, initial);
+  const [armed, setArmed] = useState(false);
+
+  const look = armed
+    ? "border-[var(--plate-25)] text-[var(--plate-25)]"
+    : "border-rule text-chalk-faint hover:border-chalk-faint hover:text-chalk";
+
+  return (
+    <form
+      action={action}
+      onSubmit={(e) => {
+        if (!armed) {
+          e.preventDefault();
+          setArmed(true);
+          setTimeout(() => setArmed(false), 6000);
+        }
+      }}
+      className="flex flex-col items-start gap-2"
+    >
+      {armed && (
+        <p className="text-[12px] leading-relaxed text-chalk-dim">
+          Deletes your profile, your lifts and their history, and any
+          co-signs on them. Cannot be undone. Tap again to confirm.
+        </p>
+      )}
+      <button
+        type="submit"
+        disabled={pending}
+        className={`press inline-flex min-h-11 items-center rounded-sm border px-4 text-[15px] ${look}`}
+      >
+        {pending ? "Deleting…" : armed ? "Yes, delete my account" : "Delete my account"}
+      </button>
+      {state.error && (
+        <p role="alert" className="text-[12px] text-[var(--plate-25)]">
+          {state.error}
+        </p>
+      )}
+    </form>
+  );
+}

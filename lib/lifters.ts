@@ -367,8 +367,9 @@ export async function adminListLifters(): Promise<AdminLifter[]> {
   }));
 }
 
-/** Everything about one lifter: the privacy page promises this exists. */
-export async function adminDeleteLifter(lifterId: string): Promise<boolean> {
+/** Everything about one lifter: the privacy page promises this exists.
+ *  Used by the owner (self-service) and by admin. */
+export async function deleteLifter(lifterId: string): Promise<boolean> {
   // Cascades cover lifts, history, notifications; events keep the row
   // with lifter_id nulled so the usage numbers stay honest.
   const rows = await sql`delete from lifters where id = ${lifterId} returning id`;

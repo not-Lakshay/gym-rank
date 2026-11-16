@@ -7,7 +7,7 @@ import { addCollege } from "@/lib/colleges";
 import {
   adminClearCosign,
   adminDeleteLift,
-  adminDeleteLifter,
+  deleteLifter,
   recordEvent,
 } from "@/lib/lifters";
 
@@ -26,7 +26,7 @@ export async function deleteLifterAction(
   const admin = await currentAdmin();
   if (!admin) return fail("Not allowed.");
   const id = String(formData.get("lifterId") ?? "");
-  const done = await adminDeleteLifter(id);
+  const done = await deleteLifter(id);
   if (!done) return fail("No such lifter.");
   await recordEvent("admin:lifter_deleted", null);
   refresh();

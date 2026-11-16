@@ -9,6 +9,7 @@ import {
   type Movement,
   UsernameTakenError,
   cosignLift,
+  deleteLifter,
   getLifterByEmail,
   getLiftById,
   isUsernameTaken,
@@ -243,5 +244,28 @@ export async function cosignLiftAction(
   );
 
   refresh();
+  return ok();
+}
+
+/**
+ * Self-service deletion. The privacy page promises it; making people email
+ * for it would be the kind of thing a reviewer flags. Deletes the lifter
+ * and, by cascade, their lifts, history and notifications; usage events
+ * keep an anonymous row. Then signs them out.
+ */
+export async function deleteMyAccountAction(
+  _prev: ActionState,
+  _formData: FormData,
+): Promise<ActionState> {
+  const email = await requireEmail();
+  if (!email) return fail("You are signed out.");
+  const lifter = await getLifterByEmail(email);
+  if (!lifter) return fail("No profile to delete.");
+
+  await recordEvent("account_deleted", null);
+  const done = await deleteLifter(lifter.id);
+  if (!done) return fail("Couldn't delete the account. Email the address on the privacy page.");
+
+  await signOut({ redirectTo: "/" });
   return ok();
 }

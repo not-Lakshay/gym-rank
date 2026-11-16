@@ -85,3 +85,8 @@ export function validateLift(params: {
 
   return null;
 }
+
+/** A v4-ish UUID. Used to reject junk ids before they reach Postgres. */
+export function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}

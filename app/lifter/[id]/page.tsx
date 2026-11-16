@@ -4,6 +4,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { connection } from "next/server";
 import { lifterMetadata } from "@/app/lifter-metadata";
 import { getLifterById } from "@/lib/lifters";
+import { isUuid } from "@/lib/validate";
 
 // The redirect happens after the shell streams, so link previewers that
 // don't run scripts read this page's metadata, not /u/…'s. Same card.
@@ -13,7 +14,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const lifter = await getLifterById(id).catch(() => null);
+  const lifter = isUuid(id) ? await getLifterById(id).catch(() => null) : null;
   return lifterMetadata(lifter);
 }
 
@@ -46,7 +47,7 @@ async function Redirector({
 }): Promise<React.ReactNode> {
   await connection();
   const { id } = await params;
-  const lifter = await getLifterById(id).catch(() => null);
+  const lifter = isUuid(id) ? await getLifterById(id).catch(() => null) : null;
   if (!lifter) notFound();
   permanentRedirect(`/u/${lifter.username}`);
 }
