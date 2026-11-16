@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { sql } from "@/lib/db";
 
 /*
@@ -17,6 +18,9 @@ import { sql } from "@/lib/db";
   room for real traffic. Running out suspends the database outright.
 */
 export async function GET() {
+  // Never prerendered: a cached "up" from build time would be worse than
+  // no endpoint, and the ping has to reach Postgres every time.
+  await connection();
   const started = Date.now();
   try {
     await sql`select 1`;

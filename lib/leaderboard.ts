@@ -1,4 +1,5 @@
 import { sql } from "./db";
+import type { Movement } from "./movements";
 
 export type BoardRow = {
   id: string;
@@ -220,4 +221,142 @@ function nextUpFrom(
     displayName: nearest.displayName,
     dotsAhead: nearest.dots - row.dots,
   };
+}
+
+/* ------------------------------------------------------------------------
+   Per-lift boards.
+
+   The overall board needs a full squat/bench/deadlift total, which makes
+   someone who only benches invisible until they've entered all three. A
+   lift board ranks a single movement, so one entry puts you on one.
+
+   Ranked by bodyweight-adjusted score, not raw kilos: raw kilos per lift
+   brings back exactly the problem DOTS exists to fix. DOTS is a ratio
+   against a bodyweight curve, so it applies to a single lift's est. 1RM
+   as cleanly as to a total — only the scale changes. Pull-ups are already
+   bodyweight-relative, so they rank by reps.
+
+   One query ranks every movement at once (window functions partitioned by
+   movement), so a page with five tabs pays one round trip, not five.
+   ------------------------------------------------------------------------ */
+
+export type LiftRow = {
+  id: string;
+  username: string;
+  displayName: string;
+  weightClass: string;
+  movement: Movement;
+  /** est. 1RM in kg; null for pull-ups. */
+  kg: number | null;
+  reps: number;
+  /** What the rank is on: lift DOTS, or reps for pull-ups. */
+  score: number;
+  verified: boolean;
+  rank: number;
+  classRank: number;
+  collegeSlug: string;
+  collegeShort: string;
+};
+
+export type LiftBoards = Record<Movement, LiftRow[]>;
+
+export async function getLiftBoards(scope: BoardScope): Promise<LiftBoards> {
+  const collegeId = "collegeId" in scope ? scope.collegeId : null;
+  const verifiedOnly = "global" in scope;
+
+  const rows = await sql`
+    with base as (
+      select
+        lf.id,
+        lf.username,
+        lf.display_name,
+        lf.bodyweight_kg,
+        c.slug       as college_slug,
+        c.short_name as college_short,
+        l.movement,
+        l.est_1rm_kg,
+        l.reps,
+        (l.verified_by is not null) as verified
+      from lifts l
+      join lifters lf on lf.id = l.lifter_id
+      join colleges c on c.id = lf.college_id
+      where (${collegeId}::int is null or lf.college_id = ${collegeId}::int)
+        and (not ${verifiedOnly}::boolean or l.verified_by is not null)
+    ),
+    scored as (
+      select
+        *,
+        least(greatest(bodyweight_kg, 40), 201.9)::double precision as bw,
+        case
+          when bodyweight_kg <= 65 then 'Up to 65kg'
+          when bodyweight_kg <= 75 then '65-75kg'
+          when bodyweight_kg <= 85 then '75-85kg'
+          else '85kg+'
+        end as weight_class
+      from base
+    ),
+    dotted as (
+      select
+        *,
+        case
+          when movement = 'pullups' then reps::double precision
+          else (est_1rm_kg::double precision * 500) / (
+              -307.75076
+            +   24.0900756    * bw
+            +   -0.1918759221 * power(bw, 2)
+            +    0.0007391293 * power(bw, 3)
+            +   -0.000001093  * power(bw, 4)
+          )
+        end as score
+      from scored
+    )
+    select
+      id, username, display_name, weight_class, movement,
+      est_1rm_kg, reps, score, verified, college_slug, college_short,
+      rank() over (partition by movement order by score desc) as rank,
+      rank() over (partition by movement, weight_class order by score desc) as class_rank
+    from dotted
+    order by movement, score desc
+  `;
+
+  const boards: LiftBoards = {
+    squat: [],
+    bench: [],
+    deadlift: [],
+    overhead_press: [],
+    pullups: [],
+  };
+  for (const row of rows) {
+    const movement = row.movement as Movement;
+    boards[movement].push({
+      id: row.id as string,
+      username: row.username as string,
+      displayName: row.display_name as string,
+      weightClass: row.weight_class as string,
+      movement,
+      kg: row.est_1rm_kg === null ? null : Number(row.est_1rm_kg),
+      reps: Number(row.reps),
+      score: Number(row.score),
+      verified: Boolean(row.verified),
+      rank: Number(row.rank),
+      classRank: Number(row.class_rank),
+      collegeSlug: row.college_slug as string,
+      collegeShort: row.college_short as string,
+    });
+  }
+  return boards;
+}
+
+/** Where one lifter stands on each lift board: rank and board size. */
+export function standingsFor(
+  boards: LiftBoards,
+  lifterId: string,
+): Partial<Record<Movement, { rank: number; of: number }>> {
+  const out: Partial<Record<Movement, { rank: number; of: number }>> = {};
+  for (const movement of Object.keys(boards) as Movement[]) {
+    const rows = boards[movement];
+    const me = rows.find((r) => r.id === lifterId);
+    if (me) out[movement] = { rank: me.rank, of: rows.length };
+  }
+  return out;
 }

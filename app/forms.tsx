@@ -31,9 +31,14 @@ const initial: ActionState = { error: null };
 export function LiftRowForm({
   movement,
   existing,
+  standing = null,
+  boardHref,
 }: {
   movement: (typeof MOVEMENTS)[number];
   existing: Lift | undefined;
+  /** Rank on this lift's college board, once the lift is entered. */
+  standing?: { rank: number; of: number } | null;
+  boardHref?: string;
 }) {
   const [state, action, pending] = useActionState(saveLiftAction, initial);
   const isPullups = movement.id === "pullups";
@@ -81,6 +86,24 @@ export function LiftRowForm({
             )}
             {existing?.verifiedByName && (
               <span> · co-signed by {existing.verifiedByName}</span>
+            )}
+            {standing && (
+              <span>
+                {" "}
+                ·{" "}
+                {boardHref ? (
+                  <a
+                    href={boardHref}
+                    className="text-chalk-dim underline-offset-4 hover:text-chalk hover:underline"
+                  >
+                    #{standing.rank} of {standing.of}
+                  </a>
+                ) : (
+                  <span className="text-chalk-dim">
+                    #{standing.rank} of {standing.of}
+                  </span>
+                )}
+              </span>
             )}
           </span>
         </div>

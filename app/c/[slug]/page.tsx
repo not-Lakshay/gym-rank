@@ -5,26 +5,30 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { auth } from "@/auth";
 import { getCollegeBySlug, type College } from "@/lib/colleges";
-import { getLeaderboard } from "@/lib/leaderboard";
+import { getLeaderboard, getLiftBoards } from "@/lib/leaderboard";
 import { getLifterByEmail } from "@/lib/lifters";
 import { plateFor } from "@/lib/plates";
 import { WEIGHT_CLASSES } from "@/lib/scoring";
 import {
   Board,
   BoardSkeleton,
+  BoardTabs,
   Bone,
   ChevronLeft,
   Footer,
+  LiftTab,
   MIN_CLASS_SIZE,
   Stats,
   button,
   navButton,
   shortClass,
+  tabFrom,
 } from "@/app/board";
 import { Calculator } from "@/app/calculator";
 import { SignInForm } from "@/app/sign-in";
 
 type Params = Promise<{ slug: string }>;
+type SearchParams = Promise<{ tab?: string }>;
 
 export async function generateMetadata({
   params,
@@ -51,7 +55,13 @@ export async function generateMetadata({
 */
 // `params` is awaited inside the Suspense boundary, not here: with Cache
 // Components, reading it in the page shell blocks prerendering of the shell.
-export default function CollegePage({ params }: { params: Params }) {
+export default function CollegePage({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
       <Suspense
@@ -64,21 +74,31 @@ export default function CollegePage({ params }: { params: Params }) {
           </>
         }
       >
-        <CollegeBoard params={params} />
+        <CollegeBoard params={params} searchParams={searchParams} />
       </Suspense>
       <Footer />
     </main>
   );
 }
 
-async function CollegeBoard({ params }: { params: Params }) {
+async function CollegeBoard({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
   await connection();
-  const { slug } = await params;
+  const [{ slug }, { tab: rawTab }] = await Promise.all([params, searchParams]);
+  const tab = tabFrom(rawTab);
   const college = await getCollegeBySlug(slug).catch(() => null);
   if (!college) notFound();
 
-  const [rows, session] = await Promise.all([
+  // Both boards in parallel: the overall one feeds the stats strip and the
+  // calculator's projected rank whichever tab is showing.
+  const [rows, liftBoards, session] = await Promise.all([
     getLeaderboard({ collegeId: college.id }),
+    getLiftBoards({ collegeId: college.id }),
     auth(),
   ]);
 
@@ -112,7 +132,20 @@ async function CollegeBoard({ params }: { params: Params }) {
     <div>
       <Header college={college} accountLink={accountLink} />
 
-      {rows.length === 0 ? (
+      <div className="rise pt-1" style={{ "--i": 1 } as React.CSSProperties}>
+        <BoardTabs base={`/c/${college.slug}`} active={tab} />
+      </div>
+
+      {tab !== "all" ? (
+        <LiftTab
+          movement={tab}
+          rows={liftBoards[tab]}
+          viewerId={viewer?.id ?? null}
+          emptyNote={`One entry puts you on it. Sign in, enter your ${
+            tab === "pullups" ? "max reps" : "last working set"
+          }, and you are first at ${college.shortName} by default.`}
+        />
+      ) : rows.length === 0 ? (
         <section className="rise pt-8" style={{ "--i": 1 } as React.CSSProperties}>
           <p className="text-[15px] font-medium">
             Nobody at {college.shortName} is on the board yet.

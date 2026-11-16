@@ -2,18 +2,21 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { auth } from "@/auth";
-import { getLeaderboard } from "@/lib/leaderboard";
+import { getLeaderboard, getLiftBoards } from "@/lib/leaderboard";
 import { getLifterByEmail } from "@/lib/lifters";
 import { plateFor } from "@/lib/plates";
 import { WEIGHT_CLASSES } from "@/lib/scoring";
 import {
   Board,
   BoardSkeleton,
+  BoardTabs,
   ChevronLeft,
   Footer,
+  LiftTab,
   MIN_CLASS_SIZE,
   Stats,
   navButton,
+  tabFrom,
 } from "@/app/board";
 
 export const metadata = {
@@ -28,7 +31,9 @@ export const metadata = {
   co-signed by someone at their college who watched the set. That is the
   reward for getting co-signed, and the reason to trust what's here.
 */
-export default function GlobalPage() {
+type SearchParams = Promise<{ tab?: string }>;
+
+export default function GlobalPage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
       <Link href="/" className={navButton}>
@@ -48,7 +53,7 @@ export default function GlobalPage() {
       </header>
 
       <Suspense fallback={<BoardSkeleton />}>
-        <GlobalBoard />
+        <GlobalBoard searchParams={searchParams} />
       </Suspense>
 
       <Footer />
@@ -56,27 +61,58 @@ export default function GlobalPage() {
   );
 }
 
-async function GlobalBoard() {
+async function GlobalBoard({ searchParams }: { searchParams: SearchParams }) {
   await connection();
-  const [rows, session] = await Promise.all([
+  const { tab: rawTab } = await searchParams;
+  const tab = tabFrom(rawTab);
+  const [rows, liftBoards, session] = await Promise.all([
     getLeaderboard({ global: true }),
+    getLiftBoards({ global: true }),
     auth(),
   ]);
   const viewer = session?.user?.email
     ? await getLifterByEmail(session.user.email).catch(() => null)
     : null;
 
+  const tabs = (
+    <div className="rise pt-6" style={{ "--i": 1 } as React.CSSProperties}>
+      <BoardTabs base="/global" active={tab} />
+    </div>
+  );
+
+  // A lift tab on the global board admits a co-signed lift, not a fully
+  // co-signed lifter: the rule is per number shown, and here each row is
+  // one number.
+  if (tab !== "all") {
+    return (
+      <>
+        {tabs}
+        <LiftTab
+          movement={tab}
+          rows={liftBoards[tab]}
+          viewerId={viewer?.id ?? null}
+          showCollege
+          emptyNote="Only co-signed lifts appear here. Get someone at your college who watched the set to vouch for it."
+        />
+      </>
+    );
+  }
+
   if (rows.length === 0) {
     return (
-      <p className="pt-8 text-[13px] leading-relaxed text-chalk-dim">
-        Nobody is fully co-signed yet. The first lifter to get all three sets
-        vouched for opens this board.
-      </p>
+      <>
+        {tabs}
+        <p className="pt-8 text-[13px] leading-relaxed text-chalk-dim">
+          Nobody is fully co-signed yet. The first lifter to get all three sets
+          vouched for opens this board.
+        </p>
+      </>
     );
   }
 
   return (
     <div className="pt-6">
+      {tabs}
       <div className="rise mb-6" style={{ "--i": 1 } as React.CSSProperties}>
         <Stats rows={rows} />
       </div>

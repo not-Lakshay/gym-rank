@@ -30,9 +30,12 @@ import {
 import { suggestUsername, usernameCandidates } from "@/lib/username";
 import {
   getGlobalRankFor,
+  getLiftBoards,
   getRankFor,
+  standingsFor,
   type RankCard,
 } from "@/lib/leaderboard";
+import type { Movement } from "@/lib/movements";
 import {
   getNotificationsFor,
   markNotificationsSeen,
@@ -135,12 +138,14 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
   // Everything the dashboard shows, in one round trip. The database is a
   // region away and each sequential stage is ~80 ms of nothing, so the
   // whole page is two stages: who you are, then everything about you.
-  const [lifts, card, globalCard, notifications] = await Promise.all([
+  const [lifts, card, globalCard, notifications, liftBoards] = await Promise.all([
     getLiftsFor(lifter.id),
     getRankFor(lifter.id, lifter.college.id).catch(() => null),
     getGlobalRankFor(lifter.id).catch(() => null),
     getNotificationsFor(lifter.id).catch(() => [] as Notification[]),
+    getLiftBoards({ collegeId: lifter.college.id }).catch(() => null),
   ]);
+  const standings = liftBoards ? standingsFor(liftBoards, lifter.id) : {};
 
   // Rendered once as "new", then they're just history. The write happens
   // after the response is sent, so it never slows the page.
@@ -156,6 +161,7 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
       card={card}
       globalCard={globalCard}
       notifications={notifications}
+      standings={standings}
       editForm={
         // Collapsed by default and needs the 159-college list, so it
         // streams in behind the dashboard instead of holding it up.
@@ -222,6 +228,7 @@ function LifterView({
   card,
   globalCard,
   notifications,
+  standings,
   editForm,
 }: {
   lifter: Lifter;
@@ -230,6 +237,7 @@ function LifterView({
   card: RankCard | null;
   globalCard: RankCard | null;
   notifications: Notification[];
+  standings: Partial<Record<Movement, { rank: number; of: number }>>;
   editForm: React.ReactNode;
 }) {
   const summary = summarise(lifts, lifter.bodyweightKg);
@@ -428,6 +436,8 @@ function LifterView({
               key={movement.id}
               movement={movement}
               existing={byMovement.get(movement.id)}
+              standing={standings[movement.id] ?? null}
+              boardHref={`/c/${college.slug}?tab=${movement.id}`}
             />
           ))}
         </div>
