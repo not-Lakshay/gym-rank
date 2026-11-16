@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { EncryptedText } from "@/components/ui/encrypted-text";
 import { connection } from "next/server";
 import { auth } from "@/auth";
 import { getCollegeOptions } from "@/lib/colleges";
@@ -26,7 +27,12 @@ export default function Home() {
               Gym Rank
             </h1>
             <p className="mt-2.5 text-[16px] font-bold leading-none tracking-[-0.02em]">
-              Pound for pound.
+              <EncryptedText
+                text="Pound for pound."
+                encryptedClassName="text-chalk-faint"
+                revealedClassName="text-chalk"
+                revealDelayMs={60}
+              />
             </p>
             <p className="mt-2 text-[13px] leading-snug text-chalk-dim">
               College gym leaderboards, every score adjusted for bodyweight.
