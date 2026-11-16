@@ -577,12 +577,14 @@ export function LiftTab({
   movement,
   rows,
   viewerId,
+  viewerClass = null,
   showCollege = false,
   emptyNote,
 }: {
   movement: Movement;
   rows: LiftRow[];
   viewerId: string | null;
+  viewerClass?: string | null;
   showCollege?: boolean;
   emptyNote: string;
 }) {
@@ -610,29 +612,90 @@ export function LiftTab({
           showCollege={showCollege}
         />
       </div>
-      <div className="mt-10 flex flex-col gap-8">
-        {WEIGHT_CLASSES.map((weightClass, i) => {
-          const inClass = rows.filter((r) => r.weightClass === weightClass.label);
-          if (inClass.length < MIN_CLASS_SIZE) return null;
-          return (
-            <div
-              key={weightClass.label}
-              className="rise"
-              style={{ "--i": 2 + i } as React.CSSProperties}
-            >
-              <LiftBoard
-                heading={`${label} · ${weightClass.label}`}
-                movement={movement}
-                plate={plateFor(weightClass.label)}
-                rows={inClass}
-                rankOf={(r) => r.classRank}
-                viewerId={viewerId}
-                showCollege={showCollege}
-              />
-            </div>
-          );
-        })}
-      </div>
+      <ClassBoards
+        rows={rows}
+        viewerClass={viewerClass}
+        firstIndex={2}
+        render={(weightClass, inClass) => (
+          <LiftBoard
+            heading={`${label} · ${weightClass}`}
+            movement={movement}
+            plate={plateFor(weightClass)}
+            rows={inClass}
+            rankOf={(r) => r.classRank}
+            viewerId={viewerId}
+            showCollege={showCollege}
+          />
+        )}
+      />
     </div>
+  );
+}
+
+/*
+  The weight-class section, shared by every board page.
+
+  A class gets its own board once it has MIN_CLASS_SIZE lifters; below
+  that it would be a repeat of the overall board. The signed-in viewer's
+  class comes first so they find themselves without scrolling past a
+  class they aren't in — and if their class is still too small, the
+  section says so instead of silently leaving it out, which otherwise
+  reads as "why am I being shown someone else's class?".
+*/
+export function ClassBoards<T extends { weightClass: string }>({
+  rows,
+  viewerClass,
+  firstIndex,
+  render,
+}: {
+  rows: T[];
+  /** The viewer's weight class, if signed in and on a board. */
+  viewerClass: string | null;
+  /** The rise animation index to start from. */
+  firstIndex: number;
+  render: (weightClass: string, inClass: T[]) => React.ReactNode;
+}) {
+  const ordered = [...WEIGHT_CLASSES].sort((a, b) =>
+    a.label === viewerClass ? -1 : b.label === viewerClass ? 1 : 0,
+  );
+  const sized = ordered.map((wc) => ({
+    label: wc.label,
+    inClass: rows.filter((r) => r.weightClass === wc.label),
+  }));
+  const shown = sized.filter((c) => c.inClass.length >= MIN_CLASS_SIZE);
+  const mine = sized.find((c) => c.label === viewerClass);
+  const mineTooSmall = mine !== undefined && mine.inClass.length < MIN_CLASS_SIZE;
+
+  if (shown.length === 0 && !mineTooSmall) return null;
+
+  return (
+    <section
+      className="rise mt-10"
+      style={{ "--i": firstIndex } as React.CSSProperties}
+    >
+      <h2 className="flex items-center justify-between border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
+        Weight classes
+        <span className="text-[11px] font-normal text-chalk-faint">
+          classes with {MIN_CLASS_SIZE}+ lifters
+        </span>
+      </h2>
+      {mineTooSmall && (
+        <p className="mt-3 text-[13px] leading-relaxed text-chalk-dim">
+          Your class, {viewerClass}, has {mine.inClass.length} lifter
+          {mine.inClass.length === 1 ? "" : "s"} — {MIN_CLASS_SIZE - mine.inClass.length} more and it gets its own board.
+        </p>
+      )}
+      <div className="mt-6 flex flex-col gap-8">
+        {shown.map((c, i) => (
+          <div
+            key={c.label}
+            className="rise"
+            style={{ "--i": firstIndex + 1 + i } as React.CSSProperties}
+          >
+            {render(c.label, c.inClass)}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

@@ -5,15 +5,15 @@ import { auth } from "@/auth";
 import { getLeaderboard, getLiftBoards } from "@/lib/leaderboard";
 import { getLifterByEmail } from "@/lib/lifters";
 import { plateFor } from "@/lib/plates";
-import { WEIGHT_CLASSES } from "@/lib/scoring";
+import { weightClassFor } from "@/lib/scoring";
 import {
   Board,
   BoardSkeleton,
   BoardTabs,
   ChevronLeft,
+  ClassBoards,
   Footer,
   LiftTab,
-  MIN_CLASS_SIZE,
   Stats,
   navButton,
   tabFrom,
@@ -73,6 +73,7 @@ async function GlobalBoard({ searchParams }: { searchParams: SearchParams }) {
   const viewer = session?.user?.email
     ? await getLifterByEmail(session.user.email).catch(() => null)
     : null;
+  const viewerClass = viewer ? weightClassFor(viewer.bodyweightKg) : null;
 
   const tabs = (
     <div className="rise pt-6" style={{ "--i": 1 } as React.CSSProperties}>
@@ -91,6 +92,7 @@ async function GlobalBoard({ searchParams }: { searchParams: SearchParams }) {
           movement={tab}
           rows={liftBoards[tab]}
           viewerId={viewer?.id ?? null}
+          viewerClass={viewerClass}
           showCollege
           emptyNote="Only co-signed lifts appear here. Get someone at your college who watched the set to vouch for it."
         />
@@ -128,28 +130,21 @@ async function GlobalBoard({ searchParams }: { searchParams: SearchParams }) {
         />
       </div>
 
-      <div className="mt-10 flex flex-col gap-8">
-        {WEIGHT_CLASSES.map((weightClass, i) => {
-          const inClass = rows.filter((r) => r.weightClass === weightClass.label);
-          if (inClass.length < MIN_CLASS_SIZE) return null;
-          return (
-            <div
-              key={weightClass.label}
-              className="rise"
-              style={{ "--i": 3 + i } as React.CSSProperties}
-            >
-              <Board
-                heading={weightClass.label}
-                plate={plateFor(weightClass.label)}
-                rows={inClass}
-                rankOf={(r) => r.classRank}
-                viewerId={viewer?.id ?? null}
-                showCollege
-              />
-            </div>
-          );
-        })}
-      </div>
+      <ClassBoards
+        rows={rows}
+        viewerClass={viewerClass}
+        firstIndex={3}
+        render={(weightClass, inClass) => (
+          <Board
+            heading={weightClass}
+            plate={plateFor(weightClass)}
+            rows={inClass}
+            rankOf={(r) => r.classRank}
+            viewerId={viewer?.id ?? null}
+            showCollege
+          />
+        )}
+      />
     </div>
   );
 }

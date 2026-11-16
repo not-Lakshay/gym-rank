@@ -8,16 +8,16 @@ import { getCollegeBySlug, type College } from "@/lib/colleges";
 import { getLeaderboard, getLiftBoards } from "@/lib/leaderboard";
 import { getLifterByEmail } from "@/lib/lifters";
 import { plateFor } from "@/lib/plates";
-import { WEIGHT_CLASSES } from "@/lib/scoring";
+import { WEIGHT_CLASSES, weightClassFor } from "@/lib/scoring";
 import {
   Board,
   BoardSkeleton,
   BoardTabs,
   Bone,
   ChevronLeft,
+  ClassBoards,
   Footer,
   LiftTab,
-  MIN_CLASS_SIZE,
   Stats,
   button,
   navButton,
@@ -107,6 +107,7 @@ async function CollegeBoard({
   const viewer = session?.user?.email
     ? await getLifterByEmail(session.user.email).catch(() => null)
     : null;
+  const viewerClass = viewer ? weightClassFor(viewer.bodyweightKg) : null;
 
   // Sign-in from this page lands on /me with this college preselected, so
   // a friend who was sent the IIT Delhi link ends up on IIT Delhi's board.
@@ -141,6 +142,7 @@ async function CollegeBoard({
           movement={tab}
           rows={liftBoards[tab]}
           viewerId={viewer?.id ?? null}
+          viewerClass={viewerClass}
           emptyNote={`One entry puts you on it. Sign in, enter your ${
             tab === "pullups" ? "max reps" : "last working set"
           }, and you are first at ${college.shortName} by default.`}
@@ -176,29 +178,20 @@ async function CollegeBoard({
             {calculator}
           </div>
 
-          <div className="mt-10 flex flex-col gap-8">
-            {WEIGHT_CLASSES.map((weightClass, i) => {
-              const inClass = rows.filter(
-                (r) => r.weightClass === weightClass.label,
-              );
-              if (inClass.length < MIN_CLASS_SIZE) return null;
-              return (
-                <div
-                  key={weightClass.label}
-                  className="rise"
-                  style={{ "--i": 4 + i } as React.CSSProperties}
-                >
-                  <Board
-                    heading={weightClass.label}
-                    plate={plateFor(weightClass.label)}
-                    rows={inClass}
-                    rankOf={(r) => r.classRank}
-                    viewerId={viewer?.id ?? null}
-                  />
-                </div>
-              );
-            })}
-          </div>
+          <ClassBoards
+            rows={rows}
+            viewerClass={viewerClass}
+            firstIndex={4}
+            render={(weightClass, inClass) => (
+              <Board
+                heading={weightClass}
+                plate={plateFor(weightClass)}
+                rows={inClass}
+                rankOf={(r) => r.classRank}
+                viewerId={viewer?.id ?? null}
+              />
+            )}
+          />
         </div>
       )}
     </div>
