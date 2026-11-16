@@ -326,3 +326,98 @@ export function summarise(lifts: Lift[], bodyweightKg: number): Summary {
     missingForTotal: [],
   };
 }
+
+/* ------------------------------------------------------------------------
+   Admin reads and writes. Authorisation happens in the action, not here.
+   ------------------------------------------------------------------------ */
+
+export type AdminLifter = {
+  id: string;
+  username: string;
+  displayName: string;
+  email: string;
+  bodyweightKg: number;
+  collegeShort: string | null;
+  liftCount: number;
+  verifiedCount: number;
+  createdAt: Date;
+};
+
+export async function adminListLifters(): Promise<AdminLifter[]> {
+  const rows = await sql`
+    select
+      lf.id, lf.username, lf.display_name, lf.email, lf.bodyweight_kg,
+      lf.created_at, c.short_name as college_short,
+      (select count(*) from lifts l where l.lifter_id = lf.id) as lift_count,
+      (select count(*) from lifts l where l.lifter_id = lf.id and l.verified_by is not null) as verified_count
+    from lifters lf
+    left join colleges c on c.id = lf.college_id
+    order by lf.created_at desc
+  `;
+  return rows.map((r) => ({
+    id: r.id as string,
+    username: r.username as string,
+    displayName: r.display_name as string,
+    email: r.email as string,
+    bodyweightKg: num(r.bodyweight_kg),
+    collegeShort: (r.college_short as string | null) ?? null,
+    liftCount: Number(r.lift_count),
+    verifiedCount: Number(r.verified_count),
+    createdAt: new Date(r.created_at as string),
+  }));
+}
+
+/** Everything about one lifter: the privacy page promises this exists. */
+export async function adminDeleteLifter(lifterId: string): Promise<boolean> {
+  // Cascades cover lifts, history, notifications; events keep the row
+  // with lifter_id nulled so the usage numbers stay honest.
+  const rows = await sql`delete from lifters where id = ${lifterId} returning id`;
+  return rows.length > 0;
+}
+
+export async function adminDeleteLift(liftId: string): Promise<boolean> {
+  const rows = await sql`delete from lifts where id = ${liftId} returning id`;
+  return rows.length > 0;
+}
+
+export async function adminClearCosign(liftId: string): Promise<boolean> {
+  const rows = await sql`
+    update lifts set verified_by = null where id = ${liftId} returning id
+  `;
+  return rows.length > 0;
+}
+
+export type AdminStats = {
+  lifters: number;
+  withTotal: number;
+  colleges: number;
+  cosigns: number;
+  signupsLast7: number;
+  liftsSavedLast7: number;
+};
+
+export async function adminStats(): Promise<AdminStats> {
+  const [r] = await sql`
+    select
+      (select count(*) from lifters) as lifters,
+      (select count(*) from (
+        select lifter_id from lifts
+        where movement in ('squat','bench','deadlift')
+        group by lifter_id having count(*) = 3
+      ) t) as with_total,
+      (select count(distinct college_id) from lifters where college_id is not null) as colleges,
+      (select count(*) from lifts where verified_by is not null) as cosigns,
+      (select count(*) from events where name = 'profile_created'
+         and created_at > now() - interval '7 days') as signups_7,
+      (select count(*) from events where name like 'lift_saved:%'
+         and created_at > now() - interval '7 days') as lifts_7
+  `;
+  return {
+    lifters: Number(r.lifters),
+    withTotal: Number(r.with_total),
+    colleges: Number(r.colleges),
+    cosigns: Number(r.cosigns),
+    signupsLast7: Number(r.signups_7),
+    liftsSavedLast7: Number(r.lifts_7),
+  };
+}

@@ -89,3 +89,20 @@ export async function collegeForEmail(email: string): Promise<College | null> {
   `;
   return rows.length === 0 ? null : fromRow(rows[0]);
 }
+
+/** Admin: add a college without a deploy. Slug must be unique. */
+export async function addCollege(c: {
+  slug: string;
+  name: string;
+  shortName: string;
+  city: string;
+  state: string;
+  domains: string[];
+}): Promise<College> {
+  const rows = await sql`
+    insert into colleges (slug, name, short_name, city, state, domains)
+    values (${c.slug}, ${c.name}, ${c.shortName}, ${c.city}, ${c.state}, ${c.domains})
+    returning id, slug, name, short_name, city, state
+  `;
+  return fromRow(rows[0]);
+}
