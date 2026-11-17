@@ -269,6 +269,17 @@ export async function saveLift(params: {
       ? null
       : estimatedOneRepMax(weightKg, reps);
 
+  // A changed lift is a new claim, so every previous co-sign is void.
+  // Cleared BEFORE the new number is written: no transaction here, and a
+  // crash in between should lose co-signs on the old number, never leave
+  // them standing on a new one nobody witnessed.
+  await sql`
+    delete from lift_cosigns
+    where lift_id = (
+      select id from lifts where lifter_id = ${lifterId} and movement = ${movement}
+    )
+  `;
+
   await sql`
     insert into lifts
       (lifter_id, movement, weight_kg, reps, est_1rm_kg, bodyweight_kg)
@@ -279,16 +290,7 @@ export async function saveLift(params: {
           reps          = excluded.reps,
           est_1rm_kg    = excluded.est_1rm_kg,
           bodyweight_kg = excluded.bodyweight_kg,
-          verified_by   = null,
           recorded_at   = now()
-  `;
-
-  // A changed lift is a new claim, so every previous co-sign is void.
-  await sql`
-    delete from lift_cosigns
-    where lift_id = (
-      select id from lifts where lifter_id = ${lifterId} and movement = ${movement}
-    )
   `;
 
   // Append-only. The Neon HTTP driver has no multi-statement transaction
@@ -393,10 +395,7 @@ export async function adminListLifters(): Promise<AdminLifter[]> {
  *  Used by the owner (self-service) and by admin. */
 export async function deleteLifter(lifterId: string): Promise<boolean> {
   // Cascades cover lifts, history, notifications; events keep the row
-  // with lifter_id nulled so the usage numbers stay honest. The legacy
-  // verified_by column has no cascade, so a lifter who ever co-signed under
-  // it would otherwise be undeletable; lift_cosigns cascades on its own.
-  await sql`update lifts set verified_by = null where verified_by = ${lifterId}`;
+  // with lifter_id nulled so the usage numbers stay honest.
   const rows = await sql`delete from lifters where id = ${lifterId} returning id`;
   return rows.length > 0;
 }
@@ -409,9 +408,8 @@ export async function adminDeleteLift(liftId: string): Promise<boolean> {
 /** Clears every co-sign on the lift. */
 export async function adminClearCosign(liftId: string): Promise<boolean> {
   const rows = await sql`
-    update lifts set verified_by = null where id = ${liftId} returning id
+    delete from lift_cosigns where lift_id = ${liftId} returning lift_id
   `;
-  await sql`delete from lift_cosigns where lift_id = ${liftId}`;
   return rows.length > 0;
 }
 

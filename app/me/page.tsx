@@ -20,6 +20,7 @@ import {
 } from "@/lib/colleges";
 import {
   MOVEMENTS,
+  TOTAL_MOVEMENTS,
   type Lift,
   type Lifter,
   getLifterByEmail,
@@ -43,6 +44,7 @@ import {
 } from "@/lib/notifications";
 import { ordinal, timeAgo } from "@/lib/format";
 import { batchLabel } from "@/lib/batch";
+import { cosignStatus, cosignText } from "@/lib/cosign";
 import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
 import { siteUrl } from "@/lib/site";
@@ -246,6 +248,9 @@ function LifterView({
 }) {
   const summary = summarise(lifts, lifter.bodyweightKg);
   const byMovement = new Map(lifts.map((l) => [l.movement, l]));
+  const cosign = cosignStatus(
+    TOTAL_MOVEMENTS.map((m) => byMovement.get(m)?.cosigners ?? []),
+  );
   const weightClass = weightClassFor(lifter.bodyweightKg);
   const plate = plateFor(weightClass);
   const unseen = notifications.filter((n) => !n.seen).length;
@@ -434,6 +439,14 @@ function LifterView({
         <h2 className="border-b border-rule pb-2 caption">
           Your lifts
         </h2>
+        {cosign && (
+          <p className="flex items-center gap-1.5 pt-3 text-[13px] text-chalk-dim">
+            <span className={cosign.kind === "full" ? "" : "opacity-50"}>
+              <Check />
+            </span>
+            {cosignText(cosign)}
+          </p>
+        )}
 
         <div>
           {MOVEMENTS.map((movement) => (

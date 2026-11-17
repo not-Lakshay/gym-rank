@@ -60,9 +60,6 @@ create table if not exists lifts (
   -- later cut or bulk doesn't retroactively rewrite old scores
   bodyweight_kg numeric(5,2) not null check (bodyweight_kg between 30 and 250),
 
-  -- null = unverified. A lifter id means someone else co-signed it.
-  verified_by   uuid references lifters(id),
-
   recorded_at   timestamptz not null default now(),
 
   unique (lifter_id, movement),
@@ -75,10 +72,8 @@ create table if not exists lifts (
 );
 
 -- Who co-signed which lift: any number of witnesses per lift, one row
--- each. This is the record of co-signs; lifts.verified_by above is the
--- older single-witness column, kept only so a deploy in progress keeps
--- working, and no longer read. A lift counts as co-signed when it has
--- at least one row here. Re-saving a lift deletes its rows.
+-- each. A lift counts as co-signed when it has at least one row here.
+-- Re-saving a lift deletes its rows.
 create table if not exists lift_cosigns (
   lift_id    uuid not null references lifts(id) on delete cascade,
   witness_id uuid not null references lifters(id) on delete cascade,
@@ -88,10 +83,9 @@ create table if not exists lift_cosigns (
 
 create index if not exists lift_cosigns_witness_idx on lift_cosigns (witness_id);
 
--- Carry over co-signs made before this table existed. Idempotent.
-insert into lift_cosigns (lift_id, witness_id)
-  select id, verified_by from lifts where verified_by is not null
-  on conflict do nothing;
+-- The old single-witness column. Its co-signs were copied into
+-- lift_cosigns on 2026-11-17, and nothing reads or writes it now.
+alter table lifts drop column if exists verified_by;
 
 create index if not exists lifts_movement_idx on lifts (movement);
 create index if not exists lifts_lifter_idx   on lifts (lifter_id);

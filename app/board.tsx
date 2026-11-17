@@ -197,6 +197,19 @@ export function Board({
                       >
                         {row.collegeShort}
                       </Link>
+                      {/* Everyone here is co-signed; say how, without names
+                          so the line stays short. */}
+                      {row.cosign && (
+                        <>
+                          <span aria-hidden className="text-chalk-faint">·</span>
+                          <span className={row.cosign.kind === "full" ? "" : "opacity-50"}>
+                            <Check />
+                          </span>
+                          <span className="truncate">
+                            {row.cosign.kind === "full" ? "fully" : "partially"} co-signed
+                          </span>
+                        </>
+                      )}
                     </>
                   ) : (
                     row.verifiedCount > 0 && (

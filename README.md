@@ -110,11 +110,15 @@ lie at the top kills the board.
 
 So each lifter has a public page (`/u/<username>`) listing the sets behind
 their score, and any *other* signed-in lifter can tap "I saw this" on a set
-they watched. That writes their id into `lifts.verified_by`, and their name
-shows next to the lift. The owner can't co-sign their own sets — the server
-checks, not just the UI — and editing a lift clears the co-sign, because a
-changed number is a new claim. The board shows how many of the three total
-lifts are co-signed.
+they watched. That adds a row to `lift_cosigns`, and their name shows next
+to the lift. Any number of people can co-sign one set, each once. The owner
+can't co-sign their own sets — the server checks, not just the UI — and
+editing a lift clears its co-signs, because a changed number is a new claim.
+
+Once squat, bench and deadlift are all co-signed, the lifter is *fully*
+co-signed if one person witnessed all three, and *partially* co-signed if it
+took several people (`lib/cosign.ts`). Either way they qualify for the global
+board; the board and their page say which.
 
 Whether people actually bother to co-sign is an open question; the
 `lift_cosigned` event will answer it.
