@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { EncryptedText } from "@/components/ui/encrypted-text";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { auth } from "@/auth";
@@ -209,15 +210,20 @@ function Header({
     <header className="rise pb-5" style={{ "--i": 0 } as React.CSSProperties}>
       <Link href="/" className={navButton}>
         <ChevronLeft />
-        All colleges
+        <EncryptedText text="All colleges" scrambleOnHover revealDelayMs={30} />
       </Link>
       <div className="mt-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-[2.25rem] font-extrabold leading-[0.9] tracking-[-0.04em]">
-            {college.shortName}
+            <EncryptedText text={college.shortName} charset="ABCDEFGHIJKLMNOPQRSTUVWXYZ" revealDelayMs={55} />
           </h1>
           <p className="mt-2.5 text-[16px] font-bold leading-none tracking-[-0.02em]">
-            Pound for pound.
+            <EncryptedText
+              text="Pound for pound."
+              encryptedClassName="text-chalk-faint"
+              revealedClassName="text-chalk"
+              revealDelayMs={60}
+            />
           </p>
           <p className="mt-2 text-[13px] leading-snug text-chalk-dim">
             {college.city} · every score adjusted for bodyweight

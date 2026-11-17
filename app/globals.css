@@ -14,7 +14,7 @@
   --iron-raised: #1f1b16;
   --chalk: #f3efe7;
   --chalk-dim: #a49d91;
-  --chalk-faint: #6b6459;
+  --chalk-faint: #857d70;
   --rule: #2b261f;
 
   --plate-10: #2e8b53;
@@ -76,6 +76,33 @@ body {
   color: var(--foreground);
   font-family: var(--font-archivo), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/*
+  A loaded bar across the top of every page: the four plates in the order
+  they go on, so the colour key is the first thing on screen.
+*/
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: 3px;
+  z-index: 50;
+  background: linear-gradient(
+    90deg,
+    var(--plate-10) 0 25%,
+    var(--plate-15) 25% 50%,
+    var(--plate-20) 50% 75%,
+    var(--plate-25) 75%
+  );
+  pointer-events: none;
+}
+
+/* A raised panel: boards and the calculator sit on it. */
+.card {
+  border: 1px solid var(--rule);
+  border-radius: 0.125rem;
+  background: color-mix(in oklab, var(--iron-raised) 55%, transparent);
 }
 
 /* Sections rise in on arrival. --i staggers them; set it inline. */

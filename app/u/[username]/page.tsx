@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { EncryptedText } from "@/components/ui/encrypted-text";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import {
@@ -99,7 +100,11 @@ async function Profile({ params }: { params: Params }) {
     <div>
       <Link href={boardHref} className={navButton}>
         <ChevronLeft />
-        {lifter.college ? `${lifter.college.shortName} board` : "All colleges"}
+        <EncryptedText
+          text={lifter.college ? `${lifter.college.shortName} board` : "All colleges"}
+          scrambleOnHover
+          revealDelayMs={30}
+        />
       </Link>
       <div className="pt-8">
         {isOwner && (
@@ -129,7 +134,7 @@ async function Profile({ params }: { params: Params }) {
             style={{ background: plateFor(weightClass) }}
           />
           <h1 className="mt-4 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
-            {lifter.displayName}
+            <EncryptedText text={lifter.displayName} charset="ABCDEFGHIJKLMNOPQRSTUVWXYZ" revealDelayMs={45} />
           </h1>
           <p className="mt-1.5 text-[13px] text-chalk-dim">
             <span className="text-chalk">@{lifter.username}</span>

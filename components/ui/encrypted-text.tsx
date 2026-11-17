@@ -22,6 +22,8 @@ type EncryptedTextProps = {
   encryptedClassName?: string;
   /** CSS class for styling the revealed characters */
   revealedClassName?: string;
+  /** Replay the scramble when the pointer enters the nearest link/button. */
+  scrambleOnHover?: boolean;
 };
 
 const DEFAULT_CHARSET =
@@ -32,19 +34,6 @@ function generateRandomCharacter(charset: string): string {
   return charset.charAt(index);
 }
 
-function generateGibberishPreservingSpaces(
-  original: string,
-  charset: string,
-): string {
-  if (!original) return "";
-  let result = "";
-  for (let i = 0; i < original.length; i += 1) {
-    const ch = original[i];
-    result += ch === " " ? " " : generateRandomCharacter(charset);
-  }
-  return result;
-}
-
 export const EncryptedText: React.FC<EncryptedTextProps> = ({
   text,
   className,
@@ -53,76 +42,57 @@ export const EncryptedText: React.FC<EncryptedTextProps> = ({
   flipDelayMs = 50,
   encryptedClassName,
   revealedClassName,
+  scrambleOnHover = false,
 }) => {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true });
 
-  const [revealCount, setRevealCount] = useState<number>(0);
-  const animationFrameRef = useRef<number | null>(null);
-  const startTimeRef = useRef<number>(0);
-  const lastFlipTimeRef = useRef<number>(0);
-  // Empty until the effect runs: random values can't be made during render
-  // (Next prerender rejects Math.random, and SSR/client would disagree).
-  const scrambleCharsRef = useRef<string[]>([]);
+  // Starts fully revealed, so server HTML and no-JS visitors read the real
+  // text; the scramble only begins once the effect runs in the browser.
+  const [revealCount, setRevealCount] = useState<number>(text.length);
+  const [run, setRun] = useState(0);
+  const [scrambled, setScrambled] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!scrambleOnHover) return;
+    if (!window.matchMedia("(hover: hover)").matches) return;
+    const target = ref.current?.closest("a,button") ?? ref.current;
+    if (!target) return;
+    const replay = () => setRun((n) => n + 1);
+    target.addEventListener("mouseenter", replay);
+    return () => target.removeEventListener("mouseenter", replay);
+  }, [scrambleOnHover]);
 
   useEffect(() => {
     if (!isInView) return;
+    // Hover-only scrambles skip the on-arrival run.
+    if (scrambleOnHover && run === 0) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    // Reset state for a fresh animation whenever dependencies change
-    const initial = text
-      ? generateGibberishPreservingSpaces(text, charset)
-      : "";
-    scrambleCharsRef.current = initial.split("");
-    startTimeRef.current = performance.now();
-    lastFlipTimeRef.current = startTimeRef.current;
-    setRevealCount(0);
-
-    let isCancelled = false;
+    const scramble = (i: number) =>
+      text[i] === " " ? " " : generateRandomCharacter(charset);
+    const start = performance.now();
+    let lastFlip = -Infinity;
+    let frame = 0;
 
     const update = (now: number) => {
-      if (isCancelled) return;
-
-      const elapsedMs = now - startTimeRef.current;
-      const totalLength = text.length;
-      const currentRevealCount = Math.min(
-        totalLength,
-        Math.floor(elapsedMs / Math.max(1, revealDelayMs)),
+      const count = Math.min(
+        text.length,
+        Math.floor((now - start) / Math.max(1, revealDelayMs)),
       );
+      setRevealCount(count);
+      if (count >= text.length) return;
 
-      setRevealCount(currentRevealCount);
-
-      if (currentRevealCount >= totalLength) {
-        return;
+      if (now - lastFlip >= Math.max(0, flipDelayMs)) {
+        setScrambled(text.split("").map((_, i) => scramble(i)));
+        lastFlip = now;
       }
-
-      // Re-randomize unrevealed scramble characters on an interval
-      const timeSinceLastFlip = now - lastFlipTimeRef.current;
-      if (timeSinceLastFlip >= Math.max(0, flipDelayMs)) {
-        for (let index = 0; index < totalLength; index += 1) {
-          if (index >= currentRevealCount) {
-            if (text[index] !== " ") {
-              scrambleCharsRef.current[index] =
-                generateRandomCharacter(charset);
-            } else {
-              scrambleCharsRef.current[index] = " ";
-            }
-          }
-        }
-        lastFlipTimeRef.current = now;
-      }
-
-      animationFrameRef.current = requestAnimationFrame(update);
+      frame = requestAnimationFrame(update);
     };
 
-    animationFrameRef.current = requestAnimationFrame(update);
-
-    return () => {
-      isCancelled = true;
-      if (animationFrameRef.current !== null) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [isInView, text, revealDelayMs, charset, flipDelayMs]);
+    frame = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(frame);
+  }, [isInView, run, scrambleOnHover, text, revealDelayMs, charset, flipDelayMs]);
 
   if (!text) return null;
 
@@ -137,13 +107,12 @@ export const EncryptedText: React.FC<EncryptedTextProps> = ({
         const isRevealed = index < revealCount;
         const displayChar = isRevealed
           ? char
-          : char === " "
-            ? " "
-            : (scrambleCharsRef.current[index] ?? charset.charAt(0));
+          : (scrambled[index] ?? char);
 
         return (
           <span
             key={index}
+            aria-hidden
             className={cn(isRevealed ? revealedClassName : encryptedClassName)}
           >
             {displayChar}

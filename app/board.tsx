@@ -3,7 +3,20 @@ import type { BoardRow, LiftRow } from "@/lib/leaderboard";
 import { MOVEMENTS, type Movement } from "@/lib/movements";
 import { plateFor } from "@/lib/plates";
 import { WEIGHT_CLASSES } from "@/lib/scoring";
+import { EncryptedText } from "@/components/ui/encrypted-text";
 import { CountUp } from "./score";
+
+// Rank digits flip like a stadium board before settling, staggered down the list.
+function Digits({ value, index }: { value: number; index: number }) {
+  return (
+    <EncryptedText
+      text={String(value)}
+      charset="0123456789"
+      revealDelayMs={260 + Math.min(index, 8) * 45}
+      flipDelayMs={40}
+    />
+  );
+}
 
 export const MEDALS = ["var(--gold)", "var(--silver)", "var(--bronze)"];
 
@@ -82,7 +95,7 @@ export function Board({
         </span>
       </h2>
 
-      <ol>
+      <ol className="card px-3">
         {rows.map((row, index) => {
           const rank = rankOf(row);
           const leading = rank === 1;
@@ -128,11 +141,11 @@ export function Board({
                   className="medal relative shrink-0"
                   style={{ "--medal": medal } as React.CSSProperties}
                 >
-                  {rank}
+                  <Digits value={rank} index={index} />
                 </span>
               ) : (
                 <span className="tnum relative w-6 shrink-0 text-center text-[13px] text-chalk-faint">
-                  {rank}
+                  <Digits value={rank} index={index} />
                 </span>
               )}
 
@@ -255,7 +268,7 @@ export function ChevronRight() {
 }
 
 export const button =
-  "press inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-sm bg-chalk px-5 text-[15px] font-bold text-iron hover:opacity-85";
+  "press inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-sm bg-gold px-5 text-[15px] font-bold text-iron hover:opacity-85";
 
 // Outlined: navigation and account controls. Visibly tappable, but clearly
 // not the main action on the screen.
@@ -450,7 +463,7 @@ export function LiftBoard({
         </span>
       </h2>
 
-      <ol>
+      <ol className="card px-3">
         {rows.map((row, index) => {
           const rank = rankOf(row);
           const leading = rank === 1;
@@ -491,11 +504,11 @@ export function LiftBoard({
                   className="medal relative shrink-0"
                   style={{ "--medal": medal } as React.CSSProperties}
                 >
-                  {rank}
+                  <Digits value={rank} index={index} />
                 </span>
               ) : (
                 <span className="tnum relative w-6 shrink-0 text-center text-[13px] text-chalk-faint">
-                  {rank}
+                  <Digits value={rank} index={index} />
                 </span>
               )}
 

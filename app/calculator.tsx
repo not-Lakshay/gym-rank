@@ -99,7 +99,7 @@ export function Calculator({
   }
 
   return (
-    <section className="mt-10 rounded-sm border border-rule bg-[color-mix(in_oklab,var(--iron-raised)_60%,transparent)] p-4">
+    <section className="mt-10 card p-4">
       <h2 className="text-[15px] font-bold">Where would you land?</h2>
       <p className="mt-1 text-[12px] leading-relaxed text-chalk-dim">
         Your last real working set for each lift. Nothing here is saved.

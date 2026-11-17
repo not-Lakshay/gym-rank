@@ -26,7 +26,7 @@ export default function Home() {
             <h1 className="text-[2.5rem] font-extrabold leading-[0.88] tracking-[-0.045em]">
               Gym Rank
             </h1>
-            <p className="mt-2.5 text-[16px] font-bold leading-none tracking-[-0.02em]">
+            <p className="mt-1.5 text-[2.1rem] font-extrabold italic leading-none tracking-[-0.045em] whitespace-nowrap">
               <EncryptedText
                 text="Pound for pound."
                 encryptedClassName="text-chalk-faint"
@@ -152,7 +152,11 @@ async function Landing() {
               />
               {global.length > PREVIEW && (
                 <Link href="/global" className={`${navButton} mt-4`}>
-                  All {global.length} on the global board ›
+                  <EncryptedText
+                    text={`All ${global.length} on the global board ›`}
+                    scrambleOnHover
+                    revealDelayMs={20}
+                  />
                 </Link>
               )}
             </>

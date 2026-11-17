@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { EncryptedText } from "@/components/ui/encrypted-text";
 import { connection } from "next/server";
 import { auth } from "@/auth";
 import { getLeaderboard, getLiftBoards } from "@/lib/leaderboard";
@@ -38,12 +39,12 @@ export default function GlobalPage({ searchParams }: { searchParams: SearchParam
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
       <Link href="/" className={navButton}>
         <ChevronLeft />
-        All colleges
+        <EncryptedText text="All colleges" scrambleOnHover revealDelayMs={30} />
       </Link>
 
       <header className="rise pt-8" style={{ "--i": 0 } as React.CSSProperties}>
         <h1 className="text-[2.25rem] font-extrabold leading-[0.9] tracking-[-0.04em]">
-          Global board
+          <EncryptedText text="Global board" charset="ABCDEFGHIJKLMNOPQRSTUVWXYZ" revealDelayMs={55} />
         </h1>
         <p className="mt-2 text-[13px] leading-relaxed text-chalk-dim">
           Every college together. Only lifters with all three lifts co-signed
