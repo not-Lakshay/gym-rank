@@ -51,7 +51,8 @@ import { siteUrl } from "@/lib/site";
 import { ShareButton } from "@/app/share";
 import { CountUp } from "@/app/score";
 
-type SearchParams = Promise<{ college?: string }>;
+// `error` is set by Auth.js when a sign-in fails (pages.error in auth.ts).
+type SearchParams = Promise<{ college?: string; error?: string }>;
 
 export default function MePage({ searchParams }: { searchParams: SearchParams }) {
   return (
@@ -76,6 +77,7 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
   const email = session?.user?.email;
 
   if (!email) {
+    const { error } = await searchParams;
     return (
       <div>
         <Link href="/?all" className={navButton}>
@@ -86,6 +88,13 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
           <h1 className="text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
             Sign in to add your lifts
           </h1>
+          {error && (
+            <p role="alert" className="mt-3 text-[13px] leading-relaxed text-chalk-dim">
+              That sign-in didn&rsquo;t finish. Try again — if you opened the
+              link inside WhatsApp or Instagram, open it in Chrome or Safari
+              first.
+            </p>
+          )}
           <SignInForm
             redirectTo="/me"
             label="Continue with Google"
