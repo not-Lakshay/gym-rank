@@ -112,14 +112,10 @@ export function Board({
               key={row.id}
               className={`row relative flex items-center gap-3 border-b border-rule last:border-b-0 ${
                 leading ? "py-4" : "py-3"
-              } ${isViewer ? "-mx-2 rounded-sm px-2 ring-1 ring-accent/60" : ""}`}
-              style={
-                medal
-                  ? ({
-                      "--row-tint": `color-mix(in oklab, ${medal} 9%, transparent)`,
-                    } as React.CSSProperties)
-                  : undefined
-              }
+              } ${isViewer || medal ? "-mx-2 rounded-sm px-2" : ""} ${
+                medal ? "medal-row" : isViewer ? "ring-1 ring-accent/60" : ""
+              }`}
+              style={medal ? ({ "--medal": medal } as React.CSSProperties) : undefined}
             >
               <span
                 aria-hidden
@@ -483,14 +479,10 @@ export function LiftBoard({
               key={row.id}
               className={`row relative flex items-center gap-3 border-b border-rule last:border-b-0 ${
                 leading ? "py-4" : "py-3"
-              } ${isViewer ? "-mx-2 rounded-sm px-2 ring-1 ring-accent/60" : ""}`}
-              style={
-                medal
-                  ? ({
-                      "--row-tint": `color-mix(in oklab, ${medal} 9%, transparent)`,
-                    } as React.CSSProperties)
-                  : undefined
-              }
+              } ${isViewer || medal ? "-mx-2 rounded-sm px-2" : ""} ${
+                medal ? "medal-row" : isViewer ? "ring-1 ring-accent/60" : ""
+              }`}
+              style={medal ? ({ "--medal": medal } as React.CSSProperties) : undefined}
             >
               <span
                 aria-hidden

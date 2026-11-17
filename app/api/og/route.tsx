@@ -25,8 +25,8 @@ import { isUuid } from "@/lib/validate";
   properties don't resolve — hence plateHexFor rather than plateFor.
 */
 
-const IRON = "#16130f";
-const IRON_RAISED = "#1f1b16";
+const IRON = "#0a0908";
+const IRON_RAISED = "#161411";
 const CHALK = "#f3efe7";
 const CHALK_DIM = "#a49d91";
 const CHALK_FAINT = "#6b6459";

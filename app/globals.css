@@ -10,8 +10,8 @@
   Base is iron and chalk rather than the usual black-and-neon.
 */
 :root {
-  --iron: #16130f;
-  --iron-raised: #1f1b16;
+  --iron: #0a0908;
+  --iron-raised: #161411;
   --chalk: #f3efe7;
   --chalk-dim: #a49d91;
   --chalk-faint: #857d70;
@@ -212,10 +212,12 @@ h1,
 }
 
 /* Board rows: the name slides a touch right on hover, the bar brightens. */
-/* --row-tint washes the top three in their medal colour. */
 .row {
-  background-color: var(--row-tint, transparent);
   transition: background-color 150ms ease;
+}
+/* The top three are outlined in their medal colour (--medal, set inline). */
+.medal-row {
+  box-shadow: inset 0 0 0 1px var(--medal);
 }
 .row:hover {
   background-color: var(--iron-raised);
