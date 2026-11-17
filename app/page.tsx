@@ -22,11 +22,13 @@ export default function Home() {
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
       <header className="rise pb-6" style={{ "--i": 0 } as React.CSSProperties}>
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-[2.5rem] font-extrabold leading-[0.88] tracking-[-0.045em]">
+          {/* min-w-0 so the hero can shrink instead of shoving the account
+              button off a phone screen; the vw clamps keep it one line. */}
+          <div className="min-w-0">
+            <h1 className="text-[clamp(1.5rem,8.2vw,2.5rem)] font-extrabold leading-[0.88] tracking-[-0.045em]">
               Gym Rank
             </h1>
-            <p className="mt-1.5 text-[2.1rem] font-extrabold italic leading-none tracking-[-0.045em] whitespace-nowrap">
+            <p className="mt-1.5 text-[clamp(1.3rem,6.9vw,2.1rem)] font-extrabold italic leading-none tracking-[-0.045em]">
               <EncryptedText
                 text="Pound for pound."
                 encryptedClassName="text-chalk-faint"
