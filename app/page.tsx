@@ -152,11 +152,7 @@ async function Landing() {
               />
               {global.length > PREVIEW && (
                 <Link href="/global" className={`${navButton} mt-4`}>
-                  <EncryptedText
-                    text={`All ${global.length} on the global board ›`}
-                    scrambleOnHover
-                    revealDelayMs={20}
-                  />
+                  {`All ${global.length} on the global board ›`}
                 </Link>
               )}
             </>

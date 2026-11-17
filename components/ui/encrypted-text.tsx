@@ -22,8 +22,6 @@ type EncryptedTextProps = {
   encryptedClassName?: string;
   /** CSS class for styling the revealed characters */
   revealedClassName?: string;
-  /** Replay the scramble when the pointer enters the nearest link/button. */
-  scrambleOnHover?: boolean;
 };
 
 const DEFAULT_CHARSET =
@@ -42,7 +40,6 @@ export const EncryptedText: React.FC<EncryptedTextProps> = ({
   flipDelayMs = 50,
   encryptedClassName,
   revealedClassName,
-  scrambleOnHover = false,
 }) => {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true });
@@ -50,23 +47,10 @@ export const EncryptedText: React.FC<EncryptedTextProps> = ({
   // Starts fully revealed, so server HTML and no-JS visitors read the real
   // text; the scramble only begins once the effect runs in the browser.
   const [revealCount, setRevealCount] = useState<number>(text.length);
-  const [run, setRun] = useState(0);
   const [scrambled, setScrambled] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!scrambleOnHover) return;
-    if (!window.matchMedia("(hover: hover)").matches) return;
-    const target = ref.current?.closest("a,button") ?? ref.current;
-    if (!target) return;
-    const replay = () => setRun((n) => n + 1);
-    target.addEventListener("mouseenter", replay);
-    return () => target.removeEventListener("mouseenter", replay);
-  }, [scrambleOnHover]);
-
-  useEffect(() => {
     if (!isInView) return;
-    // Hover-only scrambles skip the on-arrival run.
-    if (scrambleOnHover && run === 0) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const scramble = (i: number) =>
@@ -92,7 +76,7 @@ export const EncryptedText: React.FC<EncryptedTextProps> = ({
 
     frame = requestAnimationFrame(update);
     return () => cancelAnimationFrame(frame);
-  }, [isInView, run, scrambleOnHover, text, revealDelayMs, charset, flipDelayMs]);
+  }, [isInView, text, revealDelayMs, charset, flipDelayMs]);
 
   if (!text) return null;
 

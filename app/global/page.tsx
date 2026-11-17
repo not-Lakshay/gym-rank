@@ -39,7 +39,7 @@ export default function GlobalPage({ searchParams }: { searchParams: SearchParam
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
       <Link href="/" className={navButton}>
         <ChevronLeft />
-        <EncryptedText text="All colleges" scrambleOnHover revealDelayMs={30} />
+        All colleges
       </Link>
 
       <header className="rise pt-8" style={{ "--i": 0 } as React.CSSProperties}>

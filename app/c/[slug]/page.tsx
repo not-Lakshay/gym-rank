@@ -210,7 +210,7 @@ function Header({
     <header className="rise pb-5" style={{ "--i": 0 } as React.CSSProperties}>
       <Link href="/" className={navButton}>
         <ChevronLeft />
-        <EncryptedText text="All colleges" scrambleOnHover revealDelayMs={30} />
+        All colleges
       </Link>
       <div className="mt-6 flex items-start justify-between gap-4">
         <div>

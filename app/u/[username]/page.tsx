@@ -100,11 +100,7 @@ async function Profile({ params }: { params: Params }) {
     <div>
       <Link href={boardHref} className={navButton}>
         <ChevronLeft />
-        <EncryptedText
-          text={lifter.college ? `${lifter.college.shortName} board` : "All colleges"}
-          scrambleOnHover
-          revealDelayMs={30}
-        />
+        {lifter.college ? `${lifter.college.shortName} board` : "All colleges"}
       </Link>
       <div className="pt-8">
         {isOwner && (
