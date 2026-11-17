@@ -53,7 +53,7 @@ async function Admin({ searchParams }: { searchParams: SearchParams }) {
 
   return (
     <div>
-      <Link href="/" className={navButton}>
+      <Link href="/?all" className={navButton}>
         <ChevronLeft />
         All colleges
       </Link>

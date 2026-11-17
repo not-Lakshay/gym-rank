@@ -9,7 +9,7 @@ export const metadata = {
 export default function TermsPage() {
   return (
     <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-6 px-5 pb-16 pt-10">
-      <Link href="/" className={navButton}>
+      <Link href="/?all" className={navButton}>
         <ChevronLeft />
         Gym Rank
       </Link>

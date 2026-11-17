@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { EncryptedText } from "@/components/ui/encrypted-text";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { auth } from "@/auth";
@@ -14,12 +13,14 @@ import { SignInForm } from "./sign-in";
 
 const PREVIEW = 5;
 
+type SearchParams = Promise<{ all?: string }>;
+
 /*
   The front door. Nobody competes here — they pick a college and compete
   there. So this page has one job above the fold: get the visitor onto the
   right board in one tap. The global preview underneath is the trophy case.
 */
-export default function Home() {
+export default function Home({ searchParams }: { searchParams: SearchParams }) {
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
       <header className="rise pb-6" style={{ "--i": 0 } as React.CSSProperties}>
@@ -66,7 +67,7 @@ export default function Home() {
           </div>
         }
       >
-        <Landing />
+        <Landing searchParams={searchParams} />
       </Suspense>
 
       <Footer home={false} />
@@ -91,12 +92,13 @@ async function AccountLink() {
   return <SignInForm redirectTo="/me" label="Add yours" className={button} />;
 }
 
-async function Landing() {
+async function Landing({ searchParams }: { searchParams: SearchParams }) {
   await connection();
-  const [colleges, global, session] = await Promise.all([
+  const [colleges, global, session, { all }] = await Promise.all([
     getCollegeOptions(),
     getLeaderboard({ global: true }),
     auth(),
+    searchParams,
   ]);
   const viewer = session?.user?.email
     ? await getLifterByEmail(session.user.email).catch(() => null)
@@ -104,10 +106,10 @@ async function Landing() {
 
   /*
     Someone who already has a board typed the domain to get to it, not to
-    the front door. In-app links and prefetches carry the RSC header, so
-    "All colleges" still lands here — only a fresh document load bounces.
+    the front door. Every in-app link here carries ?all, which is the way
+    back to the real front page.
   */
-  if (viewer?.college && !(await headers()).get("rsc")) {
+  if (viewer?.college && all === undefined) {
     redirect(`/c/${viewer.college.slug}`);
   }
 

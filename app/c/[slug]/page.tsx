@@ -208,7 +208,7 @@ function Header({
 }) {
   return (
     <header className="rise pb-5" style={{ "--i": 0 } as React.CSSProperties}>
-      <Link href="/" className={navButton}>
+      <Link href="/?all" className={navButton}>
         <ChevronLeft />
         All colleges
       </Link>

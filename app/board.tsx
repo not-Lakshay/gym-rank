@@ -358,7 +358,7 @@ export function Footer({ i = 6, home = true }: { i?: number; home?: boolean }) {
     >
       <p className="flex flex-wrap gap-2">
         {home && (
-          <Link href="/" className={footerLink}>
+          <Link href="/?all" className={footerLink}>
             All colleges
           </Link>
         )}

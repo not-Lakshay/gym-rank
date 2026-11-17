@@ -16,7 +16,7 @@ export const metadata = {
 export default function ScoringPage() {
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
-      <Link href="/" className={navButton}>
+      <Link href="/?all" className={navButton}>
         <ChevronLeft />
         Leaderboard
       </Link>

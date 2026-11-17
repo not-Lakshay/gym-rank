@@ -37,7 +37,7 @@ type SearchParams = Promise<{ tab?: string }>;
 export default function GlobalPage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
-      <Link href="/" className={navButton}>
+      <Link href="/?all" className={navButton}>
         <ChevronLeft />
         All colleges
       </Link>
