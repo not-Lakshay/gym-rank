@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { BoardRow, LiftRow } from "@/lib/leaderboard";
 import { MOVEMENTS, type Movement } from "@/lib/movements";
-import { batchLabel, batchText, batchesFor } from "@/lib/batch";
+import { batchLabel, batchesFor } from "@/lib/batch";
 
 /** Rank within a sub-board: one plus everyone strictly ahead (ties share). */
 export function rankWithin<T>(rows: T[], score: (r: T) => number) {
@@ -69,6 +69,7 @@ export function Board({
   viewerId,
   medals = false,
   showCollege = false,
+  showBatch = false,
 }: {
   heading: string;
   plate?: string;
@@ -78,6 +79,8 @@ export function Board({
   medals?: boolean;
   /** On the global board the college is the subline, not the co-sign count. */
   showCollege?: boolean;
+  /** LNMIIT's Everyone board: a "Y24" tag beside each name. */
+  showBatch?: boolean;
 }) {
   // Rows arrive sorted by DOTS descending, so the first is the yardstick
   // every bar below is measured against.
@@ -170,6 +173,11 @@ export function Board({
                   >
                     {row.displayName}
                   </Link>
+                  {showBatch && row.batchYear !== null && (
+                    <span className="tnum shrink-0 rounded-sm border border-rule px-1 text-[10px] font-bold leading-[1.4] text-chalk-dim">
+                      {batchLabel(row.batchYear)}
+                    </span>
+                  )}
                   {isViewer && (
                     <span className="shrink-0 rounded-sm bg-accent px-1.5 text-[10px] font-bold uppercase text-iron">
                       you
@@ -662,7 +670,7 @@ export function LiftTab({
         firstIndex={3}
         render={(year, inBatch) => (
           <LiftBoard
-            heading={`${label} · ${batchText(year)}`}
+            heading={`${label} · ${batchLabel(year)}`}
             movement={movement}
             rows={inBatch}
             rankOf={rankWithin(inBatch, (r) => r.score)}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BATCH_COLLEGE, batchOptions, batchText } from "@/lib/batch";
+import { BATCH_COLLEGE, batchOptions, batchLabel } from "@/lib/batch";
 import type { CollegeOption } from "@/lib/colleges";
 import { field } from "./forms";
 
@@ -206,7 +206,7 @@ function BatchField({ defaultBatch }: { defaultBatch: number | null }) {
         <option value="">Prefer not to say</option>
         {batchOptions().map((year) => (
           <option key={year} value={year}>
-            {batchText(year)}
+            {batchLabel(year)}
           </option>
         ))}
       </select>

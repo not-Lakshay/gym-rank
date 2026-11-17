@@ -42,7 +42,7 @@ import {
   type Notification,
 } from "@/lib/notifications";
 import { ordinal, timeAgo } from "@/lib/format";
-import { batchText } from "@/lib/batch";
+import { batchLabel } from "@/lib/batch";
 import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
 import { siteUrl } from "@/lib/site";
@@ -379,7 +379,7 @@ function LifterView({
           <span className="font-normal text-chalk-dim">
             {" "}
             · @{lifter.username}
-            {lifter.batchYear !== null && ` · ${batchText(lifter.batchYear)}`} · {weightClass}
+            {lifter.batchYear !== null && ` · ${batchLabel(lifter.batchYear)}`} · {weightClass}
           </span>
         </p>
 

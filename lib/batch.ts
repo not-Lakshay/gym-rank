@@ -12,30 +12,17 @@ export function newestBatch(now: Date = new Date()): number {
   return now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
 }
 
-/** The batches someone can pick, newest first: the four years of a B.Tech. */
+/**
+ * The batches someone can pick, newest first. Five, so a dual-degree
+ * student in their fifth year still finds theirs.
+ */
 export function batchOptions(now: Date = new Date()): number[] {
   const newest = newestBatch(now);
-  return [0, 1, 2, 3].map((i) => newest - i);
+  return [0, 1, 2, 3, 4].map((i) => newest - i);
 }
 
 export function batchLabel(year: number): string {
   return `Y${String(year % 100).padStart(2, "0")}`;
-}
-
-/** 1 for the batch that joined this academic year, 3 for Y24 in Nov 2026. */
-export function yearOfStudy(batch: number, now: Date = new Date()): number {
-  return newestBatch(now) - batch + 1;
-}
-
-export function ordinalYear(n: number): string {
-  const suffix = n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th";
-  return `${n}${suffix} year`;
-}
-
-/** "Y24 · 3rd year", or just "Y24" once they've graduated. */
-export function batchText(batch: number, now: Date = new Date()): string {
-  const n = yearOfStudy(batch, now);
-  return n >= 1 && n <= 4 ? `${batchLabel(batch)} · ${ordinalYear(n)}` : batchLabel(batch);
 }
 
 /**

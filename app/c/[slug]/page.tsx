@@ -10,7 +10,7 @@ import { getLeaderboard, getLiftBoards } from "@/lib/leaderboard";
 import { getLifterByEmail } from "@/lib/lifters";
 import { plateFor } from "@/lib/plates";
 import { WEIGHT_CLASSES, weightClassFor } from "@/lib/scoring";
-import { BATCH_COLLEGE, batchText } from "@/lib/batch";
+import { BATCH_COLLEGE, batchLabel } from "@/lib/batch";
 import {
   BatchBoards,
   Board,
@@ -176,6 +176,7 @@ async function CollegeBoard({
               rankOf={(r) => r.overallRank}
               viewerId={viewer?.id ?? null}
               medals
+              showBatch={college.slug === BATCH_COLLEGE}
             />
           </div>
 
@@ -205,7 +206,7 @@ async function CollegeBoard({
               firstIndex={5}
               render={(year, inBatch) => (
                 <Board
-                  heading={batchText(year)}
+                  heading={batchLabel(year)}
                   rows={inBatch}
                   rankOf={rankWithin(inBatch, (r) => r.dots)}
                   viewerId={viewer?.id ?? null}
