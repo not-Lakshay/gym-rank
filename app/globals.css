@@ -79,6 +79,9 @@ body {
       rgba(243, 239, 231, 0.035) 9px 10px
     );
   background-attachment: fixed;
+  /* The score's .glow bleeds past the edges on a phone; without this the
+     page pans sideways. clip, not hidden, so nothing becomes a scroller. */
+  overflow-x: clip;
   color: var(--foreground);
   font-family: var(--font-archivo), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
