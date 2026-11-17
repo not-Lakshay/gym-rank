@@ -53,6 +53,8 @@
 
 html {
   color-scheme: dark;
+  /* Backstop with body's: some mobile browsers only honour it on html. */
+  overflow-x: clip;
 }
 
 /*
@@ -164,7 +166,8 @@ h1,
 .glow::before {
   content: "";
   position: absolute;
-  inset: -3rem -4rem;
+  /* Sideways no further than the page gutter (px-5), so a phone can't pan. */
+  inset: -3rem -1.25rem;
   z-index: -1;
   background: radial-gradient(
     closest-side,
