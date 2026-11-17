@@ -198,6 +198,28 @@ h1,
   opacity: 1;
 }
 
+/* A removed lift turns to dust: it blurs, drifts right and spreads out
+   as it fades, rather than just blinking off. */
+@keyframes vanish {
+  0% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateX(0);
+    letter-spacing: normal;
+  }
+  100% {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateX(14px) skewX(-6deg);
+    letter-spacing: 0.25em;
+  }
+}
+
+.vanish {
+  animation: vanish 650ms cubic-bezier(0.55, 0, 0.75, 0.2) forwards;
+  pointer-events: none;
+}
+
 /* Interactive things give a little under the thumb. */
 .press {
   transition:

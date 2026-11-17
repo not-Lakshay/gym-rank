@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import type { ActionState } from "@/app/actions";
 import {
   checkUsernameAction,
@@ -129,10 +129,12 @@ function LiftRow({
   const isPullups = movement.id === "pullups";
   const optional = !TOTAL_MOVEMENTS.includes(movement.id);
   const delta = deltaFor(existing);
+  // True while a removal plays its vanish animation (see RemoveLift).
+  const [vanishing, setVanishing] = useState(false);
 
   return (
     <div className="border-b border-rule py-3">
-      <div className="flex items-center gap-3">
+      <div className={`flex items-center gap-3 ${vanishing ? "vanish" : ""}`}>
         <div className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5 text-[14px] font-medium">
             {movement.label}
@@ -224,6 +226,7 @@ function LiftRow({
           movement={movement}
           cosigns={existing.cosigners.length}
           inTotal={!optional}
+          onVanish={setVanishing}
           onRemoved={() => onChange({ kg: "", reps: "" })}
         />
       )}
@@ -231,77 +234,116 @@ function LiftRow({
   );
 }
 
+// How long the row takes to vanish before the removal is sent; matches
+// the .vanish animation in globals.css.
+const VANISH_MS = 650;
+
 /*
   Two taps, like deleting the account: the first says what will go, the
-  second removes it. It sits inside the lifts form (forms can't nest), so
-  it submits that form to removeLiftAction via formAction instead.
+  second plays the vanish and then removes it. Plain buttons calling the
+  action directly — not a form submit, since the row sits inside the lifts
+  form (forms can't nest) and Enter there must mean Save, not Remove.
 */
 function RemoveLift({
   movement,
   cosigns,
   inTotal,
+  onVanish,
   onRemoved,
 }: {
   movement: (typeof MOVEMENTS)[number];
   cosigns: number;
   /** Squat, bench or deadlift: removing it takes away the DOTS score. */
   inTotal: boolean;
+  /** Starts (true) or undoes (false) the row's vanish animation. */
+  onVanish: (on: boolean) => void;
   /** Empties the row, so the old numbers aren't sitting there to re-save. */
   onRemoved: () => void;
 }) {
-  const [state, action, pending] = useActionState(removeLiftAction, initial);
   const [armed, setArmed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const name = movement.label.toLowerCase();
 
-  useEffect(() => {
-    if (state.savedAt) onRemoved();
-    // Only when a removal lands, not when the parent re-renders.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.savedAt]);
+  const remove = () => {
+    setBusy(true);
+    setError(null);
+    onVanish(true);
+    startTransition(async () => {
+      await new Promise((r) => setTimeout(r, VANISH_MS));
+      const result = await removeLiftAction(movement.id, initial);
+      if (result.error) {
+        setError(result.error);
+        onVanish(false); // it failed: bring the row back
+        setBusy(false);
+      } else {
+        onRemoved();
+      }
+    });
+  };
 
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+    <div className="mt-2">
       {armed ? (
-        <>
-          <button
-            type="submit"
-            formAction={action}
-            name="movement"
-            value={movement.id}
-            disabled={pending}
-            className="press text-[12px] font-bold text-[var(--plate-25)] underline-offset-4 hover:underline"
-          >
-            {pending ? "Removing…" : `Yes, remove my ${name}`}
-          </button>
-          <button
-            type="button"
-            onClick={() => setArmed(false)}
-            className="text-[12px] text-chalk-faint hover:text-chalk"
-          >
-            Keep it
-          </button>
-          <p className="basis-full text-[12px] leading-relaxed text-chalk-dim">
+        <div className="rounded-sm border border-[color-mix(in_oklab,var(--plate-25)_45%,transparent)] bg-[color-mix(in_oklab,var(--plate-25)_8%,transparent)] p-3">
+          <p className="text-[12px] leading-relaxed text-chalk-dim">
             Removes your {name}
             {cosigns > 0 && ` and its ${cosigns} co-sign${cosigns === 1 ? "" : "s"}`}.
             {inTotal &&
               " Your DOTS score needs squat, bench and deadlift, so you'll leave the board until you enter it again."}
           </p>
-        </>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={remove}
+              disabled={busy}
+              className="press inline-flex min-h-9 items-center rounded-sm bg-[var(--plate-25)] px-3 text-[13px] font-bold text-chalk hover:opacity-85 disabled:opacity-60"
+            >
+              {busy ? "Removing…" : `Yes, remove my ${name}`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setArmed(false)}
+              disabled={busy}
+              className={`${secondary} min-h-9 px-3 text-[13px]`}
+            >
+              Keep it
+            </button>
+          </div>
+        </div>
       ) : (
         <button
           type="button"
           onClick={() => setArmed(true)}
-          className="text-[12px] text-chalk-faint underline-offset-4 hover:text-chalk hover:underline"
+          className="press inline-flex min-h-8 items-center gap-1.5 rounded-sm border border-rule px-2.5 text-[12px] font-medium text-chalk-dim hover:border-[var(--plate-25)] hover:text-[var(--plate-25)]"
         >
+          <TrashIcon />
           Remove
         </button>
       )}
-      {state.error && (
-        <p role="alert" className="basis-full text-[12px] text-[var(--plate-25)]">
-          {state.error}
+      {error && (
+        <p role="alert" className="mt-2 text-[12px] text-[var(--plate-25)]">
+          {error}
         </p>
       )}
     </div>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 16 16"
+      className="h-3.5 w-3.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M2.5 4.5h11M6.5 4.5V3h3v1.5M4 4.5l.7 8.5h6.6l.7-8.5M6.8 7v4M9.2 7v4" />
+    </svg>
   );
 }
 

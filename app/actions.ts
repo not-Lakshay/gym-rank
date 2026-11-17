@@ -215,15 +215,18 @@ export async function saveLiftsAction(
  * no total, so removing one also takes you off the board until re-entered.
  */
 export async function removeLiftAction(
+  // Bound by the button (removeLiftAction.bind(null, id)). Reading it from
+  // the submitting button's name/value lost it, and every removal failed.
+  movementId: string,
   _prev: ActionState,
-  formData: FormData,
 ): Promise<ActionState> {
   const email = await requireEmail();
   if (!email) return fail("You are signed out. Sign in again.");
   const lifter = await getLifterByEmail(email);
   if (!lifter) return fail("Set up your profile first.");
 
-  const movement = MOVEMENTS.find((m) => m.id === formData.get("movement"));
+  // Still checked: a bound argument comes from the client like any other.
+  const movement = MOVEMENTS.find((m) => m.id === movementId);
   if (!movement) return fail("Unknown movement.");
 
   if (!(await removeLift(lifter.id, movement.id))) {
