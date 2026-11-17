@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EncryptedText } from "@/components/ui/encrypted-text";
 
 export const metadata = {
   title: "Terms — Gym Rank",
@@ -14,7 +15,7 @@ export default function TermsPage() {
       </Link>
 
       <h1 className="pt-2 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
-        Terms of use
+        <EncryptedText text="Terms of use" charset="ABCDEFGHIJKLMNOPQRSTUVWXYZ" revealDelayMs={55} />
       </h1>
 
       <p className={muted}>
