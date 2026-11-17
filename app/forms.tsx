@@ -134,7 +134,7 @@ function LiftRow({
 
   return (
     <div className="border-b border-rule py-3">
-      <div className={`flex items-center gap-3 ${vanishing ? "vanish" : ""}`}>
+      <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5 text-[14px] font-medium">
             {movement.label}
@@ -144,7 +144,7 @@ function LiftRow({
               </span>
             )}
           </span>
-          <span className="tnum block text-[11px] text-chalk-faint">
+          <span className={`tnum block text-[11px] text-chalk-faint ${vanishing ? "vanish" : ""}`}>
             {existing
               ? isPullups
                 ? `${existing.reps} reps`
@@ -195,7 +195,7 @@ function LiftRow({
             onChange={(e) => onChange({ ...row, kg: e.target.value })}
             placeholder="kg"
             aria-label={`${movement.label} weight in kg`}
-            className={field}
+            className={`${field} ${vanishing ? "vanish-value" : ""}`}
           />
         )}
 
@@ -210,7 +210,7 @@ function LiftRow({
           onChange={(e) => onChange({ ...row, reps: e.target.value })}
           placeholder="reps"
           aria-label={`${movement.label} reps`}
-          className={field}
+          className={`${field} ${vanishing ? "vanish-value" : ""}`}
         />
       </div>
 
@@ -277,7 +277,10 @@ function RemoveLift({
         onVanish(false); // it failed: bring the row back
         setBusy(false);
       } else {
+        // Empty the boxes, then end the animation so the row is visible
+        // again — the row stays, only the numbers go.
         onRemoved();
+        onVanish(false);
       }
     });
   };

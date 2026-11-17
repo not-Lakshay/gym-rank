@@ -198,8 +198,10 @@ h1,
   opacity: 1;
 }
 
-/* A removed lift turns to dust: it blurs, drifts right and spreads out
-   as it fades, rather than just blinking off. */
+/* A removed lift's numbers turn to dust: the text blurs, drifts right and
+   spreads out as it fades, rather than just blinking off. Only the numbers
+   — the row and its label stay. .vanish is for plain text; .vanish-value
+   fades just the value inside an input, leaving the box itself in place. */
 @keyframes vanish {
   0% {
     opacity: 1;
@@ -217,6 +219,28 @@ h1,
 
 .vanish {
   animation: vanish 650ms cubic-bezier(0.55, 0, 0.75, 0.2) forwards;
+  pointer-events: none;
+}
+
+@keyframes vanish-value {
+  0% {
+    color: var(--chalk);
+    text-shadow: 0 0 0 transparent;
+    letter-spacing: normal;
+  }
+  60% {
+    color: transparent;
+    text-shadow: 0 0 6px var(--chalk-dim);
+  }
+  100% {
+    color: transparent;
+    text-shadow: 0 0 12px transparent;
+    letter-spacing: 0.3em;
+  }
+}
+
+.vanish-value {
+  animation: vanish-value 650ms ease-in forwards;
   pointer-events: none;
 }
 
