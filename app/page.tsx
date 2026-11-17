@@ -132,7 +132,7 @@ async function Landing({ searchParams }: { searchParams: SearchParams }) {
       )}
 
       <section className="rise" style={{ "--i": 1 } as React.CSSProperties}>
-        <h2 className="flex items-center justify-between text-[13px] font-medium text-chalk-dim">
+        <h2 className="flex items-center justify-between caption">
           Your college
           <span className="tnum text-[11px] font-normal text-chalk-faint">
             {withBoards} with boards · {colleges.length} listed
@@ -144,7 +144,7 @@ async function Landing({ searchParams }: { searchParams: SearchParams }) {
       </section>
 
       <section className="rise pt-12" style={{ "--i": 2 } as React.CSSProperties}>
-        <h2 className="text-[13px] font-medium text-chalk-dim">Global board</h2>
+        <h2 className="caption">Global board</h2>
         <p className="mt-1 text-[12px] leading-relaxed text-chalk-faint">
           Every college together. Only lifters with all three lifts co-signed
           by someone who watched them.

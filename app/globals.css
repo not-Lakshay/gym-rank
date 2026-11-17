@@ -26,6 +26,11 @@
   --silver: #b9b4ab;
   --bronze: #b8743f;
 
+  /* The page's one colour. Gold by default; a class board sets it to its
+     plate, so links, the edge of the card and the glow all say which
+     board this is. */
+  --accent: var(--gold);
+
   --background: var(--iron);
   --foreground: var(--chalk);
 }
@@ -42,6 +47,7 @@
   --color-gold: var(--gold);
   --color-silver: var(--silver);
   --color-bronze: var(--bronze);
+  --color-accent: var(--accent);
   --font-sans: var(--font-archivo);
 }
 
@@ -59,18 +65,18 @@ body {
   background-image:
     radial-gradient(
       80rem 40rem at 50% -20rem,
-      rgba(243, 239, 231, 0.07),
+      color-mix(in oklab, var(--accent) 13%, transparent),
       transparent 60%
     ),
     repeating-linear-gradient(
       45deg,
       transparent 0 9px,
-      rgba(243, 239, 231, 0.018) 9px 10px
+      rgba(243, 239, 231, 0.035) 9px 10px
     ),
     repeating-linear-gradient(
       -45deg,
       transparent 0 9px,
-      rgba(243, 239, 231, 0.018) 9px 10px
+      rgba(243, 239, 231, 0.035) 9px 10px
     );
   background-attachment: fixed;
   color: var(--foreground);
@@ -78,11 +84,33 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* A raised panel: boards and the calculator sit on it. */
+/* A raised panel: boards and the calculator sit on it. The left edge is
+   painted in the accent, like the coloured rim of a plate. */
 .card {
   border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
   border-radius: 0.125rem;
   background: color-mix(in oklab, var(--iron-raised) 55%, transparent);
+}
+
+/* Scoreboard face: Archivo pulled narrow and heavy. Page titles get it by
+   default; big numbers opt in with the class. */
+h1,
+.display {
+  font-variation-settings: "wdth" 72;
+  font-weight: 900;
+}
+
+/* Section labels read as captions on a scoreboard, not faded prose.
+   In a layer so a utility (tighter tracking) can still override it. */
+@layer components {
+  .caption {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--chalk-dim);
+  }
 }
 
 /* Sections rise in on arrival. --i staggers them; set it inline. */
@@ -184,8 +212,13 @@ body {
 }
 
 /* Board rows: the name slides a touch right on hover, the bar brightens. */
+/* --row-tint washes the top three in their medal colour. */
 .row {
+  background-color: var(--row-tint, transparent);
   transition: background-color 150ms ease;
+}
+.row:hover {
+  background-color: var(--iron-raised);
 }
 .row .row-name {
   transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -234,7 +267,7 @@ input[type="number"] {
 }
 
 :focus-visible {
-  outline: 2px solid var(--chalk);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 

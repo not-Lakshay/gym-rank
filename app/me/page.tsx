@@ -393,7 +393,7 @@ function LifterView({
 
       {notifications.length > 0 && (
         <section className="rise pt-10" style={{ "--i": 1 } as React.CSSProperties}>
-          <h2 className="flex items-center justify-between border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
+          <h2 className="flex items-center justify-between border-b border-rule pb-2 caption">
             Since you were last here
             {unseen > 0 && (
               <span className="rounded-sm bg-chalk px-1.5 text-[10px] font-bold uppercase text-iron">
@@ -426,7 +426,7 @@ function LifterView({
       )}
 
       <section className="rise pt-10" style={{ "--i": 2 } as React.CSSProperties}>
-        <h2 className="border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
+        <h2 className="border-b border-rule pb-2 caption">
           Your lifts
         </h2>
 
@@ -444,7 +444,7 @@ function LifterView({
       </section>
 
       <section className="rise pt-10" style={{ "--i": 3 } as React.CSSProperties}>
-        <h2 className="border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
+        <h2 className="border-b border-rule pb-2 caption">
           Get co-signed
         </h2>
         <p className="mt-3 text-[13px] leading-relaxed text-chalk-dim">

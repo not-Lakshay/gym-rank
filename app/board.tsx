@@ -47,10 +47,10 @@ export function Stats({ rows }: { rows: BoardRow[] }) {
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="bg-iron px-3 py-2.5">
-      <dd className="tnum text-[20px] font-extrabold leading-none tracking-[-0.02em]">
+      <dd className="tnum display text-[22px] leading-none tracking-[-0.02em]">
         <CountUp value={value} decimals={0} durationMs={900} />
       </dd>
-      <dt className="mt-1 text-[11px] text-chalk-dim">{label}</dt>
+      <dt className="caption mt-1 tracking-[0.04em]">{label}</dt>
     </div>
   );
 }
@@ -78,8 +78,8 @@ export function Board({
   const topDots = rows[0]?.dots ?? 0;
 
   return (
-    <section>
-      <h2 className="mb-2 flex items-center justify-between gap-2 text-[13px] font-medium text-chalk-dim">
+    <section style={plate ? ({ "--accent": plate } as React.CSSProperties) : undefined}>
+      <h2 className="caption mb-2 flex items-center justify-between gap-2">
         <span className="flex items-center gap-2">
           {plate && (
             <span
@@ -90,7 +90,7 @@ export function Board({
           )}
           {heading}
         </span>
-        <span className="text-[11px] font-normal text-chalk-faint">
+        <span className="text-[11px] font-normal normal-case tracking-normal text-chalk-faint">
           bar = score vs #1
         </span>
       </h2>
@@ -110,9 +110,16 @@ export function Board({
           return (
             <li
               key={row.id}
-              className={`row relative flex items-center gap-3 border-b border-rule py-3 last:border-b-0 hover:bg-iron-raised ${
-                isViewer ? "-mx-2 rounded-sm px-2 ring-1 ring-chalk-faint/40" : ""
-              }`}
+              className={`row relative flex items-center gap-3 border-b border-rule last:border-b-0 ${
+                leading ? "py-4" : "py-3"
+              } ${isViewer ? "-mx-2 rounded-sm px-2 ring-1 ring-accent/60" : ""}`}
+              style={
+                medal
+                  ? ({
+                      "--row-tint": `color-mix(in oklab, ${medal} 9%, transparent)`,
+                    } as React.CSSProperties)
+                  : undefined
+              }
             >
               <span
                 aria-hidden
@@ -162,7 +169,7 @@ export function Board({
                     {row.displayName}
                   </Link>
                   {isViewer && (
-                    <span className="shrink-0 rounded-sm bg-chalk px-1.5 text-[10px] font-bold uppercase text-iron">
+                    <span className="shrink-0 rounded-sm bg-accent px-1.5 text-[10px] font-bold uppercase text-iron">
                       you
                     </span>
                   )}
@@ -199,7 +206,7 @@ export function Board({
               <span className="relative shrink-0 text-right">
                 <span
                   className={`tnum block leading-none ${
-                    leading ? "text-[22px] font-extrabold" : "text-[17px] font-bold"
+                    leading ? "display text-[26px]" : "text-[17px] font-bold"
                   }`}
                 >
                   <CountUp value={row.dots} durationMs={700 + index * 60} />
@@ -411,7 +418,7 @@ export function BoardTabs({ base, active }: { base: string; active: BoardTab }) 
             aria-current={current ? "page" : undefined}
             className={`press inline-flex min-h-9 shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 text-[13px] font-medium transition-colors ${
               current
-                ? "border-chalk bg-chalk text-iron"
+                ? "border-accent bg-accent text-iron"
                 : "border-rule text-chalk-dim hover:border-chalk-faint hover:text-chalk"
             }`}
           >
@@ -446,8 +453,8 @@ export function LiftBoard({
   const topScore = rows[0]?.score ?? 0;
 
   return (
-    <section>
-      <h2 className="mb-2 flex items-center justify-between gap-2 text-[13px] font-medium text-chalk-dim">
+    <section style={plate ? ({ "--accent": plate } as React.CSSProperties) : undefined}>
+      <h2 className="caption mb-2 flex items-center justify-between gap-2">
         <span className="flex items-center gap-2">
           {plate && (
             <span
@@ -458,7 +465,7 @@ export function LiftBoard({
           )}
           {heading}
         </span>
-        <span className="text-[11px] font-normal text-chalk-faint">
+        <span className="text-[11px] font-normal normal-case tracking-normal text-chalk-faint">
           {isPullups ? "ranked by reps" : "ranked by kg, adjusted for bodyweight"}
         </span>
       </h2>
@@ -474,9 +481,16 @@ export function LiftBoard({
           return (
             <li
               key={row.id}
-              className={`row relative flex items-center gap-3 border-b border-rule py-3 last:border-b-0 hover:bg-iron-raised ${
-                isViewer ? "-mx-2 rounded-sm px-2 ring-1 ring-chalk-faint/40" : ""
-              }`}
+              className={`row relative flex items-center gap-3 border-b border-rule last:border-b-0 ${
+                leading ? "py-4" : "py-3"
+              } ${isViewer ? "-mx-2 rounded-sm px-2 ring-1 ring-accent/60" : ""}`}
+              style={
+                medal
+                  ? ({
+                      "--row-tint": `color-mix(in oklab, ${medal} 9%, transparent)`,
+                    } as React.CSSProperties)
+                  : undefined
+              }
             >
               <span
                 aria-hidden
@@ -523,7 +537,7 @@ export function LiftBoard({
                     {row.displayName}
                   </Link>
                   {isViewer && (
-                    <span className="shrink-0 rounded-sm bg-chalk px-1.5 text-[10px] font-bold uppercase text-iron">
+                    <span className="shrink-0 rounded-sm bg-accent px-1.5 text-[10px] font-bold uppercase text-iron">
                       you
                     </span>
                   )}
@@ -556,7 +570,7 @@ export function LiftBoard({
               <span className="relative shrink-0 text-right">
                 <span
                   className={`tnum block leading-none ${
-                    leading ? "text-[22px] font-extrabold" : "text-[17px] font-bold"
+                    leading ? "display text-[26px]" : "text-[17px] font-bold"
                   }`}
                 >
                   {isPullups ? (
@@ -691,6 +705,16 @@ export function ClassBoards<T extends { weightClass: string }>({
       <summary className="press flex min-h-11 w-full cursor-pointer list-none items-center justify-between gap-2 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk group-open:border-chalk-faint group-open:text-chalk [&::-webkit-details-marker]:hidden">
         Weight classes
         <span className="flex items-center gap-2 text-[11px] text-chalk-faint">
+          {/* A plate chip per open board, so the colours are visible before opening. */}
+          <span aria-hidden className="flex gap-1">
+            {shown.map((c) => (
+              <span
+                key={c.label}
+                className="h-2.5 w-2.5 rounded-full"
+                style={{ background: plateFor(c.label) }}
+              />
+            ))}
+          </span>
           {shown.length} with {MIN_CLASS_SIZE}+ lifters
           <Chevron />
         </span>

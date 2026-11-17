@@ -76,7 +76,7 @@ async function Admin({ searchParams }: { searchParams: SearchParams }) {
 
       {focus && (
         <section className="mt-10 rounded-sm border border-rule bg-iron-raised p-4">
-          <h2 className="flex items-center justify-between text-[13px] font-medium text-chalk-dim">
+          <h2 className="flex items-center justify-between caption">
             <span>
               Lifts of <span className="text-chalk">{focus.displayName}</span> @
               {focus.username}
@@ -112,7 +112,7 @@ async function Admin({ searchParams }: { searchParams: SearchParams }) {
       )}
 
       <section className="mt-10">
-        <h2 className="border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
+        <h2 className="border-b border-rule pb-2 caption">
           Lifters · {lifters.length}
         </h2>
         <ol>
@@ -143,7 +143,7 @@ async function Admin({ searchParams }: { searchParams: SearchParams }) {
       </section>
 
       <section className="mt-10">
-        <h2 className="border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
+        <h2 className="border-b border-rule pb-2 caption">
           Add a college
         </h2>
         <p className="mb-4 mt-3 text-[12px] leading-relaxed text-chalk-faint">
@@ -160,7 +160,7 @@ function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="bg-iron px-3 py-2.5">
       <dd className="tnum text-[20px] font-extrabold leading-none">{value}</dd>
-      <dt className="mt-1 text-[11px] text-chalk-dim">{label}</dt>
+      <dt className="caption mt-1">{label}</dt>
     </div>
   );
 }

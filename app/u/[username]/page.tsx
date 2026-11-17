@@ -177,7 +177,7 @@ async function Profile({ params }: { params: Params }) {
         </section>
 
         <section className="rise pt-10" style={{ "--i": 1 } as React.CSSProperties}>
-          <h2 className="border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
+          <h2 className="border-b border-rule pb-2 caption">
             Lifts
           </h2>
           {lifts.length === 0 && (

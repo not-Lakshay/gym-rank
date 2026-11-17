@@ -4,14 +4,16 @@ import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 /*
-  One family, used across three weights. Archivo is a grotesque with true
-  tabular figures, which matters more here than anything else: every screen
-  in this app is a column of numbers that has to line up.
+  One family. Archivo is a grotesque with true tabular figures, which
+  matters more here than anything else: every screen in this app is a
+  column of numbers that has to line up. Loaded as the variable font with
+  its width axis, so headings and big scores can go condensed and heavy
+  (.display) — the scoreboard face — without a second family.
 */
 const archivo = Archivo({
   variable: "--font-archivo",
   subsets: ["latin"],
-  weight: ["400", "500", "700", "800"],
+  axes: ["wdth"],
 });
 
 export const metadata: Metadata = {

@@ -130,7 +130,7 @@ function Section({
 }) {
   return (
     <section className="pt-10">
-      <h2 className="border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
+      <h2 className="border-b border-rule pb-2 caption">
         {title}
       </h2>
       <div className="pt-3">{children}</div>
