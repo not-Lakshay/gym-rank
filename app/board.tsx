@@ -685,12 +685,12 @@ export function ClassBoards<T extends { weightClass: string }>({
     // Closed by default: the overall board is the page, and a dozen class
     // boards underneath turned it into a scroll.
     <details
-      className="rise group mt-10"
+      className="rise drawer group mt-10"
       style={{ "--i": firstIndex } as React.CSSProperties}
     >
-      <summary className="press flex min-h-11 cursor-pointer list-none items-center justify-between border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim hover:text-chalk [&::-webkit-details-marker]:hidden">
+      <summary className="press flex min-h-11 w-full cursor-pointer list-none items-center justify-between gap-2 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk group-open:border-chalk-faint group-open:text-chalk [&::-webkit-details-marker]:hidden">
         Weight classes
-        <span className="flex items-center gap-2 text-[11px] font-normal text-chalk-faint">
+        <span className="flex items-center gap-2 text-[11px] text-chalk-faint">
           {shown.length} with {MIN_CLASS_SIZE}+ lifters
           <Chevron />
         </span>

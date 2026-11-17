@@ -164,6 +164,32 @@ body::before {
   pointer-events: none;
 }
 
+/*
+  A <details> that slides instead of snapping. Needs interpolate-size to
+  animate to an auto height; browsers without ::details-content just open
+  it instantly, which is the behaviour we had before.
+*/
+@supports (interpolate-size: allow-keywords) {
+  .drawer {
+    interpolate-size: allow-keywords;
+  }
+}
+
+.drawer::details-content {
+  block-size: 0;
+  overflow: clip;
+  opacity: 0;
+  transition:
+    block-size 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 220ms ease,
+    content-visibility 300ms allow-discrete;
+}
+
+.drawer[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+}
+
 /* Interactive things give a little under the thumb. */
 .press {
   transition:
