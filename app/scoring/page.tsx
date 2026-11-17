@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { EncryptedText } from "@/components/ui/encrypted-text";
+import { EncryptedBlock } from "@/components/ui/encrypted-block";
 
 export const metadata = {
   title: "How scoring works — Gym Rank",
@@ -21,8 +21,10 @@ export default function ScoringPage() {
         Leaderboard
       </Link>
 
+      <EncryptedBlock>
+
       <h1 className="pt-8 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
-        <EncryptedText text="How scoring works" charset="ABCDEFGHIJKLMNOPQRSTUVWXYZ" revealDelayMs={55} />
+        How scoring works
       </h1>
       <p className="mt-3 text-[13px] leading-relaxed text-chalk-dim">
         If you weigh more, you lift more. Raw totals can&rsquo;t be compared
@@ -114,6 +116,7 @@ export default function ScoringPage() {
           strength scales slower than mass.
         </p>
       </Section>
+      </EncryptedBlock>
     </main>
   );
 }

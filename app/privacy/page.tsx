@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { EncryptedText } from "@/components/ui/encrypted-text";
+import { EncryptedBlock } from "@/components/ui/encrypted-block";
 
 export const metadata = {
   title: "Privacy — Gym Rank",
@@ -14,8 +14,10 @@ export default function PrivacyPage() {
         Gym Rank
       </Link>
 
+      <EncryptedBlock>
+
       <h1 className="pt-2 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
-        <EncryptedText text="Privacy" charset="ABCDEFGHIJKLMNOPQRSTUVWXYZ" revealDelayMs={55} />
+        Privacy
       </h1>
 
       <p className={muted}>
@@ -108,6 +110,7 @@ export default function PrivacyPage() {
       </Section>
 
       <p className="text-xs text-chalk-faint">Last updated 15 November 2026.</p>
+      </EncryptedBlock>
     </main>
   );
 }
