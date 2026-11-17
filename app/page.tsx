@@ -89,7 +89,7 @@ async function AccountLink() {
     );
   }
 
-  return <SignInForm redirectTo="/me" label="Add yours" className={button} />;
+  return <SignInForm redirectTo="/me" label="Add yours" className={button} compact />;
 }
 
 async function Landing({ searchParams }: { searchParams: SearchParams }) {

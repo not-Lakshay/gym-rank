@@ -121,14 +121,14 @@ async function CollegeBoard({
       Your lifts
     </Link>
   ) : (
-    <SignInForm redirectTo={redirectTo} label="Add yours" className={button} />
+    <SignInForm redirectTo={redirectTo} label="Add yours" className={button} compact />
   );
 
   const calculator = session?.user ? null : (
     <Calculator
       boardDots={rows.map((r) => r.dots)}
       signInForm={
-        <SignInForm redirectTo={redirectTo} label="Save it" className={button} />
+        <SignInForm redirectTo={redirectTo} label="Save it" className={button} compact />
       }
     />
   );
