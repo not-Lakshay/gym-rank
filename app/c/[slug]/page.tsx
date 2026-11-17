@@ -10,7 +10,9 @@ import { getLeaderboard, getLiftBoards } from "@/lib/leaderboard";
 import { getLifterByEmail } from "@/lib/lifters";
 import { plateFor } from "@/lib/plates";
 import { WEIGHT_CLASSES, weightClassFor } from "@/lib/scoring";
+import { BATCH_COLLEGE, batchText } from "@/lib/batch";
 import {
+  BatchBoards,
   Board,
   BoardSkeleton,
   BoardTabs,
@@ -21,6 +23,7 @@ import {
   LiftTab,
   Stats,
   button,
+  rankWithin,
   navButton,
   shortClass,
   tabFrom,
@@ -144,6 +147,7 @@ async function CollegeBoard({
           rows={liftBoards[tab]}
           viewerId={viewer?.id ?? null}
           viewerClass={viewerClass}
+          viewerBatch={college.slug === BATCH_COLLEGE ? viewer?.batchYear ?? null : null}
           emptyNote={`One entry puts you on it. Sign in, enter your ${
             tab === "pullups" ? "max reps" : "last working set"
           }, and you are first at ${college.shortName} by default.`}
@@ -193,6 +197,22 @@ async function CollegeBoard({
               />
             )}
           />
+
+          {college.slug === BATCH_COLLEGE && (
+            <BatchBoards
+              rows={rows}
+              viewerBatch={viewer?.batchYear ?? null}
+              firstIndex={5}
+              render={(year, inBatch) => (
+                <Board
+                  heading={batchText(year)}
+                  rows={inBatch}
+                  rankOf={rankWithin(inBatch, (r) => r.dots)}
+                  viewerId={viewer?.id ?? null}
+                />
+              )}
+            />
+          )}
         </div>
       )}
     </div>

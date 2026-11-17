@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { BATCH_COLLEGE, batchOptions, batchText } from "@/lib/batch";
 import type { CollegeOption } from "@/lib/colleges";
 import { field } from "./forms";
 
@@ -92,11 +93,13 @@ export function CollegeField({
   colleges,
   defaultSlug,
   locked,
+  defaultBatch,
 }: {
   colleges: CollegeOption[];
   defaultSlug: string | null;
   /** Set when the sign-in email decided the college. Not changeable. */
-  locked: { shortName: string; name: string } | null;
+  locked: { slug: string; shortName: string; name: string } | null;
+  defaultBatch: number | null;
 }) {
   const [slug, setSlug] = useState(defaultSlug);
   const [query, setQuery] = useState("");
@@ -112,6 +115,7 @@ export function CollegeField({
             {locked.name} · from your sign-in email
           </span>
         </p>
+        {locked.slug === BATCH_COLLEGE && <BatchField defaultBatch={defaultBatch} />}
       </div>
     );
   }
@@ -184,6 +188,31 @@ export function CollegeField({
           </ul>
         </div>
       )}
+      {slug === BATCH_COLLEGE && <BatchField defaultBatch={defaultBatch} />}
     </div>
+  );
+}
+
+/* LNMIIT only: which batch you joined with. Optional — blank saves none. */
+function BatchField({ defaultBatch }: { defaultBatch: number | null }) {
+  return (
+    <label className="mt-3 flex flex-col gap-1.5">
+      <span className="text-[12px] text-chalk-dim">Batch</span>
+      <select
+        name="batchYear"
+        defaultValue={defaultBatch ?? ""}
+        className={`${field} w-full text-left`}
+      >
+        <option value="">Prefer not to say</option>
+        {batchOptions().map((year) => (
+          <option key={year} value={year}>
+            {batchText(year)}
+          </option>
+        ))}
+      </select>
+      <span className="text-[12px] text-chalk-faint">
+        The August you joined. Puts you on your batch&rsquo;s board.
+      </span>
+    </label>
   );
 }

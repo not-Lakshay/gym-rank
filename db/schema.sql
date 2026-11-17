@@ -40,6 +40,11 @@ create index if not exists lifters_college_idx on lifters (college_id);
 alter table lifters add column if not exists username text;
 create unique index if not exists lifters_username_idx on lifters (lower(username));
 
+-- LNMIIT only: the year someone joined (2024 = the Y24 batch). Null for
+-- everyone else and for anyone who'd rather not say. lib/batch.ts.
+alter table lifters add column if not exists batch_year smallint
+  check (batch_year between 2000 and 2100);
+
 create table if not exists lifts (
   id            uuid primary key default gen_random_uuid(),
   lifter_id     uuid not null references lifters(id) on delete cascade,

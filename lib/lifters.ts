@@ -18,11 +18,13 @@ export type Lifter = {
   bodyweightKg: number;
   /** Null until they pick one; a lifter with no college is on no board. */
   college: College | null;
+  /** LNMIIT only: the year they joined (2024 = Y24). Null otherwise. */
+  batchYear: number | null;
 };
 
 // A constant column list, not user input — the one case sql.unsafe is for.
 const lifterColumns = sql.unsafe(`
-  lf.id, lf.email, lf.username, lf.display_name, lf.bodyweight_kg,
+  lf.id, lf.email, lf.username, lf.display_name, lf.bodyweight_kg, lf.batch_year,
   c.id as college_id, c.slug as college_slug, c.name as college_name,
   c.short_name as college_short, c.city as college_city, c.state as college_state
 `);
@@ -34,6 +36,7 @@ function lifterFromRow(row: Record<string, unknown>): Lifter {
     username: row.username as string,
     displayName: row.display_name as string,
     bodyweightKg: num(row.bodyweight_kg),
+    batchYear: row.batch_year === null ? null : Number(row.batch_year),
     college:
       row.college_id === null
         ? null
@@ -125,17 +128,19 @@ export async function upsertProfile(params: {
   displayName: string;
   bodyweightKg: number;
   collegeId: number;
+  batchYear: number | null;
 }): Promise<{ id: string; isNew: boolean }> {
-  const { email, username, displayName, bodyweightKg, collegeId } = params;
+  const { email, username, displayName, bodyweightKg, collegeId, batchYear } = params;
   try {
     const rows = await sql`
-      insert into lifters (email, username, display_name, bodyweight_kg, college_id)
-      values (${email}, ${username}, ${displayName}, ${bodyweightKg}, ${collegeId})
+      insert into lifters (email, username, display_name, bodyweight_kg, college_id, batch_year)
+      values (${email}, ${username}, ${displayName}, ${bodyweightKg}, ${collegeId}, ${batchYear})
       on conflict (email) do update
         set username      = excluded.username,
             display_name  = excluded.display_name,
             bodyweight_kg = excluded.bodyweight_kg,
             college_id    = excluded.college_id,
+            batch_year    = excluded.batch_year,
             updated_at    = now()
       returning id, (xmax = 0) as is_new
     `;

@@ -42,6 +42,7 @@ import {
   type Notification,
 } from "@/lib/notifications";
 import { ordinal, timeAgo } from "@/lib/format";
+import { batchText } from "@/lib/batch";
 import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
 import { siteUrl } from "@/lib/site";
@@ -193,8 +194,11 @@ async function buildCollegeField(
       colleges={colleges}
       defaultSlug={lifter?.college?.slug ?? urlSlug}
       locked={
-        detected ? { shortName: detected.shortName, name: detected.name } : null
+        detected
+          ? { slug: detected.slug, shortName: detected.shortName, name: detected.name }
+          : null
       }
+      defaultBatch={lifter?.batchYear ?? null}
     />
   );
 }
@@ -374,7 +378,8 @@ function LifterView({
           {lifter.displayName}
           <span className="font-normal text-chalk-dim">
             {" "}
-            · @{lifter.username} · {weightClass}
+            · @{lifter.username}
+            {lifter.batchYear !== null && ` · ${batchText(lifter.batchYear)}`} · {weightClass}
           </span>
         </p>
 

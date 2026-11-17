@@ -23,6 +23,7 @@ import {
   summarise,
 } from "@/lib/lifters";
 import { getRankFor } from "@/lib/leaderboard";
+import { batchText } from "@/lib/batch";
 import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
 import { CountUp } from "@/app/score";
@@ -135,6 +136,9 @@ async function Profile({ params }: { params: Params }) {
           <p className="mt-1.5 text-[13px] text-chalk-dim">
             <span className="text-chalk">@{lifter.username}</span>
             {lifter.college && <span> · {lifter.college.shortName}</span>}
+            {lifter.batchYear !== null && (
+              <span> · {batchText(lifter.batchYear)}</span>
+            )}
             <span> · {weightClass}</span>
             {summary.totalKg !== null && (
               <span className="tnum"> · {summary.totalKg.toFixed(0)} kg total</span>

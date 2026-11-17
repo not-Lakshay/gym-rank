@@ -2,6 +2,7 @@
 
 import { refresh } from "next/cache";
 import { auth, signIn, signOut } from "@/auth";
+import { BATCH_COLLEGE, batchOptions } from "@/lib/batch";
 import { collegeForEmail, getCollegeBySlug } from "@/lib/colleges";
 import { getRankFor } from "@/lib/leaderboard";
 import {
@@ -113,6 +114,12 @@ export async function saveProfileAction(
     (await getCollegeBySlug(String(formData.get("collegeSlug") ?? "")));
   if (!college) return fail("Pick your college.");
 
+  // Batch is LNMIIT-only and optional; anything else, or a year outside
+  // the current batches, is dropped rather than trusted.
+  const rawBatch = Number(formData.get("batchYear"));
+  const batchYear =
+    college.slug === BATCH_COLLEGE && batchOptions().includes(rawBatch) ? rawBatch : null;
+
   // Bodyweight moves the score, so a profile edit can pass people too.
   const existing = await getLifterByEmail(email);
   const before = existing ? (await getRankFor(existing.id))?.dots ?? null : null;
@@ -125,6 +132,7 @@ export async function saveProfileAction(
       displayName,
       bodyweightKg,
       collegeId: college.id,
+      batchYear,
     });
   } catch (err) {
     if (err instanceof UsernameTakenError) return fail(`@${username} is taken.`);

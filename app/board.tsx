@@ -1,6 +1,12 @@
 import Link from "next/link";
 import type { BoardRow, LiftRow } from "@/lib/leaderboard";
 import { MOVEMENTS, type Movement } from "@/lib/movements";
+import { batchLabel, batchText, batchesFor } from "@/lib/batch";
+
+/** Rank within a sub-board: one plus everyone strictly ahead (ties share). */
+export function rankWithin<T>(rows: T[], score: (r: T) => number) {
+  return (row: T) => 1 + rows.filter((o) => score(o) > score(row)).length;
+}
 import { plateFor } from "@/lib/plates";
 import { WEIGHT_CLASSES } from "@/lib/scoring";
 import { EncryptedText } from "@/components/ui/encrypted-text";
@@ -597,6 +603,7 @@ export function LiftTab({
   rows,
   viewerId,
   viewerClass = null,
+  viewerBatch = null,
   showCollege = false,
   emptyNote,
 }: {
@@ -604,6 +611,8 @@ export function LiftTab({
   rows: LiftRow[];
   viewerId: string | null;
   viewerClass?: string | null;
+  /** LNMIIT only: set to show the viewer's batch boards. */
+  viewerBatch?: number | null;
   showCollege?: boolean;
   emptyNote: string;
 }) {
@@ -642,6 +651,21 @@ export function LiftTab({
             plate={plateFor(weightClass)}
             rows={inClass}
             rankOf={(r) => r.classRank}
+            viewerId={viewerId}
+            showCollege={showCollege}
+          />
+        )}
+      />
+      <BatchBoards
+        rows={rows}
+        viewerBatch={viewerBatch}
+        firstIndex={3}
+        render={(year, inBatch) => (
+          <LiftBoard
+            heading={`${label} · ${batchText(year)}`}
+            movement={movement}
+            rows={inBatch}
+            rankOf={rankWithin(inBatch, (r) => r.score)}
             viewerId={viewerId}
             showCollege={showCollege}
           />
@@ -694,7 +718,7 @@ export function ClassBoards<T extends { weightClass: string }>({
       className="rise drawer group mt-10"
       style={{ "--i": firstIndex } as React.CSSProperties}
     >
-      <summary className="press flex min-h-11 w-full cursor-pointer list-none items-center justify-between gap-2 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk group-open:border-chalk-faint group-open:text-chalk [&::-webkit-details-marker]:hidden">
+      <summary className={drawerSummary}>
         Weight classes
         <span className="flex items-center gap-2 text-[11px] text-chalk-faint">
           {/* A plate chip per open board, so the colours are visible before opening. */}
@@ -725,6 +749,58 @@ export function ClassBoards<T extends { weightClass: string }>({
             style={{ "--i": firstIndex + 1 + i } as React.CSSProperties}
           >
             {render(c.label, c.inClass)}
+          </div>
+        ))}
+      </div>
+    </details>
+  );
+}
+
+const drawerSummary =
+  "press flex min-h-11 w-full cursor-pointer list-none items-center justify-between gap-2 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk group-open:border-chalk-faint group-open:text-chalk [&::-webkit-details-marker]:hidden";
+
+/*
+  LNMIIT only: a board per batch, in the same kind of drawer as the weight
+  classes. A signed-in lifter with a batch sees theirs and the one either
+  side (Y24 sees Y23–Y25); anyone without one sees no drawer. Empty
+  batches are left out. `render` draws one batch's board, like ClassBoards.
+*/
+export function BatchBoards<T extends { batchYear: number | null }>({
+  rows,
+  viewerBatch,
+  firstIndex,
+  render,
+}: {
+  rows: T[];
+  viewerBatch: number | null;
+  firstIndex: number;
+  render: (year: number, inBatch: T[]) => React.ReactNode;
+}) {
+  const groups = batchesFor(viewerBatch)
+    .map((year) => ({ year, inBatch: rows.filter((r) => r.batchYear === year) }))
+    .filter((g) => g.inBatch.length > 0);
+  if (groups.length === 0) return null;
+
+  return (
+    <details
+      className="rise drawer group mt-3"
+      style={{ "--i": firstIndex } as React.CSSProperties}
+    >
+      <summary className={drawerSummary}>
+        Batches
+        <span className="flex items-center gap-2 text-[11px] text-chalk-faint">
+          {groups.map((g) => batchLabel(g.year)).join(" · ")}
+          <Chevron />
+        </span>
+      </summary>
+      <div className="mt-6 flex flex-col gap-8">
+        {groups.map((g, i) => (
+          <div
+            key={g.year}
+            className="rise"
+            style={{ "--i": firstIndex + 1 + i } as React.CSSProperties}
+          >
+            {render(g.year, g.inBatch)}
           </div>
         ))}
       </div>

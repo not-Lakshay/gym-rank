@@ -13,6 +13,8 @@ export type BoardRow = {
   classRank: number;
   collegeSlug: string;
   collegeShort: string;
+  /** LNMIIT only; see lib/batch.ts. */
+  batchYear: number | null;
 };
 
 /**
@@ -46,6 +48,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
         lf.username,
         lf.display_name,
         lf.bodyweight_kg,
+        lf.batch_year,
         c.slug       as college_slug,
         c.short_name as college_short,
         sum(l.est_1rm_kg) as total_kg,
@@ -55,7 +58,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
       join lifts l on l.lifter_id = lf.id
       where l.movement in ('squat', 'bench', 'deadlift')
         and (${collegeId}::int is null or lf.college_id = ${collegeId}::int)
-      group by lf.id, lf.username, lf.display_name, lf.bodyweight_kg, c.slug, c.short_name
+      group by lf.id, lf.username, lf.display_name, lf.bodyweight_kg, lf.batch_year, c.slug, c.short_name
       having count(*) = 3
         and (
           not ${verifiedOnly}::boolean
@@ -67,6 +70,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
         id,
         username,
         display_name,
+        batch_year,
         college_slug,
         college_short,
         verified_count,
@@ -96,6 +100,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
       id,
       username,
       display_name,
+      batch_year,
       college_slug,
       college_short,
       weight_class,
@@ -120,6 +125,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
     classRank: Number(row.class_rank),
     collegeSlug: row.college_slug as string,
     collegeShort: row.college_short as string,
+    batchYear: row.batch_year === null ? null : Number(row.batch_year),
   }));
 }
 
@@ -256,6 +262,7 @@ export type LiftRow = {
   classRank: number;
   collegeSlug: string;
   collegeShort: string;
+  batchYear: number | null;
 };
 
 export type LiftBoards = Record<Movement, LiftRow[]>;
@@ -271,6 +278,7 @@ export async function getLiftBoards(scope: BoardScope): Promise<LiftBoards> {
         lf.username,
         lf.display_name,
         lf.bodyweight_kg,
+        lf.batch_year,
         c.slug       as college_slug,
         c.short_name as college_short,
         l.movement,
@@ -312,7 +320,7 @@ export async function getLiftBoards(scope: BoardScope): Promise<LiftBoards> {
     )
     select
       id, username, display_name, weight_class, movement,
-      est_1rm_kg, reps, score, verified, college_slug, college_short,
+      est_1rm_kg, reps, score, verified, college_slug, college_short, batch_year,
       rank() over (partition by movement order by score desc) as rank,
       rank() over (partition by movement, weight_class order by score desc) as class_rank
     from dotted
@@ -342,6 +350,7 @@ export async function getLiftBoards(scope: BoardScope): Promise<LiftBoards> {
       classRank: Number(row.class_rank),
       collegeSlug: row.college_slug as string,
       collegeShort: row.college_short as string,
+      batchYear: row.batch_year === null ? null : Number(row.batch_year),
     });
   }
   return boards;
