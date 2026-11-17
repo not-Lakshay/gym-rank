@@ -682,16 +682,19 @@ export function ClassBoards<T extends { weightClass: string }>({
   if (shown.length === 0 && !mineTooSmall) return null;
 
   return (
-    <section
-      className="rise mt-10"
+    // Closed by default: the overall board is the page, and a dozen class
+    // boards underneath turned it into a scroll.
+    <details
+      className="rise group mt-10"
       style={{ "--i": firstIndex } as React.CSSProperties}
     >
-      <h2 className="flex items-center justify-between border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim">
+      <summary className="press flex min-h-11 cursor-pointer list-none items-center justify-between border-b border-rule pb-2 text-[13px] font-medium text-chalk-dim hover:text-chalk [&::-webkit-details-marker]:hidden">
         Weight classes
-        <span className="text-[11px] font-normal text-chalk-faint">
-          classes with {MIN_CLASS_SIZE}+ lifters
+        <span className="flex items-center gap-2 text-[11px] font-normal text-chalk-faint">
+          {shown.length} with {MIN_CLASS_SIZE}+ lifters
+          <Chevron />
         </span>
-      </h2>
+      </summary>
       {mineTooSmall && (
         <p className="mt-3 text-[13px] leading-relaxed text-chalk-dim">
           Your class, {viewerClass}, has {mine.inClass.length} lifter
@@ -709,6 +712,23 @@ export function ClassBoards<T extends { weightClass: string }>({
           </div>
         ))}
       </div>
-    </section>
+    </details>
+  );
+}
+
+function Chevron() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 16 16"
+      className="h-3.5 w-3.5 transition-transform group-open:rotate-180"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m3 6 5 5 5-5" />
+    </svg>
   );
 }
