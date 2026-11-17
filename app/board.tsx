@@ -40,7 +40,8 @@ export function shortClass(label: string) {
 /* The board in three numbers. Gives a page a pulse before the list. */
 export function Stats({ rows }: { rows: BoardRow[] }) {
   const totalKg = rows.reduce((sum, r) => sum + r.totalKg, 0);
-  const cosigned = rows.filter((r) => r.verifiedCount === 3).length;
+  // One witness for the whole total; partial co-signs don't count here.
+  const cosigned = rows.filter((r) => r.cosign?.kind === "full").length;
   return (
     <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-sm border border-rule bg-rule">
       <Stat label="lifters" value={rows.length} />
@@ -201,10 +202,14 @@ export function Board({
                     row.verifiedCount > 0 && (
                       <>
                         <span aria-hidden className="text-chalk-faint">·</span>
-                        <Check />
+                        {/* A dimmed tick for partial: every lift is vouched
+                            for, but by different people. */}
+                        <span className={row.cosign?.kind === "full" ? "" : "opacity-50"}>
+                          <Check />
+                        </span>
                         <span className="truncate">
-                          {row.verifiedCount === 3
-                            ? "all co-signed"
+                          {row.cosign
+                            ? `${row.cosign.kind === "full" ? "fully" : "partially"} co-signed by ${row.cosign.names.join(", ")}`
                             : `${row.verifiedCount} of 3 co-signed`}
                         </span>
                       </>

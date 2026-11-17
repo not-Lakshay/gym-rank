@@ -85,8 +85,8 @@ export function LiftRowForm({
                 · {delta.text}
               </span>
             )}
-            {existing?.verifiedByName && (
-              <span> · co-signed by {existing.verifiedByName}</span>
+            {existing && existing.cosigners.length > 0 && (
+              <span> · co-signed by {existing.cosigners.map((c) => c.name).join(", ")}</span>
             )}
             {standing && (
               <span>

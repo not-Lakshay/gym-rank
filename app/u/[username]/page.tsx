@@ -17,6 +17,7 @@ import { lifterMetadata } from "@/app/lifter-metadata";
 import { SignInForm } from "@/app/sign-in";
 import {
   MOVEMENTS,
+  TOTAL_MOVEMENTS,
   getLifterByEmail,
   getLifterByUsername,
   getLiftsFor,
@@ -24,6 +25,7 @@ import {
 } from "@/lib/lifters";
 import { getRankFor } from "@/lib/leaderboard";
 import { batchLabel } from "@/lib/batch";
+import { cosignStatus, cosignText } from "@/lib/cosign";
 import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
 import { CountUp } from "@/app/score";
@@ -94,6 +96,9 @@ async function Profile({ params }: { params: Params }) {
 
   const summary = summarise(lifts, lifter.bodyweightKg);
   const byMovement = new Map(lifts.map((l) => [l.movement, l]));
+  const cosign = cosignStatus(
+    TOTAL_MOVEMENTS.map((m) => byMovement.get(m)?.cosigners ?? []),
+  );
   const weightClass = weightClassFor(lifter.bodyweightKg);
   const boardHref = lifter.college ? `/c/${lifter.college.slug}` : "/";
 
@@ -187,6 +192,14 @@ async function Profile({ params }: { params: Params }) {
           {lifts.length === 0 && (
             <p className="pt-4 text-[13px] text-chalk-faint">Nothing entered yet.</p>
           )}
+          {cosign && (
+            <p className="flex items-center gap-1.5 pt-3 text-[13px] text-chalk-dim">
+              <span className={cosign.kind === "full" ? "" : "opacity-50"}>
+                <Check />
+              </span>
+              {cosignText(cosign)}
+            </p>
+          )}
           {MOVEMENTS.map((movement) => {
             const lift = byMovement.get(movement.id);
             if (!lift) return null;
@@ -204,19 +217,23 @@ async function Profile({ params }: { params: Params }) {
                       : `${lift.weightKg} kg × ${lift.reps} · est. 1RM ${lift.est1rmKg?.toFixed(1)} kg`}
                   </p>
                 </div>
-                {lift.verifiedByName ? (
-                  <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[color-mix(in_oklab,var(--plate-10)_50%,transparent)] bg-[color-mix(in_oklab,var(--plate-10)_14%,transparent)] px-2.5 py-1 text-[12px] text-chalk">
+                {lift.cosigners.length > 0 && (
+                  <span className="flex min-w-0 max-w-[45%] items-center gap-1.5 rounded-full border border-[color-mix(in_oklab,var(--plate-10)_50%,transparent)] bg-[color-mix(in_oklab,var(--plate-10)_14%,transparent)] px-2.5 py-1 text-[12px] text-chalk">
                     <Check />
                     <span className="text-chalk-dim">by</span>
-                    <span className="font-medium">{lift.verifiedByName}</span>
+                    <span className="truncate font-medium">
+                      {lift.cosigners.map((c) => c.name).join(", ")}
+                    </span>
                   </span>
-                ) : canCosign ? (
+                )}
+                {/* Any number of people can vouch for a lift, each once. */}
+                {canCosign && !lift.cosigners.some((c) => c.id === viewer?.id) ? (
                   <CosignButton liftId={lift.id} />
-                ) : (
+                ) : lift.cosigners.length === 0 ? (
                   <span className="shrink-0 rounded-full border border-rule px-2.5 py-1 text-[12px] text-chalk-faint">
                     unverified
                   </span>
-                )}
+                ) : null}
               </div>
             );
           })}

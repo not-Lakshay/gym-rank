@@ -74,6 +74,25 @@ create table if not exists lifts (
   )
 );
 
+-- Who co-signed which lift: any number of witnesses per lift, one row
+-- each. This is the record of co-signs; lifts.verified_by above is the
+-- older single-witness column, kept only so a deploy in progress keeps
+-- working, and no longer read. A lift counts as co-signed when it has
+-- at least one row here. Re-saving a lift deletes its rows.
+create table if not exists lift_cosigns (
+  lift_id    uuid not null references lifts(id) on delete cascade,
+  witness_id uuid not null references lifters(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (lift_id, witness_id)
+);
+
+create index if not exists lift_cosigns_witness_idx on lift_cosigns (witness_id);
+
+-- Carry over co-signs made before this table existed. Idempotent.
+insert into lift_cosigns (lift_id, witness_id)
+  select id, verified_by from lifts where verified_by is not null
+  on conflict do nothing;
+
 create index if not exists lifts_movement_idx on lifts (movement);
 create index if not exists lifts_lifter_idx   on lifts (lifter_id);
 

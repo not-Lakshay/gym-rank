@@ -240,7 +240,9 @@ export async function cosignLiftAction(
   }
 
   const done = await cosignLift(liftId, witness.id);
-  if (!done) return fail("Couldn't co-sign that lift.");
+  // The owner and same-college checks passed above, so a no-op insert
+  // means this witness is already on the lift.
+  if (!done) return fail("You've already co-signed this lift.");
 
   await recordEvent("lift_cosigned", witness.id);
   await quietly(() =>

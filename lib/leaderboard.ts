@@ -1,3 +1,4 @@
+import { type CosignStatus, cosignStatus } from "./cosign";
 import { sql } from "./db";
 import type { Movement } from "./movements";
 
@@ -15,6 +16,8 @@ export type BoardRow = {
   collegeShort: string;
   /** LNMIIT only; see lib/batch.ts. */
   batchYear: number | null;
+  /** Fully or partially co-signed, once all three lifts are; see lib/cosign.ts. */
+  cosign: CosignStatus;
 };
 
 /**
@@ -52,17 +55,29 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
         c.slug       as college_slug,
         c.short_name as college_short,
         sum(l.est_1rm_kg) as total_kg,
-        count(*) filter (where l.verified_by is not null) as verified_count
+        count(*) filter (where cs.cosigned) as verified_count,
+        json_agg(cs.witnesses) as witnesses
       from lifters lf
       join colleges c on c.id = lf.college_id
       join lifts l on l.lifter_id = lf.id
+      -- One yes/no per lift, never one row per co-signer: a plain join
+      -- would multiply the lift (and the total) by its number of witnesses.
+      cross join lateral (
+        select
+          exists (select 1 from lift_cosigns x where x.lift_id = l.id) as cosigned,
+          coalesce((
+            select json_agg(json_build_object('id', w.id, 'name', w.display_name))
+            from lift_cosigns x join lifters w on w.id = x.witness_id
+            where x.lift_id = l.id
+          ), '[]'::json) as witnesses
+      ) cs
       where l.movement in ('squat', 'bench', 'deadlift')
         and (${collegeId}::int is null or lf.college_id = ${collegeId}::int)
       group by lf.id, lf.username, lf.display_name, lf.bodyweight_kg, lf.batch_year, c.slug, c.short_name
       having count(*) = 3
         and (
           not ${verifiedOnly}::boolean
-          or count(*) filter (where l.verified_by is not null) = 3
+          or count(*) filter (where cs.cosigned) = 3
         )
     ),
     scored as (
@@ -74,6 +89,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
         college_slug,
         college_short,
         verified_count,
+        witnesses,
         total_kg::double precision as total_kg,
         least(greatest(bodyweight_kg, 40), 201.9)::double precision as bw,
         case
@@ -107,6 +123,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
       total_kg,
       dots,
       verified_count,
+      witnesses,
       rank() over (order by dots desc) as overall_rank,
       rank() over (partition by weight_class order by dots desc) as class_rank
     from dotted
@@ -126,6 +143,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
     collegeSlug: row.college_slug as string,
     collegeShort: row.college_short as string,
     batchYear: row.batch_year === null ? null : Number(row.batch_year),
+    cosign: cosignStatus(row.witnesses as { id: string; name: string }[][]),
   }));
 }
 
@@ -284,12 +302,13 @@ export async function getLiftBoards(scope: BoardScope): Promise<LiftBoards> {
         l.movement,
         l.est_1rm_kg,
         l.reps,
-        (l.verified_by is not null) as verified
+        exists (select 1 from lift_cosigns x where x.lift_id = l.id) as verified
       from lifts l
       join lifters lf on lf.id = l.lifter_id
       join colleges c on c.id = lf.college_id
       where (${collegeId}::int is null or lf.college_id = ${collegeId}::int)
-        and (not ${verifiedOnly}::boolean or l.verified_by is not null)
+        and (not ${verifiedOnly}::boolean
+             or exists (select 1 from lift_cosigns x where x.lift_id = l.id))
     ),
     scored as (
       select

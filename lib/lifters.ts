@@ -58,9 +58,10 @@ export type Lift = {
   reps: number;
   est1rmKg: number | null;
   bodyweightKg: number;
+  /** At least one co-sign. */
   verified: boolean;
-  /** Display name of whoever co-signed it, if anyone. */
-  verifiedByName: string | null;
+  /** Everyone who co-signed it, first co-sign first. */
+  cosigners: { id: string; name: string }[];
   /**
    * The est. 1RM (or reps, for pull-ups) of the entry this one replaced,
    * from lift_history. Null for a first entry.
@@ -195,12 +196,16 @@ export async function getLiftsFor(lifterId: string): Promise<Lift[]> {
   const rows = await sql`
     select
       l.id, l.movement, l.weight_kg, l.reps, l.est_1rm_kg, l.bodyweight_kg,
-      l.verified_by,
-      v.display_name as verified_by_name,
+      coalesce((
+        select json_agg(json_build_object('id', w.id, 'name', w.display_name)
+                        order by c.created_at)
+        from lift_cosigns c
+        join lifters w on w.id = c.witness_id
+        where c.lift_id = l.id
+      ), '[]'::json) as cosigners,
       prev.est_1rm_kg as prev_est_1rm_kg,
       prev.reps       as prev_reps
     from lifts l
-    left join lifters v on v.id = l.verified_by
     left join lateral (
       select est_1rm_kg, reps
       from lift_history h
@@ -214,6 +219,7 @@ export async function getLiftsFor(lifterId: string): Promise<Lift[]> {
     const movement = row.movement as Movement;
     const prevRaw =
       movement === "pullups" ? row.prev_reps : row.prev_est_1rm_kg;
+    const cosigners = row.cosigners as { id: string; name: string }[];
     return {
       id: row.id as string,
       movement,
@@ -221,27 +227,30 @@ export async function getLiftsFor(lifterId: string): Promise<Lift[]> {
       reps: num(row.reps),
       est1rmKg: row.est_1rm_kg === null ? null : num(row.est_1rm_kg),
       bodyweightKg: num(row.bodyweight_kg),
-      verified: row.verified_by !== null,
-      verifiedByName: (row.verified_by_name as string | null) ?? null,
+      verified: cosigners.length > 0,
+      cosigners,
       previousValue: prevRaw === null || prevRaw === undefined ? null : num(prevRaw),
     };
   });
 }
 
 /**
- * Co-sign a lift. The witness must be a different lifter — self-attestation
- * is exactly the thing a verified column is meant to rule out. Returns
- * false if the lift doesn't exist or the witness is its owner.
+ * Add a co-sign to a lift. Any number of witnesses can co-sign one lift,
+ * but the same witness only once, and never the lift's owner —
+ * self-attestation is exactly what a co-sign is meant to rule out.
+ * Returns false if nothing was added: the lift is gone, the witness owns
+ * it, or they have already co-signed it.
  */
 export async function cosignLift(
   liftId: string,
   witnessId: string,
 ): Promise<boolean> {
   const rows = await sql`
-    update lifts
-    set verified_by = ${witnessId}
-    where id = ${liftId} and lifter_id <> ${witnessId}
-    returning id
+    insert into lift_cosigns (lift_id, witness_id)
+    select id, ${witnessId}::uuid from lifts
+    where id = ${liftId} and lifter_id <> ${witnessId}::uuid
+    on conflict do nothing
+    returning lift_id
   `;
   return rows.length > 0;
 }
@@ -270,9 +279,16 @@ export async function saveLift(params: {
           reps          = excluded.reps,
           est_1rm_kg    = excluded.est_1rm_kg,
           bodyweight_kg = excluded.bodyweight_kg,
-          -- a changed lift is a new claim, so any previous co-sign is void
           verified_by   = null,
           recorded_at   = now()
+  `;
+
+  // A changed lift is a new claim, so every previous co-sign is void.
+  await sql`
+    delete from lift_cosigns
+    where lift_id = (
+      select id from lifts where lifter_id = ${lifterId} and movement = ${movement}
+    )
   `;
 
   // Append-only. The Neon HTTP driver has no multi-statement transaction
@@ -354,7 +370,8 @@ export async function adminListLifters(): Promise<AdminLifter[]> {
       lf.id, lf.username, lf.display_name, lf.email, lf.bodyweight_kg,
       lf.created_at, c.short_name as college_short,
       (select count(*) from lifts l where l.lifter_id = lf.id) as lift_count,
-      (select count(*) from lifts l where l.lifter_id = lf.id and l.verified_by is not null) as verified_count
+      (select count(*) from lifts l where l.lifter_id = lf.id
+         and exists (select 1 from lift_cosigns c where c.lift_id = l.id)) as verified_count
     from lifters lf
     left join colleges c on c.id = lf.college_id
     order by lf.created_at desc
@@ -376,7 +393,10 @@ export async function adminListLifters(): Promise<AdminLifter[]> {
  *  Used by the owner (self-service) and by admin. */
 export async function deleteLifter(lifterId: string): Promise<boolean> {
   // Cascades cover lifts, history, notifications; events keep the row
-  // with lifter_id nulled so the usage numbers stay honest.
+  // with lifter_id nulled so the usage numbers stay honest. The legacy
+  // verified_by column has no cascade, so a lifter who ever co-signed under
+  // it would otherwise be undeletable; lift_cosigns cascades on its own.
+  await sql`update lifts set verified_by = null where verified_by = ${lifterId}`;
   const rows = await sql`delete from lifters where id = ${lifterId} returning id`;
   return rows.length > 0;
 }
@@ -386,10 +406,12 @@ export async function adminDeleteLift(liftId: string): Promise<boolean> {
   return rows.length > 0;
 }
 
+/** Clears every co-sign on the lift. */
 export async function adminClearCosign(liftId: string): Promise<boolean> {
   const rows = await sql`
     update lifts set verified_by = null where id = ${liftId} returning id
   `;
+  await sql`delete from lift_cosigns where lift_id = ${liftId}`;
   return rows.length > 0;
 }
 
@@ -412,7 +434,7 @@ export async function adminStats(): Promise<AdminStats> {
         group by lifter_id having count(*) = 3
       ) t) as with_total,
       (select count(distinct college_id) from lifters where college_id is not null) as colleges,
-      (select count(*) from lifts where verified_by is not null) as cosigns,
+      (select count(*) from lift_cosigns) as cosigns,
       (select count(*) from events where name = 'profile_created'
          and created_at > now() - interval '7 days') as signups_7,
       (select count(*) from events where name like 'lift_saved:%'

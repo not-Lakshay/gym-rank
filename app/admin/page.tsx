@@ -101,10 +101,11 @@ async function Admin({ searchParams }: { searchParams: SearchParams }) {
                   {lift.movement === "pullups"
                     ? `${lift.reps} reps`
                     : `${lift.weightKg} kg × ${lift.reps} · est. 1RM ${lift.est1rmKg?.toFixed(1)} kg`}
-                  {lift.verifiedByName && ` · co-signed by ${lift.verifiedByName}`}
+                  {lift.verified &&
+                    ` · co-signed by ${lift.cosigners.map((c) => c.name).join(", ")}`}
                 </p>
               </div>
-              {lift.verifiedByName && <ClearCosignButton liftId={lift.id} />}
+              {lift.verified && <ClearCosignButton liftId={lift.id} />}
               <DeleteLiftButton liftId={lift.id} />
             </div>
           ))}
