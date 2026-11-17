@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { EncryptedText } from "@/components/ui/encrypted-text";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { auth } from "@/auth";
 import { getCollegeOptions } from "@/lib/colleges";
@@ -99,6 +101,15 @@ async function Landing() {
   const viewer = session?.user?.email
     ? await getLifterByEmail(session.user.email).catch(() => null)
     : null;
+
+  /*
+    Someone who already has a board typed the domain to get to it, not to
+    the front door. In-app links and prefetches carry the RSC header, so
+    "All colleges" still lands here — only a fresh document load bounces.
+  */
+  if (viewer?.college && !(await headers()).get("rsc")) {
+    redirect(`/c/${viewer.college.slug}`);
+  }
 
   const withBoards = colleges.filter((c) => c.lifters > 0).length;
 
