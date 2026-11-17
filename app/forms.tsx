@@ -6,11 +6,12 @@ import {
   checkUsernameAction,
   cosignLiftAction,
   deleteMyAccountAction,
-  saveLiftAction,
+  saveLiftsAction,
   saveProfileAction,
 } from "@/app/actions";
-import { MOVEMENTS } from "@/lib/movements";
+import { MOVEMENTS, TOTAL_MOVEMENTS, type Movement } from "@/lib/movements";
 import type { Lift } from "@/lib/lifters";
+import { STANDARD_BODYWEIGHTS, noviceOneRepMax } from "@/lib/standards";
 import { siteLabel } from "@/lib/site";
 import {
   USERNAME_MAX,
@@ -29,30 +30,36 @@ const initial: ActionState = { error: null };
   as a full page render instead.
 */
 
-export function LiftRowForm({
-  movement,
-  existing,
-  standing = null,
+type Row = { kg: string; reps: string };
+const rowFrom = (lift: Lift | undefined): Row => ({
+  kg: lift?.weightKg?.toString() ?? "",
+  reps: lift?.reps?.toString() ?? "",
+});
+
+/*
+  Every lift in one form with one Save. Only rows that changed are saved
+  (see saveLiftsAction), so pressing Save never voids the co-signs on a
+  lift you didn't touch.
+*/
+export function LiftsForm({
+  lifts,
+  standings,
   boardHref,
+  bodyweightKg,
 }: {
-  movement: (typeof MOVEMENTS)[number];
-  existing: Lift | undefined;
-  /** Rank on this lift's college board, once the lift is entered. */
-  standing?: { rank: number; of: number } | null;
-  boardHref?: string;
+  lifts: Partial<Record<Movement, Lift>>;
+  /** Rank on each lift's college board, once entered. */
+  standings: Partial<Record<Movement, { rank: number; of: number }>>;
+  /** The college board; each row links to its lift's tab. */
+  boardHref: string;
+  bodyweightKg: number;
 }) {
-  const [state, action, pending] = useActionState(saveLiftAction, initial);
-  const isPullups = movement.id === "pullups";
-
-  const delta = deltaFor(existing);
-
-  // Save only lights up once a value differs from what is stored. Five
-  // identical Save buttons give no hint which row you touched.
-  const storedKg = existing?.weightKg?.toString() ?? "";
-  const storedReps = existing?.reps?.toString() ?? "";
-  const [kg, setKg] = useState(storedKg);
-  const [reps, setReps] = useState(storedReps);
-  const dirty = (!isPullups && kg !== storedKg) || reps !== storedReps;
+  const [state, action, pending] = useActionState(saveLiftsAction, initial);
+  const stored = Object.fromEntries(MOVEMENTS.map((m) => [m.id, rowFrom(lifts[m.id])]));
+  const [rows, setRows] = useState<Record<string, Row>>(stored);
+  const dirty = MOVEMENTS.some(
+    (m) => rows[m.id].kg !== stored[m.id].kg || rows[m.id].reps !== stored[m.id].reps,
+  );
 
   const [dismissedAt, setDismissedAt] = useState(0);
   const justSaved = !!state.savedAt && state.savedAt > dismissedAt;
@@ -63,14 +70,77 @@ export function LiftRowForm({
   }, [justSaved, state.savedAt]);
 
   return (
-    <form action={action} className="border-b border-rule py-3">
-      <div className="flex items-center gap-3">
-        <input type="hidden" name="movement" value={movement.id} />
+    <form action={action}>
+      {MOVEMENTS.map((movement) => (
+        <LiftRow
+          key={movement.id}
+          movement={movement}
+          existing={lifts[movement.id]}
+          standing={standings[movement.id] ?? null}
+          boardHref={`${boardHref}?tab=${movement.id}`}
+          bodyweightKg={bodyweightKg}
+          row={rows[movement.id]}
+          onChange={(row) => setRows((all) => ({ ...all, [movement.id]: row }))}
+        />
+      ))}
 
+      <p className="mt-3 text-[12px] leading-relaxed text-chalk-faint">
+        Your DOTS score only needs squat, bench and deadlift. Overhead press
+        and pull-ups are optional — they just put you on those lift boards.
+      </p>
+
+      {state.error && (
+        <p role="alert" className="mt-3 text-[12px] text-[var(--plate-25)]">
+          {state.error}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        disabled={pending || (!dirty && !justSaved)}
+        className={`${primary} mt-4 w-full ${
+          justSaved ? "bg-[var(--plate-10)]" : ""
+        }`}
+      >
+        {pending ? "Saving…" : justSaved ? "Saved" : "Save lifts"}
+      </button>
+    </form>
+  );
+}
+
+function LiftRow({
+  movement,
+  existing,
+  standing,
+  boardHref,
+  bodyweightKg,
+  row,
+  onChange,
+}: {
+  movement: (typeof MOVEMENTS)[number];
+  existing: Lift | undefined;
+  standing: { rank: number; of: number } | null;
+  boardHref: string;
+  bodyweightKg: number;
+  row: Row;
+  onChange: (row: Row) => void;
+}) {
+  const isPullups = movement.id === "pullups";
+  const optional = !TOTAL_MOVEMENTS.includes(movement.id);
+  const delta = deltaFor(existing);
+
+  return (
+    <div className="border-b border-rule py-3">
+      <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
-          <label className="block text-[14px] font-medium">
+          <span className="flex items-center gap-1.5 text-[14px] font-medium">
             {movement.label}
-          </label>
+            {optional && (
+              <span className="rounded-sm border border-rule px-1 text-[10px] font-bold uppercase leading-[1.4] tracking-wide text-chalk-faint">
+                optional
+              </span>
+            )}
+          </span>
           <span className="tnum block text-[11px] text-chalk-faint">
             {existing
               ? isPullups
@@ -92,18 +162,12 @@ export function LiftRowForm({
               <span>
                 {" "}
                 ·{" "}
-                {boardHref ? (
-                  <a
-                    href={boardHref}
-                    className="text-chalk-dim underline-offset-4 hover:text-chalk hover:underline"
-                  >
-                    #{standing.rank} of {standing.of}
-                  </a>
-                ) : (
-                  <span className="text-chalk-dim">
-                    #{standing.rank} of {standing.of}
-                  </span>
-                )}
+                <a
+                  href={boardHref}
+                  className="text-chalk-dim underline-offset-4 hover:text-chalk hover:underline"
+                >
+                  #{standing.rank} of {standing.of}
+                </a>
               </span>
             )}
           </span>
@@ -118,15 +182,14 @@ export function LiftRowForm({
           </span>
         ) : (
           <input
-            name="weightKg"
+            name={`${movement.id}.kg`}
             type="number"
             inputMode="decimal"
             step="0.5"
             min="1"
             max={movement.maxKg ?? undefined}
-            required
-            value={kg}
-            onChange={(e) => setKg(e.target.value)}
+            value={row.kg}
+            onChange={(e) => onChange({ ...row, kg: e.target.value })}
             placeholder="kg"
             aria-label={`${movement.label} weight in kg`}
             className={field}
@@ -134,41 +197,88 @@ export function LiftRowForm({
         )}
 
         <input
-          name="reps"
+          name={`${movement.id}.reps`}
           type="number"
           inputMode="numeric"
           step="1"
           min="1"
           max="100"
-          required
-          value={reps}
-          onChange={(e) => setReps(e.target.value)}
+          value={row.reps}
+          onChange={(e) => onChange({ ...row, reps: e.target.value })}
           placeholder="reps"
           aria-label={`${movement.label} reps`}
           className={field}
         />
-
-        <button
-          type="submit"
-          disabled={pending || (!dirty && !justSaved)}
-          className={`${secondary} ${
-            justSaved
-              ? "border-[var(--plate-10)] text-[var(--plate-10)]"
-              : dirty
-                ? "border-chalk bg-chalk text-iron hover:opacity-85"
-                : ""
-          }`}
-        >
-          {pending ? "…" : justSaved ? "Saved" : "Save"}
-        </button>
       </div>
 
-      {state.error && (
-        <p role="alert" className="mt-2 text-[12px] text-[var(--plate-25)]">
-          {state.error}
-        </p>
+      {!optional && !existing && (
+        <NeverDone
+          movement={movement}
+          bodyweightKg={bodyweightKg}
+          onUse={(kg) => onChange({ kg: String(kg), reps: "1" })}
+        />
       )}
-    </form>
+    </div>
+  );
+}
+
+/*
+  For someone who has never done this lift: what a beginner of each
+  bodyweight typically lifts, with theirs picked out, and a button that
+  puts it in the row as a single. Only shown until the lift is entered.
+*/
+function NeverDone({
+  movement,
+  bodyweightKg,
+  onUse,
+}: {
+  movement: (typeof MOVEMENTS)[number];
+  bodyweightKg: number;
+  onUse: (kg: number) => void;
+}) {
+  const mine = noviceOneRepMax(movement.id, bodyweightKg);
+  if (mine === null) return null;
+  const name = movement.label.toLowerCase();
+
+  return (
+    <details className="group mt-2">
+      <summary className="w-fit cursor-pointer list-none text-[12px] text-chalk-dim underline-offset-4 hover:text-chalk hover:underline [&::-webkit-details-marker]:hidden">
+        Never done a {name}?
+      </summary>
+      <div className="mt-2 rounded-sm border border-rule p-3">
+        <p className="text-[12px] leading-relaxed text-chalk-dim">
+          Typical one-rep max for a beginner, by bodyweight. Use yours to get
+          a score now, and replace it once you&rsquo;ve done the lift.
+        </p>
+        <table className="tnum mt-2 w-full text-[12px]">
+          <thead>
+            <tr className="text-left text-chalk-faint">
+              <th className="py-1 font-medium">Bodyweight</th>
+              <th className="py-1 text-right font-medium">Typical {name}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {STANDARD_BODYWEIGHTS.map((bw) => (
+              <tr key={bw} className="border-t border-rule text-chalk-dim">
+                <td className="py-1">{bw} kg</td>
+                <td className="py-1 text-right">{noviceOneRepMax(movement.id, bw)} kg</td>
+              </tr>
+            ))}
+            <tr className="border-t border-rule font-bold text-chalk">
+              <td className="py-1">You · {bodyweightKg} kg</td>
+              <td className="py-1 text-right">{mine} kg</td>
+            </tr>
+          </tbody>
+        </table>
+        <button
+          type="button"
+          onClick={() => onUse(mine)}
+          className={`${secondary} mt-3 min-h-9 px-3 text-[13px]`}
+        >
+          Use {mine} kg × 1
+        </button>
+      </div>
+    </details>
   );
 }
 

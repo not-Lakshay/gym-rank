@@ -1,5 +1,6 @@
-import { MOVEMENTS, type Movement } from "./movements";
-import { estimatedOneRepMax } from "./scoring";
+// .ts extensions so `node lib/validate.test.ts` can run this file as is.
+import { MOVEMENTS, type Movement } from "./movements.ts";
+import { estimatedOneRepMax } from "./scoring.ts";
 
 /*
   Every plausibility rule, in one client-safe place.
@@ -84,6 +85,44 @@ export function validateLift(params: {
   }
 
   return null;
+}
+
+type LiftChange = { movement: Movement; weightKg: number | null; reps: number };
+
+/**
+ * Reads the all-lifts form (fields `<movement>.kg` and `<movement>.reps`)
+ * into the lifts that actually changed. Blank rows are skipped (the
+ * optional lifts); so are rows equal to what is stored, because re-saving
+ * an unchanged lift would void its co-signs. A half-filled or invalid row
+ * fails the whole form, naming the lift.
+ */
+export function liftChanges(
+  get: (name: string) => string,
+  stored: { movement: Movement; weightKg: number | null; reps: number }[],
+  bodyweightKg: number,
+): { changes: LiftChange[] } | { error: string } {
+  const byMovement = new Map(stored.map((l) => [l.movement, l]));
+  const changes: LiftChange[] = [];
+
+  for (const movement of MOVEMENTS) {
+    const isPullups = movement.id === "pullups";
+    const rawKg = get(`${movement.id}.kg`).trim();
+    const rawReps = get(`${movement.id}.reps`).trim();
+    if (rawReps === "" && (isPullups || rawKg === "")) continue;
+    if (rawReps === "" || (!isPullups && rawKg === "")) {
+      return { error: `${movement.label}: enter both the weight and the reps.` };
+    }
+
+    const reps = Number(rawReps);
+    const weightKg = isPullups ? null : Number(rawKg);
+    const before = byMovement.get(movement.id);
+    if (before && before.reps === reps && before.weightKg === weightKg) continue;
+
+    const error = validateLift({ movement: movement.id, weightKg, reps, bodyweightKg });
+    if (error) return { error: `${movement.label}: ${error}` };
+    changes.push({ movement: movement.id, weightKg, reps });
+  }
+  return { changes };
 }
 
 /** A v4-ish UUID. Used to reject junk ids before they reach Postgres. */

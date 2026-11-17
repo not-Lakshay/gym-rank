@@ -13,6 +13,7 @@ import {
   deleteLifter,
   getLifterByEmail,
   getLiftById,
+  getLiftsFor,
   isUsernameTaken,
   recordEvent,
   saveLift,
@@ -21,7 +22,7 @@ import {
 import { sendWelcome } from "@/lib/mail";
 import { notifyCosigned, notifyPassed } from "@/lib/notifications";
 import { normalizeUsername, validateUsername } from "@/lib/username";
-import { validateBodyweight, validateLift } from "@/lib/validate";
+import { liftChanges, validateBodyweight } from "@/lib/validate";
 
 /**
  * Every action returns this instead of throwing. A thrown error inside a
@@ -165,7 +166,14 @@ export async function saveProfileAction(
   return ok();
 }
 
-export async function saveLiftAction(
+/**
+ * Saves every lift on the form at once. Fields are named `<movement>.kg`
+ * and `<movement>.reps`. A blank row is skipped (the optional lifts), and
+ * so is a row that matches what is stored: re-saving an unchanged lift
+ * would void its co-signs for nothing. Every row is checked before any is
+ * written, so one typo saves nothing rather than half the form.
+ */
+export async function saveLiftsAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
@@ -176,33 +184,21 @@ export async function saveLiftAction(
   if (!lifter) return fail("Set up your profile first.");
   if (!lifter.college) return fail("Pick your college first.");
 
-  const movementId = String(formData.get("movement") ?? "");
-  const movement = MOVEMENTS.find((m) => m.id === movementId);
-  if (!movement) return fail("Unknown movement.");
-
-  const reps = Number(formData.get("reps"));
-  const weightKg =
-    movement.id === "pullups" ? null : Number(formData.get("weightKg"));
-
-  // Same rules the home page calculator applies, from the same module.
-  const liftError = validateLift({
-    movement: movement.id as Movement,
-    weightKg,
-    reps,
-    bodyweightKg: lifter.bodyweightKg,
-  });
-  if (liftError) return fail(liftError);
+  const parsed = liftChanges(
+    (name) => String(formData.get(name) ?? ""),
+    await getLiftsFor(lifter.id),
+    lifter.bodyweightKg,
+  );
+  if ("error" in parsed) return fail(parsed.error);
+  const { changes } = parsed;
+  if (changes.length === 0) return ok();
 
   const before = (await getRankFor(lifter.id))?.dots ?? null;
 
-  await saveLift({
-    lifterId: lifter.id,
-    movement: movement.id as Movement,
-    weightKg,
-    reps,
-    bodyweightKg: lifter.bodyweightKg,
-  });
-  await recordEvent(`lift_saved:${movement.id}`, lifter.id);
+  for (const change of changes) {
+    await saveLift({ lifterId: lifter.id, ...change, bodyweightKg: lifter.bodyweightKg });
+    await recordEvent(`lift_saved:${change.movement}`, lifter.id);
+  }
 
   const collegeId = lifter.college.id;
   await quietly(() =>

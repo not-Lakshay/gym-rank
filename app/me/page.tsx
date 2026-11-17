@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { after, connection } from "next/server";
 import { auth } from "@/auth";
-import { DeleteAccountButton, LiftRowForm, ProfileForm, primary } from "@/app/forms";
+import { DeleteAccountButton, LiftsForm, ProfileForm, primary } from "@/app/forms";
 import { SignInForm, SignOutForm } from "@/app/sign-in";
 import { CollegeField } from "@/app/college-picker";
 import {
@@ -457,17 +457,12 @@ function LifterView({
           </p>
         )}
 
-        <div>
-          {MOVEMENTS.map((movement) => (
-            <LiftRowForm
-              key={movement.id}
-              movement={movement}
-              existing={byMovement.get(movement.id)}
-              standing={standings[movement.id] ?? null}
-              boardHref={`/c/${college.slug}?tab=${movement.id}`}
-            />
-          ))}
-        </div>
+        <LiftsForm
+          lifts={Object.fromEntries(byMovement)}
+          standings={standings}
+          boardHref={`/c/${college.slug}`}
+          bodyweightKg={lifter.bodyweightKg}
+        />
       </section>
 
       <section className="rise pt-10" style={{ "--i": 3 } as React.CSSProperties}>
