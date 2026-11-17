@@ -66,12 +66,29 @@ export function LiftsForm({
   const justSaved = !!state.savedAt && state.savedAt > dismissedAt;
   useEffect(() => {
     if (!justSaved) return;
+    // Back up to the score and the college board button, to see the result.
+    window.scrollTo({ top: 0, behavior: "smooth" });
     const t = setTimeout(() => setDismissedAt(state.savedAt!), 1800);
     return () => clearTimeout(t);
   }, [justSaved, state.savedAt]);
 
   return (
     <form action={action}>
+      {Object.keys(lifts).length === 0 && (
+        <div className="mt-3 rounded-sm border border-rule p-3 text-[13px] leading-relaxed text-chalk-dim">
+          <p className="font-bold text-chalk">What to enter</p>
+          <p className="mt-1">
+            For each lift, your <span className="text-chalk">heaviest set ever</span>:
+            the most weight you&rsquo;ve lifted with good form, and how many reps
+            you got <em>at that weight</em>.
+          </p>
+          <p className="mt-1">
+            Squatted 100 kg for 3? Enter <span className="tnum text-chalk">100</span> kg
+            and <span className="tnum text-chalk">3</span> reps. For pull-ups, enter the
+            most you&rsquo;ve done in one go.
+          </p>
+        </div>
+      )}
       {MOVEMENTS.map((movement) => (
         <LiftRow
           key={movement.id}
@@ -400,7 +417,10 @@ function NeverDone({
         </table>
         <button
           type="button"
-          onClick={() => onUse(mine)}
+          onClick={(e) => {
+            onUse(mine);
+            e.currentTarget.closest("details")!.open = false;
+          }}
           className={`${secondary} mt-3 min-h-9 px-3 text-[13px]`}
         >
           Use {mine} kg × 1
