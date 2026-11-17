@@ -7,7 +7,6 @@ import { collegeForEmail, getCollegeBySlug } from "@/lib/colleges";
 import { getRankFor } from "@/lib/leaderboard";
 import {
   MOVEMENTS,
-  type Movement,
   UsernameTakenError,
   cosignLift,
   deleteLifter,
@@ -16,6 +15,7 @@ import {
   getLiftsFor,
   isUsernameTaken,
   recordEvent,
+  removeLift,
   saveLift,
   upsertProfile,
 } from "@/lib/lifters";
@@ -204,6 +204,32 @@ export async function saveLiftsAction(
   await quietly(() =>
     notifyPassed({ lifterId: lifter.id, collegeId, dotsBefore: before }),
   );
+
+  refresh();
+  return ok();
+}
+
+/**
+ * Remove one of your own lifts. Only ever your own: the lifter comes from
+ * the session, never the form. Without squat, bench and deadlift there is
+ * no total, so removing one also takes you off the board until re-entered.
+ */
+export async function removeLiftAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const email = await requireEmail();
+  if (!email) return fail("You are signed out. Sign in again.");
+  const lifter = await getLifterByEmail(email);
+  if (!lifter) return fail("Set up your profile first.");
+
+  const movement = MOVEMENTS.find((m) => m.id === formData.get("movement"));
+  if (!movement) return fail("Unknown movement.");
+
+  if (!(await removeLift(lifter.id, movement.id))) {
+    return fail(`No ${movement.label.toLowerCase()} to remove.`);
+  }
+  await recordEvent(`lift_removed:${movement.id}`, lifter.id);
 
   refresh();
   return ok();

@@ -6,6 +6,7 @@ import {
   checkUsernameAction,
   cosignLiftAction,
   deleteMyAccountAction,
+  removeLiftAction,
   saveLiftsAction,
   saveProfileAction,
 } from "@/app/actions";
@@ -217,6 +218,88 @@ function LiftRow({
           bodyweightKg={bodyweightKg}
           onUse={(kg) => onChange({ kg: String(kg), reps: "1" })}
         />
+      )}
+      {existing && (
+        <RemoveLift
+          movement={movement}
+          cosigns={existing.cosigners.length}
+          inTotal={!optional}
+          onRemoved={() => onChange({ kg: "", reps: "" })}
+        />
+      )}
+    </div>
+  );
+}
+
+/*
+  Two taps, like deleting the account: the first says what will go, the
+  second removes it. It sits inside the lifts form (forms can't nest), so
+  it submits that form to removeLiftAction via formAction instead.
+*/
+function RemoveLift({
+  movement,
+  cosigns,
+  inTotal,
+  onRemoved,
+}: {
+  movement: (typeof MOVEMENTS)[number];
+  cosigns: number;
+  /** Squat, bench or deadlift: removing it takes away the DOTS score. */
+  inTotal: boolean;
+  /** Empties the row, so the old numbers aren't sitting there to re-save. */
+  onRemoved: () => void;
+}) {
+  const [state, action, pending] = useActionState(removeLiftAction, initial);
+  const [armed, setArmed] = useState(false);
+  const name = movement.label.toLowerCase();
+
+  useEffect(() => {
+    if (state.savedAt) onRemoved();
+    // Only when a removal lands, not when the parent re-renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.savedAt]);
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+      {armed ? (
+        <>
+          <button
+            type="submit"
+            formAction={action}
+            name="movement"
+            value={movement.id}
+            disabled={pending}
+            className="press text-[12px] font-bold text-[var(--plate-25)] underline-offset-4 hover:underline"
+          >
+            {pending ? "Removing…" : `Yes, remove my ${name}`}
+          </button>
+          <button
+            type="button"
+            onClick={() => setArmed(false)}
+            className="text-[12px] text-chalk-faint hover:text-chalk"
+          >
+            Keep it
+          </button>
+          <p className="basis-full text-[12px] leading-relaxed text-chalk-dim">
+            Removes your {name}
+            {cosigns > 0 && ` and its ${cosigns} co-sign${cosigns === 1 ? "" : "s"}`}.
+            {inTotal &&
+              " Your DOTS score needs squat, bench and deadlift, so you'll leave the board until you enter it again."}
+          </p>
+        </>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setArmed(true)}
+          className="text-[12px] text-chalk-faint underline-offset-4 hover:text-chalk hover:underline"
+        >
+          Remove
+        </button>
+      )}
+      {state.error && (
+        <p role="alert" className="basis-full text-[12px] text-[var(--plate-25)]">
+          {state.error}
+        </p>
       )}
     </div>
   );

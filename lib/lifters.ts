@@ -255,6 +255,19 @@ export async function cosignLift(
   return rows.length > 0;
 }
 
+/**
+ * A lifter removing one of their own lifts. Its co-signs go with it (the
+ * foreign key cascades); lift_history keeps the old entry, so a later
+ * re-entry still shows its change. Returns false if there was nothing.
+ */
+export async function removeLift(lifterId: string, movement: Movement): Promise<boolean> {
+  const rows = await sql`
+    delete from lifts where lifter_id = ${lifterId} and movement = ${movement}
+    returning id
+  `;
+  return rows.length > 0;
+}
+
 export async function saveLift(params: {
   lifterId: string;
   movement: Movement;
