@@ -33,13 +33,16 @@ function lifterCount(n: number) {
 
 export function CollegePicker({ colleges }: { colleges: CollegeOption[] }) {
   const [query, setQuery] = useState("");
-  // Before a search, only colleges with a board: a list of "no board yet"
-  // is the emptiest thing a front page can show. The rest turn up when
-  // searched for.
-  const withBoards = colleges.filter((c) => c.lifters > 0);
+  // Before a search: LNMIIT first, since most visitors study there, then
+  // other colleges with a board. A list of "no board yet" is the emptiest
+  // thing a front page can show; the rest turn up when searched for.
+  const featured = [
+    ...colleges.filter((c) => c.slug === BATCH_COLLEGE),
+    ...colleges.filter((c) => c.slug !== BATCH_COLLEGE && c.lifters > 0),
+  ];
   const shown =
-    query.trim() === "" && withBoards.length > 0
-      ? withBoards.slice(0, SHOWN)
+    query.trim() === "" && featured.length > 0
+      ? featured.slice(0, SHOWN)
       : matches(colleges, query);
 
   return (
@@ -60,7 +63,7 @@ export function CollegePicker({ colleges }: { colleges: CollegeOption[] }) {
             ? "Nothing matches."
             : `${shown.length} match${shown.length === 1 ? "" : "es"}`}
       </p>
-      <ul className="mt-2">
+      <ul className="scroll-list mt-2 max-h-[17rem]">
         {shown.map((c, i) => (
           <li key={c.slug} className="rise" style={{ "--i": i } as React.CSSProperties}>
             <Link

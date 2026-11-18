@@ -113,6 +113,19 @@ h1,
     text-transform: uppercase;
     color: var(--chalk-dim);
   }
+
+  /*
+    A long list scrolls inside itself: five board rows and half of a sixth
+    show, and the cut-off row says there's more. Overscroll is left to
+    chain, so a swipe that reaches either end of the list carries on
+    scrolling the page. A max-h-* utility resizes it for shorter rows.
+  */
+  .scroll-list {
+    max-height: 25rem;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rule) transparent;
+  }
 }
 
 /* Sections rise in on arrival. --i staggers them; set it inline. */
@@ -280,7 +293,10 @@ h1,
   display: inline-block;
   line-height: 1;
   -webkit-text-fill-color: transparent;
-  clip-path: inset(0 -0.1em);
+  /* Clips the reel to one digit. clip, not clip-path: the reel is twenty
+     lines tall, and only overflow clipping stops it adding empty scroll
+     space below a list or the page. */
+  overflow: clip;
 }
 .roll-d::before {
   content: "0\A 1\A 2\A 3\A 4\A 5\A 6\A 7\A 8\A 9\A 0\A 1\A 2\A 3\A 4\A 5\A 6\A 7\A 8\A 9";

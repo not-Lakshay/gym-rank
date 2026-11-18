@@ -225,7 +225,7 @@ function Ranked({
     <>
       {podium && <Podium entries={entries.slice(0, 3)} viewerId={viewerId} />}
       {list.length > 0 && (
-        <ol className="card px-3">
+        <ol className="card scroll-list px-3">
           {list.map((e, index) => {
             const isViewer = e.id === viewerId;
             const medal = medals && e.rank <= 3 ? MEDALS[e.rank - 1] : null;

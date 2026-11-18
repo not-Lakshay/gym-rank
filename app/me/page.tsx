@@ -429,7 +429,7 @@ function LifterView({
               </span>
             )}
           </h2>
-          <ol>
+          <ol className="scroll-list max-h-[14rem]">
             {notifications.map((n) => (
               <li
                 key={n.id}
