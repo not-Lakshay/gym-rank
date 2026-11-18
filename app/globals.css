@@ -49,7 +49,8 @@
   --success: #5fb37e;
   --danger: #e0645a;
 
-  /* Gold means first place, and only that. */
+  /* Gold is first place (medals, crown), plus the PR stamp and Iron's
+     warm light at the top of the page. */
   --gold: #e0b14a;
   --silver: #b9b4ab;
   --bronze: #b8743f;

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { sql } from "./db";
 import type { College } from "./colleges";
 import { dotsScore, estimatedOneRepMax } from "./scoring";
@@ -92,7 +93,10 @@ export async function getLifterByEmail(email: string): Promise<Lifter | null> {
   return rows.length === 0 ? null : lifterFromRow(rows[0]);
 }
 
-export async function getLifterByUsername(
+// Cached per request: a page's metadata and body both look this up.
+export const getLifterByUsername = cache(getLifterByUsernameUncached);
+
+async function getLifterByUsernameUncached(
   username: string,
 ): Promise<Lifter | null> {
   const rows = await sql`
@@ -159,6 +163,17 @@ export async function upsertProfile(params: {
     }
     throw err;
   }
+}
+
+/**
+ * Voids every co-sign on this lifter's lifts. A co-sign means "someone at
+ * your college watched", so it can't follow a lifter to another college.
+ */
+export async function clearCosignsFor(lifterId: string): Promise<void> {
+  await sql`
+    delete from lift_cosigns
+    where lift_id in (select id from lifts where lifter_id = ${lifterId})
+  `;
 }
 
 export async function getLiftById(liftId: string): Promise<{

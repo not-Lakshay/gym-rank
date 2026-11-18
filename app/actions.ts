@@ -10,6 +10,7 @@ import {
   MOVEMENTS,
   UsernameTakenError,
   bestsFor,
+  clearCosignsFor,
   cosignLift,
   deleteLifter,
   getLifterByEmail,
@@ -139,6 +140,13 @@ export async function saveProfileAction(
   // the picker existed sends nothing, and that keeps what they had.
   const rawAvatar = formData.get("avatar");
   const avatar = rawAvatar === null ? existing?.avatar ?? null : avatarFrom(rawAvatar);
+
+  // Moving college voids co-signs from the old one. Cleared before the
+  // move is written, as saveLift does: a crash in between loses co-signs,
+  // never carries them to a board where nobody watched.
+  if (existing && existing.college?.id !== college.id) {
+    await clearCosignsFor(existing.id);
+  }
 
   let saved: { id: string; isNew: boolean };
   try {

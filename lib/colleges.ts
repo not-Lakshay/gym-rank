@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { sql } from "./db";
 
 export type College = {
@@ -23,7 +24,10 @@ function fromRow(row: Record<string, unknown>): College {
   };
 }
 
-export async function getCollegeBySlug(slug: string): Promise<College | null> {
+// Cached per request: a page's metadata and body both look this up.
+export const getCollegeBySlug = cache(getCollegeBySlugUncached);
+
+async function getCollegeBySlugUncached(slug: string): Promise<College | null> {
   const rows = await sql`
     select id, slug, name, short_name, city, state
     from colleges where slug = ${slug} limit 1
