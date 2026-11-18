@@ -19,6 +19,7 @@ export function Barbell({ kg, delayMs = 0 }: { kg: number; delayMs?: number }) {
             width: spec.width,
             height: `${spec.height * 100}%`,
             background: spec.color,
+            color: spec.color, // the glow's colour (.plate)
             animationDelay: `${delayMs + i * 90}ms`,
           }}
         />

@@ -19,13 +19,16 @@ export function Avatar({
     <span
       aria-hidden
       className="avatar"
-      style={{
-        width: size,
-        height: size,
-        fontSize: Math.round(size * 0.36),
-        borderColor: ring,
-        borderWidth: size >= 48 ? 3 : 2,
-      }}
+      // --ring drives the border and its neon glow (.avatar in globals.css).
+      style={
+        {
+          width: size,
+          height: size,
+          fontSize: Math.round(size * 0.36),
+          "--ring": ring,
+          borderWidth: size >= 48 ? 3 : 2,
+        } as React.CSSProperties
+      }
     >
       {initials(name)}
     </span>

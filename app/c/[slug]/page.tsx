@@ -262,7 +262,10 @@ function Header({
             <span
               aria-hidden
               className="h-1 rounded-full"
-              style={{ background: plateFor(weightClass.label) }}
+              style={{
+                background: plateFor(weightClass.label),
+                boxShadow: `0 0 8px ${plateFor(weightClass.label)}`,
+              }}
             />
             <span className="tnum whitespace-nowrap">
               {shortClass(weightClass.label)}

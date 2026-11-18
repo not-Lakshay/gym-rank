@@ -55,7 +55,9 @@ export function TabBar({ active }: { active?: Tab }) {
                 href={tab.href}
                 aria-current={current ? "page" : undefined}
                 className={`press flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-bold ${
-                  current ? "text-accent" : "text-chalk-faint hover:text-chalk"
+                  current
+                    ? "text-accent [filter:drop-shadow(0_0_6px_var(--accent))]"
+                    : "text-chalk-faint hover:text-chalk"
                 }`}
               >
                 <svg

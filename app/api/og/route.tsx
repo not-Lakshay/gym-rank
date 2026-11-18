@@ -25,11 +25,12 @@ import { isUuid } from "@/lib/validate";
   properties don't resolve — hence plateHexFor rather than plateFor.
 */
 
-const IRON = "#0a0908";
-const IRON_RAISED = "#161411";
-const CHALK = "#f3efe7";
-const CHALK_DIM = "#a49d91";
-const CHALK_FAINT = "#6b6459";
+// The site's palette (globals.css :root), as literals for satori.
+const IRON = "#050506";
+const IRON_RAISED = "#101013";
+const CHALK = "#f5f5f3";
+const CHALK_DIM = "#a6a6ad";
+const CHALK_FAINT = "#7f7f88";
 
 const SIZE = { width: 1200, height: 630 };
 

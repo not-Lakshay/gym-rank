@@ -164,7 +164,10 @@ function Heading({ text, plate, note }: { text: string; plate?: string; note: st
     <h2 className="caption mb-2 flex items-center justify-between gap-2">
       {plate ? (
         // A weight-class board wears its plate: the label is filled with it.
-        <span className="rounded-sm px-2 py-0.5 text-iron" style={{ background: plate }}>
+        <span
+          className="rounded-sm px-2 py-0.5 text-iron"
+          style={{ background: plate, boxShadow: `0 0 14px -4px ${plate}` }}
+        >
           {text}
         </span>
       ) : (
@@ -276,6 +279,7 @@ function Ranked({
                         style={{
                           width: `${Math.max(e.share * 100, 4)}%`,
                           background: ring,
+                          boxShadow: `0 0 8px ${ring}`,
                           animationDelay: `${delay}ms`,
                         }}
                       />
@@ -354,7 +358,7 @@ function Podium({ entries, viewerId }: { entries: Entry[]; viewerId: string | nu
                 className="podium-block mt-2"
                 style={{ height: BLOCK_HEIGHT[place], animationDelay: `${BLOCK_DELAY[place]}ms` }}
               >
-                <span className="display tnum text-[28px] leading-none" style={{ color: medal }}>
+                <span className="display tnum neon-text text-[28px] leading-none" style={{ color: medal }}>
                   {e.rank}
                 </span>
               </span>
@@ -465,7 +469,7 @@ export function ChevronRight() {
 }
 
 export const button =
-  "press inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-sm bg-gold px-5 text-[15px] font-bold text-iron hover:opacity-85";
+  "press inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-sm bg-gold px-5 text-[15px] font-bold text-iron shadow-[0_0_22px_-6px_var(--gold)] hover:opacity-85";
 
 // Outlined: navigation and account controls. Visibly tappable, but clearly
 // not the main action on the screen.
@@ -608,7 +612,7 @@ export function BoardTabs({ base, active }: { base: string; active: BoardTab }) 
             aria-current={current ? "page" : undefined}
             className={`press inline-flex min-h-9 shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 text-[13px] font-medium transition-colors ${
               current
-                ? "border-accent bg-accent text-iron"
+                ? "border-accent bg-accent text-iron shadow-[0_0_16px_-5px_var(--accent)]"
                 : "border-rule text-chalk-dim hover:border-chalk-faint hover:text-chalk"
             }`}
           >
