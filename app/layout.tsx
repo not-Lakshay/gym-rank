@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Archivo } from "next/font/google";
 import { siteUrl } from "@/lib/site";
-import { ThemeScript } from "./theme-switch";
+import { BeforePaint } from "./prefs";
 import "./globals.css";
 
 /*
@@ -40,11 +40,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    // suppressHydrationWarning: ThemeScript may add data-theme to <html>
-    // before React hydrates it.
+    // suppressHydrationWarning: BeforePaint may add data attributes to
+    // <html> before React hydrates it.
     <html lang="en" className={`${archivo.variable} h-full`} suppressHydrationWarning>
       <head>
-        <ThemeScript />
+        <BeforePaint />
       </head>
       <body className="min-h-full">{children}</body>
     </html>

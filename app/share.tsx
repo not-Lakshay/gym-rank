@@ -14,7 +14,15 @@ type Status = "idle" | "copied" | "failed";
   fetches that URL and renders /api/og as the preview, so the group sees
   the card without the sender doing anything.
 */
-export function ShareButton({ url, text }: { url: string; text: string }) {
+export function ShareButton({
+  url,
+  text,
+  label = "Share your rank",
+}: {
+  url: string;
+  text: string;
+  label?: string;
+}) {
   const [status, setStatus] = useState<Status>("idle");
 
   async function share() {
@@ -42,7 +50,7 @@ export function ShareButton({ url, text }: { url: string; text: string }) {
     <div>
       <button type="button" onClick={share} className={shareButton}>
         <ShareIcon />
-        {status === "copied" ? "Link copied" : "Share your rank"}
+        {status === "copied" ? "Link copied" : label}
       </button>
       {status === "failed" && (
         <p className="mt-2 text-[12px] text-chalk-dim">

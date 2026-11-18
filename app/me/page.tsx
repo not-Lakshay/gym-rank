@@ -52,6 +52,7 @@ import { ShareButton } from "@/app/share";
 import { Avatar } from "@/app/avatar";
 import { Roll } from "@/app/roll";
 import { TabBar } from "@/app/tab-bar";
+import { DotsHelp } from "@/app/help";
 
 // `error` is set by Auth.js when a sign-in fails (pages.error in auth.ts).
 type SearchParams = Promise<{ college?: string; error?: string }>;
@@ -311,6 +312,7 @@ function LifterView({
             </p>
             <p className="mt-3 text-[13px] text-chalk-dim">
               DOTS score
+              <DotsHelp />
               <span className="tnum text-chalk-faint">
                 {" "}
                 · {summary.totalKg?.toFixed(0)} kg total
@@ -344,24 +346,16 @@ function LifterView({
               </p>
             )}
 
-            {/*
-              The global line is the reward for co-signing. Either you are
-              on that board, or this says exactly what it takes to get there.
-            */}
-            {globalCard ? (
+            {/* The reward for co-signing. Until then, Next steps (below)
+                says exactly what it takes to get there. */}
+            {globalCard && (
               <p className="mt-1.5 text-[13px] text-chalk-dim">
                 <span className="tnum font-bold text-chalk">
                   #{globalCard.overallRank}
                 </span>{" "}
                 of {globalCard.totalLifters} across all colleges
               </p>
-            ) : card ? (
-              <p className="mt-1.5 text-[12px] text-chalk-faint">
-                {3 - card.verifiedCount} more co-sign
-                {3 - card.verifiedCount === 1 ? "" : "s"} and you are on the
-                global board.
-              </p>
-            ) : null}
+            )}
 
             {/*
               The gap to the person directly above you. "Third" is a fact;
@@ -418,6 +412,53 @@ function LifterView({
           </div>
         )}
       </section>
+
+      {/*
+        After the first save: what to do next, until all three lifts are
+        co-signed and there's nothing left to do but lift.
+      */}
+      {card && card.verifiedCount < 3 && (
+        <section className="rise pt-10" style={{ "--i": 1 } as React.CSSProperties}>
+          <h2 className="border-b border-rule pb-2 caption">Next steps</h2>
+          <ol className="mt-4 flex flex-col gap-5">
+            <Step n={1} done title={`You're on the ${college.shortName} board`}>
+              <p>
+                #{card.overallRank} of {card.totalLifters}. Save a better set any
+                time to climb.
+              </p>
+            </Step>
+            <Step n={2} title="Send your page to someone who watched">
+              <p>
+                They open it and tap &ldquo;I saw this&rdquo; on each lift they
+                saw. That&rsquo;s a co-sign.
+              </p>
+              <div className="mt-3">
+                <ShareButton
+                  url={`${siteUrl}/u/${lifter.username}`}
+                  text="Watched my lifts? Co-sign them on Gym Rank:"
+                  label="Send to a witness"
+                />
+              </div>
+            </Step>
+            <Step n={3} title="Get all three lifts co-signed">
+              <p>
+                {card.verifiedCount} of 3 so far. All three puts you on the
+                global board, against every college.
+              </p>
+              <div aria-hidden className="mt-2 flex gap-1.5">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className={`h-1.5 w-8 rounded-full ${
+                      i < card.verifiedCount ? "bg-[var(--plate-10)]" : "bg-rule"
+                    }`}
+                  />
+                ))}
+              </div>
+            </Step>
+          </ol>
+        </section>
+      )}
 
       {notifications.length > 0 && (
         <section className="rise pt-10" style={{ "--i": 1 } as React.CSSProperties}>
@@ -507,6 +548,39 @@ function LifterView({
       </div>
       </div>
     </div>
+  );
+}
+
+/* One item of Next steps: a number, or a tick once it's done. */
+function Step({
+  n,
+  done = false,
+  title,
+  children,
+}: {
+  n: number;
+  done?: boolean;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <li className="flex gap-3">
+      <span
+        aria-hidden
+        className={`tnum mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${
+          done ? "bg-[var(--plate-10)] text-iron" : "border border-rule text-chalk-dim"
+        }`}
+      >
+        {done ? "✓" : n}
+      </span>
+      <div className="min-w-0 flex-1 text-[13px] leading-relaxed text-chalk-dim">
+        <p className={`text-[14px] font-bold ${done ? "text-chalk-dim" : "text-chalk"}`}>
+          {title}
+          {done && <span className="sr-only"> (done)</span>}
+        </p>
+        {children}
+      </div>
+    </li>
   );
 }
 

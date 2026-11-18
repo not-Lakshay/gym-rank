@@ -30,6 +30,7 @@ import {
 import { Calculator } from "@/app/calculator";
 import { SignInForm } from "@/app/sign-in";
 import { TabBar } from "@/app/tab-bar";
+import { DotsHelp, HowItWorks } from "@/app/help";
 
 type Params = Promise<{ slug: string }>;
 type SearchParams = Promise<{ tab?: string }>;
@@ -140,6 +141,9 @@ async function CollegeBoard({
     <div>
       <Header college={college} accountLink={accountLink} />
 
+      {/* Someone sent the link and hasn't signed up: three steps, until closed. */}
+      {!session?.user && <HowItWorks />}
+
       <div className="rise pt-1" style={{ "--i": 1 } as React.CSSProperties}>
         <BoardTabs base={`/c/${college.slug}`} active={tab} />
       </div>
@@ -246,6 +250,7 @@ function Header({
           </p>
           <p className="mt-2 text-[13px] leading-snug text-chalk-dim">
             {college.city} · every score adjusted for bodyweight
+            <DotsHelp />
           </p>
         </div>
         {accountLink}
@@ -262,10 +267,7 @@ function Header({
             <span
               aria-hidden
               className="h-1 rounded-full"
-              style={{
-                background: plateFor(weightClass.label),
-                boxShadow: `0 0 calc(8px * var(--glow)) ${plateFor(weightClass.label)}`,
-              }}
+              style={{ background: plateFor(weightClass.label) }}
             />
             <span className="tnum whitespace-nowrap">
               {shortClass(weightClass.label)}

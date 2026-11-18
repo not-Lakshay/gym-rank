@@ -34,6 +34,7 @@ import { Barbell } from "@/app/barbell";
 import { ArrivingProfile } from "@/app/morph";
 import { Roll } from "@/app/roll";
 import { TabBar } from "@/app/tab-bar";
+import { DotsHelp, HelpPop } from "@/app/help";
 
 type Params = Promise<{ username: string }>;
 
@@ -177,7 +178,10 @@ async function Profile({ params }: { params: Params }) {
                 </ViewTransition>
               </p>
               <div className="pb-1 text-[13px] leading-tight text-chalk-dim">
-                <p>DOTS</p>
+                <p className="flex items-center">
+                  DOTS
+                  <DotsHelp />
+                </p>
                 {card && (
                   <p className="mt-1 flex items-center gap-1.5 font-bold text-chalk">
                     {card.overallRank <= 3 && (
@@ -255,14 +259,31 @@ async function Profile({ params }: { params: Params }) {
                   {canAdd ? (
                     <CosignButton liftId={lift.id} />
                   ) : lift.cosigners.length === 0 ? (
-                    <span className="shrink-0 rounded-full border border-rule px-2.5 py-1 text-[12px] text-chalk-faint">
-                      unverified
-                    </span>
+                    // Tap to learn what it means and how to fix it.
+                    <button
+                      type="button"
+                      popoverTarget="unverified-help"
+                      className="press shrink-0 rounded-full border border-rule px-2.5 py-1 text-[12px] text-chalk-faint hover:border-chalk-faint hover:text-chalk"
+                    >
+                      unverified <span aria-hidden>?</span>
+                    </button>
                   ) : null}
                 </div>
               </div>
             );
           })}
+          <HelpPop id="unverified-help">
+            <span className="block font-bold text-chalk">Unverified</span>
+            <span className="mt-1.5 block">
+              Nobody has co-signed this set yet. A co-sign is someone
+              {lifter.college ? ` at ${lifter.college.shortName}` : ""} vouching
+              that they watched it: they open this page and tap &ldquo;I saw this&rdquo;.
+            </span>
+            <span className="mt-1.5 block">
+              With all three of squat, bench and deadlift co-signed, a lifter
+              joins the global board.
+            </span>
+          </HelpPop>
         </section>
 
         {!viewer && lifts.length > 0 && (

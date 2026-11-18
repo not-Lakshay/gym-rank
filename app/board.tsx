@@ -7,7 +7,7 @@ import { WEIGHT_CLASSES } from "@/lib/scoring";
 import { Avatar } from "./avatar";
 import { Departure, Morph } from "./morph";
 import { Roll } from "./roll";
-import { ThemeSwitch } from "./theme-switch";
+import { ThemeSwitch } from "./prefs";
 
 /** Rank within a sub-board: one plus everyone strictly ahead (ties share). */
 export function rankWithin<T>(rows: T[], score: (r: T) => number) {
@@ -165,10 +165,7 @@ function Heading({ text, plate, note }: { text: string; plate?: string; note: st
     <h2 className="caption mb-2 flex items-center justify-between gap-2">
       {plate ? (
         // A weight-class board wears its plate: the label is filled with it.
-        <span
-          className="rounded-sm px-2 py-0.5 text-iron"
-          style={{ background: plate, boxShadow: `0 0 calc(14px * var(--glow)) -4px ${plate}` }}
-        >
+        <span className="rounded-sm px-2 py-0.5 text-iron" style={{ background: plate }}>
           {text}
         </span>
       ) : (
@@ -240,7 +237,13 @@ function Ranked({
                 key={e.id}
                 className={`row flex items-center gap-3 border-b border-rule py-3 last:border-b-0 ${
                   isViewer || medal ? "-mx-2 rounded-sm px-2" : ""
-                } ${medal ? "medal-row" : isViewer ? "ring-1 ring-accent/60" : ""}`}
+                } ${
+                  medal
+                    ? "medal-row"
+                    : isViewer
+                      ? "ring-1 ring-accent/60 shadow-[inset_0_0_calc(18px*var(--glow))_-6px_var(--accent)]"
+                      : ""
+                }`}
                 style={medal ? ({ "--medal": medal } as React.CSSProperties) : undefined}
               >
                 <Departure arrival={arrivalFor(e)}>
@@ -280,7 +283,6 @@ function Ranked({
                         style={{
                           width: `${Math.max(e.share * 100, 4)}%`,
                           background: ring,
-                          boxShadow: `0 0 calc(8px * var(--glow)) ${ring}`,
                           animationDelay: `${delay}ms`,
                         }}
                       />
@@ -470,7 +472,7 @@ export function ChevronRight() {
 }
 
 export const button =
-  "press inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-sm bg-gold px-5 text-[15px] font-bold text-iron shadow-[0_0_calc(22px*var(--glow))_-6px_var(--gold)] hover:opacity-85";
+  "press inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-sm bg-accent px-5 text-[15px] font-bold text-iron shadow-[0_0_calc(22px*var(--glow))_-6px_var(--accent)] hover:opacity-85";
 
 // Outlined: navigation and account controls. Visibly tappable, but clearly
 // not the main action on the screen.
