@@ -8,16 +8,17 @@ import { AVATAR_SETS, avatarFrom, avatarLabel } from "./avatars.ts";
 const ids = AVATAR_SETS.flatMap((set) => set.avatars.map((a) => a.id));
 assert.equal(new Set(ids).size, ids.length, "avatar ids are unique");
 
-// Ids already saved on lifters keep working.
-for (const id of ["p1", "p12", "bear", "lion", "tiger", "rhino", "shark"]) {
+// Ids already saved on lifters keep working (p11 is picked in production).
+for (const id of ["p11", "bear", "lion", "tiger", "rhino", "shark", "lift5", "px12"]) {
   assert.equal(avatarFrom(id), id);
 }
-assert.equal(avatarFrom("lift5"), "lift5");
-assert.equal(avatarFrom("px12"), "px12");
+assert.equal(avatarFrom("ninja"), "ninja");
+assert.equal(avatarFrom("aes18"), "aes18");
 
-// Anything else is initials: empty, unknown, a path, not a string.
+// Anything else is initials: empty, unknown, removed, a path, not a string.
 assert.equal(avatarFrom(""), null);
-assert.equal(avatarFrom("p19"), null);
+assert.equal(avatarFrom("p33"), null);
+assert.equal(avatarFrom("l1"), null);
 assert.equal(avatarFrom("../secrets"), null);
 assert.equal(avatarFrom(null), null);
 assert.equal(avatarFrom(["bear"]), null);
