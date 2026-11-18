@@ -21,7 +21,7 @@ import type { Lift } from "@/lib/lifters";
 import { STANDARD_BODYWEIGHTS, noviceOneRepMax } from "@/lib/standards";
 import { siteLabel } from "@/lib/site";
 import { clearTryout, parseTryout, readTryout } from "@/lib/tryout";
-import { ANIMALS, PEOPLE, avatarLabel, avatarSrc } from "@/lib/avatars";
+import { AVATAR_SETS, avatarSrc } from "@/lib/avatars";
 import { initials } from "@/lib/format";
 import Image from "next/image";
 import {
@@ -776,35 +776,75 @@ export function ProfileForm({
 }
 
 /*
-  Initials, or one of the cartoon avatars (lib/avatars.ts). Plain radio
-  buttons under the pictures, so it works by keyboard and screen reader
-  and needs no state: the form posts whichever is checked.
+  Initials, or a cartoon avatar from one of the sets (lib/avatars.ts). Each
+  set is a row showing its first three; tapping it opens the whole set, one
+  set at a time. Plain radio buttons under the pictures, so it works by
+  keyboard and screen reader and needs no state: the form posts whichever
+  is checked, even inside a closed set, and that set's row is outlined.
 */
 function AvatarPicker({ name, current }: { name: string; current: string | null }) {
   const disc =
     "flex aspect-square items-center justify-center overflow-hidden rounded-full border-2 border-rule bg-iron-raised transition-[border-color,box-shadow] peer-checked:border-accent peer-checked:shadow-[0_0_0_2px_var(--accent)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-chalk";
-  const group = (label: string, ids: string[]) => (
-    <>
-      <p className="caption mt-4">{label}</p>
-      <div className="mt-2 grid grid-cols-6 gap-2">
-        {ids.map((id) => (
-          <label key={id} className="press relative cursor-pointer">
+  const sets = AVATAR_SETS.map((set) => (
+    <details
+      key={set.label}
+      name="avatar-set"
+      // Open where their current avatar is, so they see what they have.
+      open={set.avatars.some((a) => a.id === current)}
+      className="group rounded-sm border border-rule has-[:checked]:border-accent"
+    >
+      <summary className="press flex min-h-12 cursor-pointer list-none items-center gap-3 px-3 [&::-webkit-details-marker]:hidden">
+        <span className="flex-1 text-[14px] font-bold">
+          {set.label}
+          <span className="ml-1.5 font-normal text-chalk-faint">{set.avatars.length}</span>
+          <span className="ml-1.5 hidden text-accent group-has-[:checked]:inline">✓</span>
+        </span>
+        {/* A taste of the set; the grid below has them all once open. */}
+        <span aria-hidden className="flex -space-x-2 group-open:hidden">
+          {set.avatars.slice(0, 3).map((a) => (
+            <Image
+              key={a.id}
+              src={avatarSrc(a.id)}
+              alt=""
+              width={30}
+              height={30}
+              unoptimized
+              className="rounded-full border-2 border-iron bg-iron-raised"
+            />
+          ))}
+        </span>
+        <svg
+          aria-hidden
+          viewBox="0 0 16 16"
+          className="h-3.5 w-3.5 shrink-0 text-chalk-faint transition-transform group-open:rotate-180"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="m3 6 5 5 5-5" />
+        </svg>
+      </summary>
+      <div className="grid grid-cols-6 gap-2 px-3 pb-3 pt-1">
+        {set.avatars.map((a) => (
+          <label key={a.id} className="press relative cursor-pointer">
             <input
               type="radio"
               name="avatar"
-              value={id}
-              defaultChecked={current === id}
-              aria-label={avatarLabel(id)}
+              value={a.id}
+              defaultChecked={current === a.id}
+              aria-label={a.label}
               className="peer sr-only"
             />
             <span className={`${disc} w-full`}>
-              <Image src={avatarSrc(id)} alt="" width={48} height={48} unoptimized />
+              <Image src={avatarSrc(a.id)} alt="" width={48} height={48} unoptimized />
             </span>
           </label>
         ))}
       </div>
-    </>
-  );
+    </details>
+  ));
 
   return (
     <fieldset>
@@ -822,8 +862,7 @@ function AvatarPicker({ name, current }: { name: string; current: string | null 
         </span>
         Just my initials
       </label>
-      {group("People", PEOPLE)}
-      {group("Animals", ANIMALS)}
+      <div className="mt-3 flex flex-col gap-2">{sets}</div>
     </fieldset>
   );
 }
