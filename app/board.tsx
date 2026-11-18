@@ -491,7 +491,7 @@ export const navButton =
 // Footer navigation as real buttons: on a phone a row of underlined words
 // reads as prose, and these are the only way off the page.
 export const footerLink =
-  "press inline-flex min-h-11 items-center rounded-sm border border-rule px-3.5 text-[14px] text-chalk-dim hover:border-chalk-faint hover:text-chalk";
+  "footer-link press inline-flex min-h-11 items-center rounded-sm border border-rule px-3.5 text-[14px] text-chalk-dim hover:border-chalk-faint hover:text-chalk";
 
 /*
   What a page looks like while its data is on the way. The same wait reads

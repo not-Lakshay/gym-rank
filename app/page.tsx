@@ -30,7 +30,7 @@ export default function Home({ searchParams }: { searchParams: SearchParams }) {
               <h1 className="text-[clamp(1.5rem,8.2vw,2.5rem)] font-extrabold leading-[0.88] tracking-[-0.045em]">
                 Gym Rank
               </h1>
-              <p className="mt-1.5 text-[clamp(1.3rem,6.9vw,2.1rem)] font-extrabold italic leading-none tracking-[-0.045em]">
+              <p className="tagline mt-1.5 text-[clamp(1.3rem,6.9vw,2.1rem)] font-extrabold italic leading-none tracking-[-0.045em]">
                 Your strength coefficient.
               </p>
               <p className="mt-2 text-[13px] leading-snug text-chalk-dim">

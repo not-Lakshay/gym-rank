@@ -270,7 +270,7 @@ function Header({
           <h1 className="text-[2.25rem] font-extrabold leading-[0.9] tracking-[-0.04em]">
             {college.shortName}
           </h1>
-          <p className="mt-2.5 text-[16px] font-bold leading-none tracking-[-0.02em]">
+          <p className="tagline mt-2.5 text-[16px] font-bold leading-none tracking-[-0.02em]">
             Your strength coefficient.
           </p>
           <p className="mt-2 text-[13px] leading-snug text-chalk-dim">

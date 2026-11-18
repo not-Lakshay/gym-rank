@@ -415,6 +415,15 @@ function LifterView({
         )}
       </section>
 
+      {/* Up here, by the name and avatar it changes, not under everything. */}
+      <details className="rise pt-6" style={{ "--i": 1 } as React.CSSProperties}>
+        <summary className="press flex min-h-11 cursor-pointer list-none items-center justify-between rounded-sm border border-rule px-4 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk [&::-webkit-details-marker]:hidden">
+          Edit profile
+          <span aria-hidden className="text-chalk-faint">+</span>
+        </summary>
+        <div className="pt-5">{editForm}</div>
+      </details>
+
       {/*
         After the first save: what to do next, until all three lifts are
         co-signed and there's nothing left to do but lift.
@@ -535,15 +544,7 @@ function LifterView({
         </p>
       </section>
 
-      <details className="rise pt-8" style={{ "--i": 4 } as React.CSSProperties}>
-        <summary className="press flex min-h-11 cursor-pointer list-none items-center justify-between rounded-sm border border-rule px-4 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk">
-          Edit profile
-          <span aria-hidden className="text-chalk-faint">+</span>
-        </summary>
-        <div className="pt-5">{editForm}</div>
-      </details>
-
-      <SignOutForm className={quietButton} formClassName="pt-8" />
+      <SignOutForm className={quietButton} formClassName="pt-10" />
 
       <div className="mt-10 border-t border-rule pt-6">
         <DeleteAccountButton />

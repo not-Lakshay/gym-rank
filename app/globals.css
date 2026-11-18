@@ -72,6 +72,9 @@
   /* Violet: a colour no plate or medal uses, so the interface can't be
      mistaken for a weight class or a rank. */
   --accent: #a970ff;
+  /* The one extra colour, used in two places only (.tagline, .footer-link):
+     it answers the violet and matches the cyan glow behind the page. */
+  --neon-cyan: #2ee6ff;
   --glow: 1;
   /* Tailwind's rounded-sm reads this: buttons, inputs, panels round off. */
   --radius-sm: 0.625rem;
@@ -141,6 +144,20 @@ body {
     auto,
     36px 36px,
     36px 36px;
+}
+
+/* Neon's cyan, in its two places: the tagline glows, the footer links are
+   outlined in it. Iron leaves both plain. */
+:root[data-theme="neon"] .tagline {
+  color: var(--neon-cyan);
+  text-shadow: 0 0 18px color-mix(in oklab, var(--neon-cyan) 55%, transparent);
+}
+:root[data-theme="neon"] .footer-link {
+  color: var(--neon-cyan);
+  border-color: color-mix(in oklab, var(--neon-cyan) 40%, transparent);
+}
+:root[data-theme="neon"] .footer-link:hover {
+  border-color: var(--neon-cyan);
 }
 
 /* A raised panel: boards and the calculator sit on it. The left edge is
