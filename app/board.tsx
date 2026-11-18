@@ -434,7 +434,7 @@ export function Check() {
     <svg
       aria-hidden
       viewBox="0 0 16 16"
-      className="h-3 w-3 text-[var(--plate-10)]"
+      className="h-3 w-3 text-[var(--success)]"
       fill="none"
       stroke="currentColor"
       strokeWidth="2.2"

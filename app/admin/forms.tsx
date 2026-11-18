@@ -54,7 +54,7 @@ function ArmedButton({
         className={`${secondary} min-h-9 px-3 text-[13px] ${
           armed
             ? danger
-              ? "border-[var(--plate-25)] text-[var(--plate-25)]"
+              ? "border-[var(--danger)] text-[var(--danger)]"
               : "border-chalk text-chalk"
             : ""
         }`}
@@ -62,7 +62,7 @@ function ArmedButton({
         {pending ? "…" : armed ? armedLabel : label}
       </button>
       {state.error && (
-        <span role="alert" className="mt-1 text-[11px] text-[var(--plate-25)]">
+        <span role="alert" className="mt-1 text-[11px] text-[var(--danger)]">
           {state.error}
         </span>
       )}
@@ -147,12 +147,12 @@ export function AddCollegeForm() {
         />
       </label>
       {state.error && (
-        <p role="alert" className="col-span-2 text-[12px] text-[var(--plate-25)]">
+        <p role="alert" className="col-span-2 text-[12px] text-[var(--danger)]">
           {state.error}
         </p>
       )}
       {state.savedAt && !state.error && (
-        <p className="col-span-2 text-[12px] text-[var(--plate-10)]">Added.</p>
+        <p className="col-span-2 text-[12px] text-[var(--success)]">Added.</p>
       )}
       <button type="submit" disabled={pending} className={`${primary} col-span-2 w-fit`}>
         {pending ? "Adding…" : "Add college"}

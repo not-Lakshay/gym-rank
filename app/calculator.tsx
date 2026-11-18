@@ -173,7 +173,7 @@ export function Calculator({
         {error ? (
           <p
             role="alert"
-            className="text-[13px] leading-relaxed text-[var(--plate-25)]"
+            className="text-[13px] leading-relaxed text-[var(--danger)]"
           >
             {error}
           </p>

@@ -461,7 +461,7 @@ function LifterView({
                   <span
                     key={i}
                     className={`h-1.5 w-8 rounded-full ${
-                      i < card.verifiedCount ? "bg-[var(--plate-10)]" : "bg-rule"
+                      i < card.verifiedCount ? "bg-[var(--success)]" : "bg-rule"
                     }`}
                   />
                 ))}
@@ -571,7 +571,7 @@ function Step({
       <span
         aria-hidden
         className={`tnum mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${
-          done ? "bg-[var(--plate-10)] text-iron" : "border border-rule text-chalk-dim"
+          done ? "bg-[var(--success)] text-iron" : "border border-rule text-chalk-dim"
         }`}
       >
         {done ? "✓" : n}

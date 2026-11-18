@@ -27,12 +27,29 @@
   --chalk-faint: #8f877a;
   --rule: #352f27;
 
-  /* Real plate colours, lifted enough to read on dark iron. */
+  /* Real plate colours, lifted enough to read on dark iron. Only for
+     drawing plates on a bar (app/barbell.tsx). */
   --plate-10: #37a464;
   --plate-15: #ebbc47;
   --plate-20: #5c93d6;
   --plate-25: #da4e58;
 
+  /* Weight classes, lightest first: indigo, blue, cyan, ice. Brightness
+     rises with each heavier class, so the order reads at a glance and
+     survives colour blindness; the hue walks too, so neighbours are easy to
+     tell apart (OKLab ΔE >= 15, colour-blind >= 9). The dimmest still
+     clears 4.5:1 on iron. */
+  --class-1: #8160eb;
+  --class-2: #62a4f7;
+  --class-3: #19e0f7;
+  --class-4: #daf2e6;
+
+  /* Status, kept apart from every data colour: green and red no longer
+     double as weight classes. Softened to sit with the matte iron. */
+  --success: #5fb37e;
+  --danger: #e0645a;
+
+  /* Gold means first place, and only that. */
   --gold: #e0b14a;
   --silver: #b9b4ab;
   --bronze: #b8743f;
@@ -42,10 +59,10 @@
   --beam: rgba(243, 239, 231, 0.07);
   --pool: 16%;
 
-  /* The page's one colour. Gold in Iron, violet in Neon; a class board
-     sets it to its plate, so links, the edge of the card and the glow all
-     say which board this is. */
-  --accent: var(--gold);
+  /* The page's one interface colour: chalk in Iron (chalk on iron), violet
+     in Neon. A class board sets it to its class colour, so the edge of the
+     card and the glow say which board this is. */
+  --accent: var(--chalk);
 
   --background: var(--iron);
   --foreground: var(--chalk);
@@ -64,10 +81,21 @@
   --plate-20: #3d9cff;
   --plate-25: #ff3d5e;
 
-  /* An orange-gold, so first place never reads as the 65–75 kg yellow. */
-  --gold: #ffb020;
+  /* The same ramp, its first step pulled toward blue so it stays clear of
+     the violet buttons. Cool colours only, one family with the cyan. */
+  --class-1: #6266fe;
+  --class-2: #3ba8ff;
+  --class-3: #19e0f7;
+  --class-4: #daf2e6;
+
+  --success: #3ddc97;
+  --danger: #ff5c7a;
+
+  /* The only warm colours in Neon, so the podium stands out from the cool
+     palette around it. */
+  --gold: #ffc23d;
   --silver: #d4dbe6;
-  --bronze: #f07a3c;
+  --bronze: #ff8f4f;
 
   /* Violet: a colour no plate or medal uses, so the interface can't be
      mistaken for a weight class or a rank. */
@@ -114,7 +142,7 @@ body {
     radial-gradient(34rem 28rem at 50% -10rem, var(--beam), transparent 70%),
     radial-gradient(
       80rem 44rem at 50% -18rem,
-      color-mix(in oklab, var(--accent) var(--pool), transparent),
+      color-mix(in oklab, var(--gold) var(--pool), transparent),
       transparent 62%
     ),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");

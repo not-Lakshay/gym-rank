@@ -146,7 +146,7 @@ export function LiftsForm({
       </p>
 
       {state.error && (
-        <p role="alert" className="mt-3 text-[12px] text-[var(--plate-25)]">
+        <p role="alert" className="mt-3 text-[12px] text-[var(--danger)]">
           {state.error}
         </p>
       )}
@@ -155,7 +155,7 @@ export function LiftsForm({
         type="submit"
         disabled={pending || (!dirty && !justSaved)}
         className={`${primary} mt-4 w-full ${
-          justSaved ? "bg-[var(--plate-10)]" : ""
+          justSaved ? "bg-[var(--success)]" : ""
         }`}
       >
         {pending ? "Saving…" : justSaved ? "Saved" : "Save lifts"}
@@ -192,7 +192,7 @@ function Celebration({ prs, passed }: { prs: Movement[]; passed: string[] }) {
       )}
       {passed.length > 0 && (
         <p className={`flex items-center gap-2 ${lifts.length > 0 ? "mt-2" : ""}`}>
-          <span aria-hidden className="text-[var(--plate-10)]">
+          <span aria-hidden className="text-[var(--success)]">
             ▲
           </span>
           <span>
@@ -423,7 +423,7 @@ function RemoveLift({
   return (
     <div className="mt-2">
       {armed ? (
-        <div className="rounded-sm border border-[color-mix(in_oklab,var(--plate-25)_45%,transparent)] bg-[color-mix(in_oklab,var(--plate-25)_8%,transparent)] p-3">
+        <div className="rounded-sm border border-[color-mix(in_oklab,var(--danger)_45%,transparent)] bg-[color-mix(in_oklab,var(--danger)_8%,transparent)] p-3">
           <p className="text-[12px] leading-relaxed text-chalk-dim">
             Removes your {name}
             {cosigns > 0 && ` and its ${cosigns} co-sign${cosigns === 1 ? "" : "s"}`}.
@@ -435,7 +435,7 @@ function RemoveLift({
               type="button"
               onClick={remove}
               disabled={busy}
-              className="press inline-flex min-h-9 items-center rounded-sm bg-[var(--plate-25)] px-3 text-[13px] font-bold text-chalk hover:opacity-85 disabled:opacity-60"
+              className="press inline-flex min-h-9 items-center rounded-sm bg-[var(--danger)] px-3 text-[13px] font-bold text-iron hover:opacity-85 disabled:opacity-60"
             >
               {busy ? "Removing…" : `Yes, remove my ${name}`}
             </button>
@@ -453,14 +453,14 @@ function RemoveLift({
         <button
           type="button"
           onClick={() => setArmed(true)}
-          className="press inline-flex min-h-8 items-center gap-1.5 rounded-sm border border-rule px-2.5 text-[12px] font-medium text-chalk-dim hover:border-[var(--plate-25)] hover:text-[var(--plate-25)]"
+          className="press inline-flex min-h-8 items-center gap-1.5 rounded-sm border border-rule px-2.5 text-[12px] font-medium text-chalk-dim hover:border-[var(--danger)] hover:text-[var(--danger)]"
         >
           <TrashIcon />
           Remove
         </button>
       )}
       {error && (
-        <p role="alert" className="mt-2 text-[12px] text-[var(--plate-25)]">
+        <p role="alert" className="mt-2 text-[12px] text-[var(--danger)]">
           {error}
         </p>
       )}
@@ -661,9 +661,9 @@ function UsernameField({
         id="username-status"
         className={`min-h-4 text-[12px] ${
           shown.kind === "bad"
-            ? "text-[var(--plate-25)]"
+            ? "text-[var(--danger)]"
             : shown.kind === "ok"
-              ? "text-[var(--plate-10)]"
+              ? "text-[var(--success)]"
               : "text-chalk-faint"
         }`}
       >
@@ -719,7 +719,7 @@ export function ProfileForm({
           role="status"
           className="toast fixed inset-x-0 top-3 z-50 mx-auto flex w-fit items-center gap-2 rounded-sm border border-rule bg-iron-raised px-4 py-3 text-[14px] font-bold shadow-[0_12px_32px_rgba(0,0,0,0.55)]"
         >
-          <span aria-hidden className="text-[var(--plate-10)]">
+          <span aria-hidden className="text-[var(--success)]">
             ✓
           </span>
           Profile saved
@@ -763,7 +763,7 @@ export function ProfileForm({
       <AvatarPicker name={defaultName} current={defaultAvatar} />
 
       {state.error && (
-        <p role="alert" className="text-[12px] text-[var(--plate-25)]">
+        <p role="alert" className="text-[12px] text-[var(--danger)]">
           {state.error}
         </p>
       )}
@@ -926,7 +926,7 @@ export function CosignButton({ liftId }: { liftId: string }) {
         {pending ? "…" : "I saw this"}
       </button>
       {state.error && (
-        <p role="alert" className="mt-1 text-[11px] text-[var(--plate-25)]">
+        <p role="alert" className="mt-1 text-[11px] text-[var(--danger)]">
           {state.error}
         </p>
       )}
@@ -956,7 +956,7 @@ export function DeleteAccountButton() {
   const [armed, setArmed] = useState(false);
 
   const look = armed
-    ? "border-[var(--plate-25)] text-[var(--plate-25)]"
+    ? "border-[var(--danger)] text-[var(--danger)]"
     : "border-rule text-chalk-faint hover:border-chalk-faint hover:text-chalk";
 
   return (
@@ -985,7 +985,7 @@ export function DeleteAccountButton() {
         {pending ? "Deleting…" : armed ? "Yes, delete my account" : "Delete my account"}
       </button>
       {state.error && (
-        <p role="alert" className="text-[12px] text-[var(--plate-25)]">
+        <p role="alert" className="text-[12px] text-[var(--danger)]">
           {state.error}
         </p>
       )}

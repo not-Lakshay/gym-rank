@@ -253,7 +253,7 @@ async function Profile({ params }: { params: Params }) {
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   {lift.cosigners.length > 0 && (
-                    <span className="flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-[color-mix(in_oklab,var(--plate-10)_50%,transparent)] bg-[color-mix(in_oklab,var(--plate-10)_14%,transparent)] px-2.5 py-1 text-[12px] text-chalk">
+                    <span className="flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-[color-mix(in_oklab,var(--success)_50%,transparent)] bg-[color-mix(in_oklab,var(--success)_14%,transparent)] px-2.5 py-1 text-[12px] text-chalk">
                       <Check />
                       <span className="text-chalk-dim">by</span>
                       <span className="truncate font-medium">

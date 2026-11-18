@@ -1,10 +1,9 @@
 /**
- * Weight class to plate colour.
- *
- * Olympic plates are colour-coded by weight internationally: 10kg green,
- * 15kg yellow, 20kg blue, 25kg red. Mapping the classes onto them in
- * ascending order means the colour carries meaning rather than decorating —
- * a heavier class reads as a heavier plate.
+ * Weight class to its colour: indigo to ice, brighter for each heavier class
+ * (--class-1 … --class-4 in globals.css), so the order reads at a glance,
+ * colour-blind or not. These used to be the plate colours, whose order
+ * only lifters who know the plate code could see. Plates keep theirs for
+ * drawing a bar (PLATES below).
  *
  * Two forms of each colour. The CSS variable is what the app uses, so a
  * palette change in globals.css reaches every screen. The literal hex is
@@ -14,10 +13,10 @@
 const PLATE_BY_CLASS: Record<string, { cssVar: string; hex: string }> = {
   // The hex is the default (Iron) theme's: a share card can't know which
   // theme its viewer picked.
-  "Up to 65kg": { cssVar: "var(--plate-10)", hex: "#2e8b53" },
-  "65-75kg": { cssVar: "var(--plate-15)", hex: "#e3b53b" },
-  "75-85kg": { cssVar: "var(--plate-20)", hex: "#3f7cc9" },
-  "85kg+": { cssVar: "var(--plate-25)", hex: "#d1434d" },
+  "Up to 65kg": { cssVar: "var(--class-1)", hex: "#8160eb" },
+  "65-75kg": { cssVar: "var(--class-2)", hex: "#62a4f7" },
+  "75-85kg": { cssVar: "var(--class-3)", hex: "#19e0f7" },
+  "85kg+": { cssVar: "var(--class-4)", hex: "#daf2e6" },
 };
 
 export function plateFor(weightClass: string): string {
