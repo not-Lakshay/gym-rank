@@ -776,13 +776,16 @@ export function ProfileForm({
 }
 
 /*
-  Initials, or a cartoon avatar from one of the sets (lib/avatars.ts). Each
-  set is a row showing its first three; tapping it opens the whole set, one
-  set at a time. Plain radio buttons under the pictures, so it works by
-  keyboard and screen reader and needs no state: the form posts whichever
-  is checked, even inside a closed set, and that set's row is outlined.
+  Initials, or a cartoon avatar from one of the sets (lib/avatars.ts). On the
+  form it's one line: the current pick and a button. The sets open in a
+  sheet over the page, each a row showing its first three; tapping a row
+  opens the whole set, one set at a time. Plain radio buttons under the
+  pictures, so it works by keyboard and screen reader, and the form posts
+  whichever is checked even with the sheet or its set closed.
 */
 function AvatarPicker({ name, current }: { name: string; current: string | null }) {
+  // Only for the preview beside the button; the checked radio is what's posted.
+  const [picked, setPicked] = useState(current);
   const disc =
     "flex aspect-square items-center justify-center overflow-hidden rounded-full border-2 border-rule bg-iron-raised transition-[border-color,box-shadow] peer-checked:border-accent peer-checked:shadow-[0_0_0_2px_var(--accent)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-chalk";
   const sets = AVATAR_SETS.map((set) => (
@@ -847,23 +850,69 @@ function AvatarPicker({ name, current }: { name: string; current: string | null 
   ));
 
   return (
-    <fieldset>
-      <legend className="text-[12px] text-chalk-dim">Avatar</legend>
-      <label className="press relative mt-2 flex w-fit cursor-pointer items-center gap-3 whitespace-nowrap text-[14px]">
-        <input
-          type="radio"
-          name="avatar"
-          value=""
-          defaultChecked={current === null}
-          className="peer sr-only"
-        />
-        <span className={`${disc} tnum w-11 shrink-0 text-[14px] font-extrabold text-chalk`}>
-          {initials(name)}
+    <div>
+      <p className="text-[12px] text-chalk-dim">Avatar</p>
+      <div className="mt-1.5 flex items-center gap-3">
+        <span
+          aria-hidden
+          className="tnum flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-rule bg-iron-raised text-[14px] font-extrabold text-chalk"
+        >
+          {picked ? (
+            <Image
+              src={avatarSrc(picked)}
+              alt=""
+              width={44}
+              height={44}
+              loading="eager"
+              unoptimized
+            />
+          ) : (
+            initials(name)
+          )}
         </span>
-        Just my initials
-      </label>
-      <div className="mt-3 flex flex-col gap-2">{sets}</div>
-    </fieldset>
+        <button type="button" popoverTarget="avatar-sheet" className={secondary}>
+          {picked ? "Change avatar" : "Select avatar"}
+        </button>
+      </div>
+
+      <div
+        id="avatar-sheet"
+        popover="auto"
+        // .help-pop gives it the dimmed backdrop the "?" explanations have.
+        className="help-pop m-auto max-h-[85dvh] w-[min(26rem,calc(100%-1.5rem))] overflow-y-auto rounded-sm border border-rule bg-iron p-0 text-chalk"
+        onChange={(e) => setPicked((e.target as HTMLInputElement).value || null)}
+      >
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-rule bg-iron px-4 py-3">
+          <h2 id="avatar-sheet-title" className="text-[15px] font-bold">
+            Select avatar
+          </h2>
+          <button
+            type="button"
+            popoverTarget="avatar-sheet"
+            popoverTargetAction="hide"
+            className="press inline-flex min-h-9 items-center rounded-sm bg-chalk px-4 text-[14px] font-bold text-iron hover:opacity-85"
+          >
+            Done
+          </button>
+        </div>
+        <div role="group" aria-labelledby="avatar-sheet-title" className="p-4">
+          <label className="press relative flex w-fit cursor-pointer items-center gap-3 whitespace-nowrap text-[14px]">
+            <input
+              type="radio"
+              name="avatar"
+              value=""
+              defaultChecked={current === null}
+              className="peer sr-only"
+            />
+            <span className={`${disc} tnum w-11 shrink-0 text-[14px] font-extrabold text-chalk`}>
+              {initials(name)}
+            </span>
+            Just my initials
+          </label>
+          <div className="mt-3 flex flex-col gap-2">{sets}</div>
+        </div>
+      </div>
+    </div>
   );
 }
 
