@@ -174,7 +174,7 @@ async function CollegeBoard({
 
           <div className="rise" style={{ "--i": 2 } as React.CSSProperties}>
             <Board
-              heading="Everyone"
+              heading="Overall"
               rows={rows}
               rankOf={(r) => r.overallRank}
               viewerId={viewer?.id ?? null}
@@ -264,7 +264,7 @@ function Header({
               className="h-1 rounded-full"
               style={{
                 background: plateFor(weightClass.label),
-                boxShadow: `0 0 8px ${plateFor(weightClass.label)}`,
+                boxShadow: `0 0 calc(8px * var(--glow)) ${plateFor(weightClass.label)}`,
               }}
             />
             <span className="tnum whitespace-nowrap">

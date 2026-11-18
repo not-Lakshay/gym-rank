@@ -7,6 +7,7 @@ import { WEIGHT_CLASSES } from "@/lib/scoring";
 import { Avatar } from "./avatar";
 import { Departure, Morph } from "./morph";
 import { Roll } from "./roll";
+import { ThemeSwitch } from "./theme-switch";
 
 /** Rank within a sub-board: one plus everyone strictly ahead (ties share). */
 export function rankWithin<T>(rows: T[], score: (r: T) => number) {
@@ -69,7 +70,7 @@ export function Board({
   medals?: boolean;
   /** On the global board the college is the subline, not the co-sign count. */
   showCollege?: boolean;
-  /** LNMIIT's Everyone board: a "Y24" tag beside each name. */
+  /** LNMIIT's overall board: a "Y24" tag beside each name. */
   showBatch?: boolean;
 }) {
   // Rows arrive sorted by DOTS descending, so the first is the yardstick
@@ -166,7 +167,7 @@ function Heading({ text, plate, note }: { text: string; plate?: string; note: st
         // A weight-class board wears its plate: the label is filled with it.
         <span
           className="rounded-sm px-2 py-0.5 text-iron"
-          style={{ background: plate, boxShadow: `0 0 14px -4px ${plate}` }}
+          style={{ background: plate, boxShadow: `0 0 calc(14px * var(--glow)) -4px ${plate}` }}
         >
           {text}
         </span>
@@ -279,7 +280,7 @@ function Ranked({
                         style={{
                           width: `${Math.max(e.share * 100, 4)}%`,
                           background: ring,
-                          boxShadow: `0 0 8px ${ring}`,
+                          boxShadow: `0 0 calc(8px * var(--glow)) ${ring}`,
                           animationDelay: `${delay}ms`,
                         }}
                       />
@@ -469,7 +470,7 @@ export function ChevronRight() {
 }
 
 export const button =
-  "press inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-sm bg-gold px-5 text-[15px] font-bold text-iron shadow-[0_0_22px_-6px_var(--gold)] hover:opacity-85";
+  "press inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-sm bg-gold px-5 text-[15px] font-bold text-iron shadow-[0_0_calc(22px*var(--glow))_-6px_var(--gold)] hover:opacity-85";
 
 // Outlined: navigation and account controls. Visibly tappable, but clearly
 // not the main action on the screen.
@@ -491,7 +492,7 @@ export function Bone({ className }: { className: string }) {
   return (
     <span
       aria-hidden
-      className={`block animate-pulse rounded-sm bg-iron-raised ${className}`}
+      className={`bone block rounded-sm ${className}`}
     />
   );
 }
@@ -512,7 +513,7 @@ export function BoardSkeleton({ rows = 5 }: { rows?: number }) {
         {Array.from({ length: rows }, (_, i) => (
           <li key={i} className="flex items-center gap-3 border-b border-rule py-3">
             <Bone className="h-4 w-6" />
-            <span aria-hidden className="block h-9 w-9 shrink-0 animate-pulse rounded-full bg-iron-raised" />
+            <span aria-hidden className="bone block h-9 w-9 shrink-0 rounded-full" />
             <span className="flex-1">
               <Bone className="h-4 w-32" />
               <Bone className="mt-1.5 h-3 w-20" />
@@ -524,6 +525,43 @@ export function BoardSkeleton({ rows = 5 }: { rows?: number }) {
           </li>
         ))}
       </ol>
+    </div>
+  );
+}
+
+/* A lifter's page while it loads, in the page's own shape so nothing
+   jumps when it arrives (app/u/[username]/page.tsx). The header and the
+   lifts are separate: right after a tap on a board, the real header is
+   drawn in place of the first (app/morph.tsx). */
+export function LifterHeaderSkeleton() {
+  return (
+    <div className="pt-8">
+      <div className="flex items-center gap-4">
+        <span aria-hidden className="bone block h-16 w-16 shrink-0 rounded-full" />
+        <span className="flex-1">
+          <Bone className="h-7 w-44" />
+          <Bone className="mt-2.5 h-3 w-40" />
+        </span>
+      </div>
+      <Bone className="mt-5 h-14 w-40" />
+    </div>
+  );
+}
+
+export function LiftsSkeleton() {
+  return (
+    <div className="pt-10">
+      <Bone className="h-3 w-12" />
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="flex items-center gap-3 border-b border-rule py-4">
+          <span className="flex-1">
+            <Bone className="h-4 w-24" />
+            <Bone className="mt-1.5 h-3 w-36" />
+            <Bone className="mt-2.5 h-6 w-28 rounded-full" />
+          </span>
+          <Bone className="h-[30px] w-[7.5rem]" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -576,6 +614,9 @@ export function Footer({ i = 6, home = true }: { i?: number; home?: boolean }) {
           Terms
         </Link>
       </p>
+      <div className="mt-5">
+        <ThemeSwitch />
+      </div>
     </footer>
   );
 }
@@ -585,7 +626,7 @@ export function Footer({ i = 6, home = true }: { i?: number; home?: boolean }) {
    ------------------------------------------------------------------------ */
 
 export const BOARD_TABS = [
-  { id: "all", label: "Everyone" },
+  { id: "all", label: "Overall" },
   ...MOVEMENTS.map((m) => ({ id: m.id, label: m.label })),
 ] as const;
 
@@ -612,7 +653,7 @@ export function BoardTabs({ base, active }: { base: string; active: BoardTab }) 
             aria-current={current ? "page" : undefined}
             className={`press inline-flex min-h-9 shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 text-[13px] font-medium transition-colors ${
               current
-                ? "border-accent bg-accent text-iron shadow-[0_0_16px_-5px_var(--accent)]"
+                ? "border-accent bg-accent text-iron shadow-[0_0_calc(16px*var(--glow))_-5px_var(--accent)]"
                 : "border-rule text-chalk-dim hover:border-chalk-faint hover:text-chalk"
             }`}
           >

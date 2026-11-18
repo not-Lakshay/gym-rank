@@ -85,13 +85,27 @@ export function Morph({
 }
 
 /**
- * A profile's loading state. Right after a tap on a board it's that
- * lifter's header, so the morph has a target; otherwise the skeleton.
+ * A profile's loading state. Right after a tap on a board the header is
+ * that lifter's, so the morph has a target; otherwise `header`, a
+ * skeleton. `children` (the lifts skeleton) follows either way.
  */
-export function ArrivingProfile({ skeleton }: { skeleton: React.ReactNode }) {
+export function ArrivingProfile({
+  header,
+  children,
+}: {
+  header: React.ReactNode;
+  children: React.ReactNode;
+}) {
   const [who] = useState(() => arriving);
-  if (!who) return skeleton;
+  return (
+    <>
+      {who ? <ArrivingHeader who={who} /> : header}
+      {children}
+    </>
+  );
+}
 
+function ArrivingHeader({ who }: { who: Arrival }) {
   return (
     <div className="pt-8">
       <div className="flex items-center gap-4">
@@ -102,7 +116,7 @@ export function ArrivingProfile({ skeleton }: { skeleton: React.ReactNode }) {
           <p className="text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
             {who.displayName}
           </p>
-          <span aria-hidden className="mt-2.5 block h-3 w-40 animate-pulse rounded-sm bg-iron-raised" />
+          <span aria-hidden className="bone mt-2.5 block h-3 w-40 rounded-sm" />
         </div>
       </div>
       {who.score !== null && (

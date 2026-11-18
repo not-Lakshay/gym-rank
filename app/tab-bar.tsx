@@ -56,7 +56,7 @@ export function TabBar({ active }: { active?: Tab }) {
                 aria-current={current ? "page" : undefined}
                 className={`press flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-bold ${
                   current
-                    ? "text-accent [filter:drop-shadow(0_0_6px_var(--accent))]"
+                    ? "text-accent [filter:drop-shadow(0_0_calc(6px*var(--glow))_var(--accent))]"
                     : "text-chalk-faint hover:text-chalk"
                 }`}
               >

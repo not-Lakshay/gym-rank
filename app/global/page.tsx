@@ -125,7 +125,7 @@ async function GlobalBoard({ searchParams }: { searchParams: SearchParams }) {
 
       <div className="rise" style={{ "--i": 2 } as React.CSSProperties}>
         <Board
-          heading="Everyone, everywhere"
+          heading="Overall"
           rows={rows}
           rankOf={(r) => r.overallRank}
           viewerId={viewer?.id ?? null}

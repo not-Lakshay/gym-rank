@@ -52,8 +52,8 @@ export default function TermsPage() {
       <Section title="Your account">
         <p className={muted}>
           You can delete your account and data at any time by emailing{" "}
-          <a href="mailto:lakshay2718@gmail.com" className={inlineLink}>
-            lakshay2718@gmail.com
+          <a href="mailto:getgymrank@gmail.com" className={inlineLink}>
+            getgymrank@gmail.com
           </a>
           . See the{" "}
           <Link href="/privacy" className={inlineLink}>

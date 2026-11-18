@@ -7,11 +7,47 @@
   exactly the way a loaded bar reads. The colour is information: it tells
   you which board you're looking at.
 
-  Base is iron and chalk rather than the usual black-and-neon.
+  Two themes, chosen in the footer (app/theme-switch.tsx):
+
+  Iron, the original and the default: warm iron and chalk, with the plate
+  colours as they are in a gym.
+
+  Neon, on <html data-theme="neon">: near-black and neutral, the same hues
+  saturated and bright, and everything coloured glows. Every glow in the
+  app is multiplied by --glow, which is 0 in Iron — so Iron has none.
 */
 :root {
-  /* Near-black, with neon versions of the plate and medal colours: the
-     same hues, saturated and bright enough to glow (see the glows below). */
+  --iron: #0a0908;
+  --iron-raised: #161411;
+  --chalk: #f3efe7;
+  --chalk-dim: #a49d91;
+  --chalk-faint: #857d70;
+  --rule: #2b261f;
+
+  --plate-10: #2e8b53;
+  --plate-15: #e3b53b;
+  --plate-20: #3f7cc9;
+  --plate-25: #d1434d;
+
+  --gold: #e0b14a;
+  --silver: #b9b4ab;
+  --bronze: #b8743f;
+
+  --glow: 0;
+  /* The stage light at the top of the page (body). */
+  --beam: rgba(243, 239, 231, 0.07);
+  --pool: 16%;
+
+  /* The page's one colour. Gold by default; a class board sets it to its
+     plate, so links, the edge of the card and the glow all say which
+     board this is. */
+  --accent: var(--gold);
+
+  --background: var(--iron);
+  --foreground: var(--chalk);
+}
+
+:root[data-theme="neon"] {
   --iron: #050506;
   --iron-raised: #101013;
   --chalk: #f5f5f3;
@@ -28,13 +64,9 @@
   --silver: #d4dbe6;
   --bronze: #ff9a4d;
 
-  /* The page's one colour. Gold by default; a class board sets it to its
-     plate, so links, the edge of the card and the glow all say which
-     board this is. */
-  --accent: var(--gold);
-
-  --background: var(--iron);
-  --foreground: var(--chalk);
+  --glow: 1;
+  --beam: rgba(245, 245, 243, 0.045);
+  --pool: 10%;
 }
 
 @theme inline {
@@ -68,14 +100,10 @@ html {
 body {
   background-color: var(--background);
   background-image:
-    radial-gradient(
-      34rem 28rem at 50% -10rem,
-      rgba(245, 245, 243, 0.045),
-      transparent 70%
-    ),
+    radial-gradient(34rem 28rem at 50% -10rem, var(--beam), transparent 70%),
     radial-gradient(
       80rem 44rem at 50% -18rem,
-      color-mix(in oklab, var(--accent) 10%, transparent),
+      color-mix(in oklab, var(--accent) var(--pool), transparent),
       transparent 62%
     ),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
@@ -95,15 +123,16 @@ body {
   border-left: 3px solid var(--accent);
   border-radius: 0.125rem;
   background: color-mix(in oklab, var(--iron-raised) 55%, transparent);
-  /* The accent edge glows like a neon tube. */
-  box-shadow: -4px 0 16px -10px var(--accent);
+  /* Neon: the accent edge glows like a tube. */
+  box-shadow: -4px 0 calc(16px * var(--glow)) -10px var(--accent);
 }
 
 /* Neon: a glow in the element's own colour (set `color`, or rely on the
    inherited text colour). Static text only — never around a rolling
    number, whose clipped reel would glow as a box. */
 .neon-text {
-  text-shadow: 0 0 14px color-mix(in oklab, currentColor 60%, transparent);
+  text-shadow: 0 0 calc(14px * var(--glow))
+    color-mix(in oklab, currentColor calc(60% * var(--glow)), transparent);
 }
 
 /* Scoreboard face: Archivo pulled narrow and heavy. Page titles get it by
@@ -278,6 +307,28 @@ h1,
   transform: translateX(3px);
 }
 
+/* Loading placeholders (Bone in app/board.tsx): a band of light sweeps
+   across, so a wait reads as something arriving, not something stuck. */
+.bone {
+  background: linear-gradient(
+      100deg,
+      transparent 30%,
+      color-mix(in oklab, var(--chalk) 8%, transparent) 50%,
+      transparent 70%
+    )
+    var(--iron-raised);
+  background-size: 250% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+@keyframes shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
 /* Initials disc (app/avatar.tsx); size and ring colour are set inline. */
 .avatar {
   display: inline-flex;
@@ -289,8 +340,8 @@ h1,
   border-radius: 9999px;
   background: var(--iron-raised);
   box-shadow:
-    0 0 14px -4px var(--ring),
-    inset 0 0 10px -6px var(--ring);
+    0 0 calc(14px * var(--glow)) -4px var(--ring),
+    inset 0 0 calc(10px * var(--glow)) -6px var(--ring);
   color: var(--chalk);
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -339,7 +390,7 @@ h1,
   padding-top: 0.6rem;
   border-top: 3px solid var(--medal);
   background: color-mix(in oklab, var(--medal) 9%, var(--iron-raised));
-  box-shadow: 0 -10px 24px -14px var(--medal);
+  box-shadow: 0 calc(-10px * var(--glow)) calc(24px * var(--glow)) -14px var(--medal);
   transform-origin: bottom;
   animation: podium-rise 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
@@ -359,7 +410,7 @@ h1,
   }
 }
 .crown {
-  filter: drop-shadow(0 0 6px var(--gold));
+  filter: drop-shadow(0 0 calc(6px * var(--glow)) var(--gold));
   animation: crown-drop 500ms cubic-bezier(0.3, 1.5, 0.5, 1) 900ms both;
 }
 @keyframes crown-drop {
@@ -408,7 +459,7 @@ h1,
   flex-shrink: 0;
   border-radius: 1px;
   /* `color` is the plate's colour, set inline with its background. */
-  box-shadow: 0 0 7px -1px currentColor;
+  box-shadow: 0 0 calc(7px * var(--glow)) -1px currentColor;
   animation: 450ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
 }
 .barbell-left .plate {
@@ -436,8 +487,8 @@ h1,
   padding: 1px 5px;
   border: 1.5px solid var(--gold);
   color: var(--gold);
-  box-shadow: 0 0 12px -3px var(--gold);
-  text-shadow: 0 0 8px var(--gold);
+  box-shadow: 0 0 calc(12px * var(--glow)) -3px var(--gold);
+  text-shadow: 0 0 calc(8px * var(--glow)) var(--gold);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.08em;

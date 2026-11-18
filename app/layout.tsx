@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Archivo } from "next/font/google";
 import { siteUrl } from "@/lib/site";
+import { ThemeScript } from "./theme-switch";
 import "./globals.css";
 
 /*
@@ -39,7 +40,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${archivo.variable} h-full`}>
+    // suppressHydrationWarning: ThemeScript may add data-theme to <html>
+    // before React hydrates it.
+    <html lang="en" className={`${archivo.variable} h-full`} suppressHydrationWarning>
+      <head>
+        <ThemeScript />
+      </head>
       <body className="min-h-full">{children}</body>
     </html>
   );

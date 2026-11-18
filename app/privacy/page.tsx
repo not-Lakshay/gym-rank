@@ -88,8 +88,8 @@ export default function PrivacyPage() {
       <Section title="Deleting your data">
         <p className={muted}>
           Email{" "}
-          <a href="mailto:lakshay2718@gmail.com" className={inlineLink}>
-            lakshay2718@gmail.com
+          <a href="mailto:getgymrank@gmail.com" className={inlineLink}>
+            getgymrank@gmail.com
           </a>{" "}
           and your account and all your lifts will be deleted.
         </p>
@@ -102,8 +102,8 @@ export default function PrivacyPage() {
 
       <Section title="Contact">
         <p className={muted}>
-          <a href="mailto:lakshay2718@gmail.com" className={inlineLink}>
-            lakshay2718@gmail.com
+          <a href="mailto:getgymrank@gmail.com" className={inlineLink}>
+            getgymrank@gmail.com
           </a>
         </p>
       </Section>

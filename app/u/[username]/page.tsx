@@ -2,13 +2,15 @@ import { Suspense, ViewTransition } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { auth } from "@/auth";
 import {
   Bone,
   Check,
   ChevronLeft,
   ChevronRight,
-  ProfileSkeleton,
+  LifterHeaderSkeleton,
+  LiftsSkeleton,
   navButton,
 } from "@/app/board";
 import { CosignButton } from "@/app/forms";
@@ -66,12 +68,14 @@ export default function LifterPage({ params }: { params: Params }) {
       <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
         <Suspense
           fallback={
-            <>
+            <div role="status" aria-label="Loading">
               <Bone className="h-11 w-36" />
-              {/* Straight after a tap on a board, the lifter's header, so
-                  their avatar and score have somewhere to fly to. */}
-              <ArrivingProfile skeleton={<ProfileSkeleton />} />
-            </>
+              {/* Straight after a tap on a board, the lifter's real header,
+                  so their avatar and score have somewhere to fly to. */}
+              <ArrivingProfile header={<LifterHeaderSkeleton />}>
+                <LiftsSkeleton />
+              </ArrivingProfile>
+            </div>
           }
         >
           <Profile params={params} />
@@ -84,17 +88,24 @@ export default function LifterPage({ params }: { params: Params }) {
 
 async function Profile({ params }: { params: Params }) {
   const { username } = await params;
-  const lifter = await getLifterByUsername(username).catch(() => null);
+  // auth() touches crypto before it reads cookies; marking the render
+  // dynamic first keeps prerendering from tripping on the random bytes.
+  await connection();
+  // Two waits on the database, not four: who this is (and who's looking),
+  // then everything about them at once. Each wait is a trip to a database
+  // a region away, and this page is opened by tapping a name.
+  const [lifter, session] = await Promise.all([
+    getLifterByUsername(username).catch(() => null),
+    auth(),
+  ]);
   if (!lifter) notFound();
 
-  const [lifts, session, card] = await Promise.all([
+  const [lifts, card, viewer] = await Promise.all([
     getLiftsFor(lifter.id),
-    auth(),
-    getRankFor(lifter.id).catch(() => null),
+    // No college, no board, no rank — and passing the id saves a lookup.
+    lifter.college ? getRankFor(lifter.id, lifter.college.id).catch(() => null) : null,
+    session?.user?.email ? getLifterByEmail(session.user.email) : null,
   ]);
-  const viewer = session?.user?.email
-    ? await getLifterByEmail(session.user.email)
-    : null;
 
   const isOwner = viewer?.id === lifter.id;
   // A co-sign is "I was in the room", so it has to come from the same gym.

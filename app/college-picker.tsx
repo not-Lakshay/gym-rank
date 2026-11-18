@@ -88,7 +88,7 @@ export function CollegePicker({ colleges }: { colleges: CollegeOption[] }) {
       <p className="mt-3 text-[12px] leading-relaxed text-chalk-faint">
         College not listed?{" "}
         <a
-          href="mailto:lakshay2718@gmail.com?subject=Add%20my%20college%20to%20Gym%20Rank"
+          href="mailto:getgymrank@gmail.com?subject=Add%20my%20college%20to%20Gym%20Rank"
           className="text-chalk-dim underline underline-offset-4 hover:text-chalk"
         >
           Ask for it
