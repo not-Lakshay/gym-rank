@@ -701,8 +701,30 @@ export function ProfileForm({
   const tried = useTryout();
   const bodyweight = defaultBodyweight ?? tried?.bodyweight ?? "";
 
+  // After a save: back to the top, where the new name and avatar show, with
+  // a moment's confirmation, the way saving lifts does.
+  const [dismissedAt, setDismissedAt] = useState(0);
+  const justSaved = !!state.savedAt && state.savedAt > dismissedAt;
+  useEffect(() => {
+    if (!justSaved) return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    const t = setTimeout(() => setDismissedAt(state.savedAt!), 2500);
+    return () => clearTimeout(t);
+  }, [justSaved, state.savedAt]);
+
   return (
     <form action={action} className="flex flex-col gap-4">
+      {justSaved && (
+        <p
+          role="status"
+          className="toast fixed inset-x-0 top-3 z-50 mx-auto flex w-fit items-center gap-2 rounded-sm border border-rule bg-iron-raised px-4 py-3 text-[14px] font-bold shadow-[0_12px_32px_rgba(0,0,0,0.55)]"
+        >
+          <span aria-hidden className="text-[var(--plate-10)]">
+            ✓
+          </span>
+          Profile saved
+        </p>
+      )}
       {college}
 
       <label className="flex flex-col gap-1.5">

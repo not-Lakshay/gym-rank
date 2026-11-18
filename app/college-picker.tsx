@@ -220,9 +220,6 @@ function BatchField({ defaultBatch }: { defaultBatch: number | null }) {
           </option>
         ))}
       </select>
-      <span className="text-[12px] text-chalk-faint">
-        The August you joined. Puts you on your batch&rsquo;s board.
-      </span>
     </label>
   );
 }
