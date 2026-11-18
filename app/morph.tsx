@@ -1,6 +1,6 @@
 "use client";
 
-import { ViewTransition, createContext, use, useState } from "react";
+import { ViewTransition, createContext, use, useEffect, useState } from "react";
 import { Avatar } from "./avatar";
 
 /*
@@ -35,6 +35,9 @@ export type Arrival = {
 let arriving: Arrival | null = null;
 
 const Departing = createContext(false);
+
+// How long the profile skeleton may show before the page reloads itself.
+const STALL_MS = 8000;
 
 /** Wraps one board row or podium spot. Adds no box (display: contents). */
 export function Departure({
@@ -99,6 +102,25 @@ export function ArrivingProfile({
   children: React.ReactNode;
 }) {
   const [who] = useState(() => arriving);
+
+  // Safety net. A profile answers in well under a second, yet a phone was
+  // once left on this skeleton with the page already delivered. If it's
+  // still showing after a while, load the page afresh — once per profile,
+  // so a slow connection can't turn it into a reload loop.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const key = `stall-reload:${location.pathname}`;
+      try {
+        if (sessionStorage.getItem(key)) return;
+        sessionStorage.setItem(key, "1");
+      } catch {
+        return; // no storage, no way to stop a loop: leave it
+      }
+      location.reload();
+    }, STALL_MS);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <>
       {who ? <ArrivingHeader who={who} /> : header}
