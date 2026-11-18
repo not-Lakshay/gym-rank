@@ -3,15 +3,14 @@
 import { useLayoutEffect, useSyncExternalStore } from "react";
 
 /*
-  Choices a visitor makes that stay on this device (localStorage): the
-  theme, and closing the "How it works" card. Each is mirrored onto <html>
-  as a data attribute the CSS reads — data-theme="neon", data-howto="done"
-  — so no account or cookie is involved and every page stays static.
+  The theme a visitor picks stays on this device (localStorage) and is
+  mirrored onto <html> as data-theme="neon", which the CSS reads — so no
+  account or cookie is involved and every page stays static.
 */
 
-// Applies the saved choices before first paint, so Neon never flashes
-// Iron and a closed card never flashes back. Inline in <head>.
-const apply = `try{var d=document.documentElement,s=localStorage;if(s.getItem("theme")==="neon")d.dataset.theme="neon";if(s.getItem("howto")==="done")d.dataset.howto="done"}catch(e){}`;
+// Applies the saved theme before first paint, so Neon never flashes Iron.
+// Inline in <head>.
+const apply = `try{if(localStorage.getItem("theme")==="neon")document.documentElement.dataset.theme="neon"}catch(e){}`;
 
 /**
  * The before-paint script, for the root layout's <head>. The pattern is
@@ -23,9 +22,9 @@ const apply = `try{var d=document.documentElement,s=localStorage;if(s.getItem("t
 export function BeforePaint() {
   useLayoutEffect(() => {
     try {
-      const root = document.documentElement;
-      if (localStorage.getItem("theme") === "neon") root.dataset.theme = "neon";
-      if (localStorage.getItem("howto") === "done") root.dataset.howto = "done";
+      if (localStorage.getItem("theme") === "neon") {
+        document.documentElement.dataset.theme = "neon";
+      }
     } catch {
       // No storage: defaults.
     }
@@ -98,30 +97,5 @@ export function ThemeSwitch() {
         ))}
       </span>
     </div>
-  );
-}
-
-/* --------------------------------------------------------- How it works */
-
-/** Closes the "How it works" card for good on this device (.howto in CSS). */
-export function CloseHowTo() {
-  return (
-    <button
-      type="button"
-      aria-label="Close"
-      onClick={() => {
-        document.documentElement.dataset.howto = "done";
-        try {
-          localStorage.setItem("howto", "done");
-        } catch {
-          // Private mode: closed for this visit only.
-        }
-      }}
-      className="press -mr-1.5 -mt-1.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-chalk-faint hover:text-chalk"
-    >
-      <svg aria-hidden viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-        <path d="M4 4l8 8M12 4l-8 8" />
-      </svg>
-    </button>
   );
 }

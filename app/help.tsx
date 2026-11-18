@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { CloseHowTo } from "./prefs";
 
 /*
   Explanations at the moment they're needed, instead of a tutorial up
@@ -61,48 +60,5 @@ export function DotsHelp() {
         </Link>
       </HelpPop>
     </>
-  );
-}
-
-/**
- * Three steps for a first-time visitor on a college board. Closing it
- * hides it on this device for good (.howto, data-howto in globals.css).
- */
-export function HowItWorks() {
-  return (
-    <section className="howto card mb-6 px-4 pb-4 pt-3" aria-labelledby="howto-title">
-      <div className="flex items-start justify-between gap-3">
-        <h2 id="howto-title" className="caption pt-2">
-          How it works
-        </h2>
-        <CloseHowTo />
-      </div>
-      <ol className="mt-1 flex flex-col gap-2.5 text-[13px] leading-relaxed text-chalk-dim">
-        {[
-          <>
-            Enter your <span className="text-chalk">heaviest squat, bench and deadlift</span> —
-            the weight and how many reps you got.
-          </>,
-          <>
-            Your total is <span className="text-chalk">adjusted for bodyweight</span> (DOTS),
-            so lifters of every size compare fairly.
-          </>,
-          <>
-            A friend who watched <span className="text-chalk">co-signs</span> each set. All
-            three co-signed puts you on the global board.
-          </>,
-        ].map((step, i) => (
-          <li key={i} className="flex gap-3">
-            <span
-              aria-hidden
-              className="tnum mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-iron"
-            >
-              {i + 1}
-            </span>
-            <span>{step}</span>
-          </li>
-        ))}
-      </ol>
-    </section>
   );
 }

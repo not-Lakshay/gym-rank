@@ -1,6 +1,12 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import type { ActionState } from "@/app/actions";
 import {
   checkUsernameAction,
@@ -14,6 +20,7 @@ import { MOVEMENTS, TOTAL_MOVEMENTS, type Movement } from "@/lib/movements";
 import type { Lift } from "@/lib/lifters";
 import { STANDARD_BODYWEIGHTS, noviceOneRepMax } from "@/lib/standards";
 import { siteLabel } from "@/lib/site";
+import { clearTryout, parseTryout, readTryout } from "@/lib/tryout";
 import {
   USERNAME_MAX,
   USERNAME_MIN,
@@ -37,6 +44,14 @@ const rowFrom = (lift: Lift | undefined): Row => ({
   reps: lift?.reps?.toString() ?? "",
 });
 
+// What they typed into a board's calculator before signing up
+// (lib/tryout.ts). Null on the server and while hydrating, then read from
+// this device; nothing else changes it mid-visit, so nothing to subscribe to.
+const unsubscribed = () => () => {};
+function useTryout() {
+  return parseTryout(useSyncExternalStore(unsubscribed, readTryout, () => null));
+}
+
 /*
   Every lift in one form with one Save. Only rows that changed are saved
   (see saveLiftsAction), so pressing Save never voids the co-signs on a
@@ -57,7 +72,15 @@ export function LiftsForm({
 }) {
   const [state, action, pending] = useActionState(saveLiftsAction, initial);
   const stored = Object.fromEntries(MOVEMENTS.map((m) => [m.id, rowFrom(lifts[m.id])]));
-  const [rows, setRows] = useState<Record<string, Row>>(stored);
+  // A first-timer who tried the board's calculator starts with those numbers.
+  const tried = useTryout();
+  const prefilled = Object.keys(lifts).length === 0 && tried !== null;
+  const start = prefilled
+    ? { ...stored, squat: tried.squat, bench: tried.bench, deadlift: tried.deadlift }
+    : stored;
+  // What's been typed since, over the starting numbers.
+  const [edits, setEdits] = useState<Record<string, Row>>({});
+  const rows = { ...start, ...edits };
   const dirty = MOVEMENTS.some(
     (m) => rows[m.id].kg !== stored[m.id].kg || rows[m.id].reps !== stored[m.id].reps,
   );
@@ -66,6 +89,7 @@ export function LiftsForm({
   const justSaved = !!state.savedAt && state.savedAt > dismissedAt;
   useEffect(() => {
     if (!justSaved) return;
+    clearTryout(); // the calculator's numbers are saved for real now
     // Back up to the score and the college board button, to see the result.
     window.scrollTo({ top: 0, behavior: "smooth" });
     const t = setTimeout(() => setDismissedAt(state.savedAt!), 1800);
@@ -91,6 +115,12 @@ export function LiftsForm({
             and <span className="tnum text-chalk">3</span> reps. For pull-ups, enter the
             most you&rsquo;ve done in one go.
           </p>
+          {prefilled && (
+            <p className="mt-1 text-chalk">
+              Squat, bench and deadlift are filled in from what you tried on the
+              board. Check them, then save.
+            </p>
+          )}
         </div>
       )}
       {MOVEMENTS.map((movement) => (
@@ -102,7 +132,7 @@ export function LiftsForm({
           boardHref={`${boardHref}?tab=${movement.id}`}
           bodyweightKg={bodyweightKg}
           row={rows[movement.id]}
-          onChange={(row) => setRows((all) => ({ ...all, [movement.id]: row }))}
+          onChange={(row) => setEdits((all) => ({ ...all, [movement.id]: row }))}
           pr={prs.includes(movement.id)}
         />
       ))}
@@ -315,6 +345,7 @@ function LiftRow({
         />
       </div>
 
+      {movement.id === "overhead_press" && <ShoulderPress />}
       {!optional && !existing && (
         <NeverDone
           movement={movement}
@@ -471,9 +502,7 @@ function NeverDone({
 
   return (
     <details className="group mt-2">
-      <summary className="w-fit cursor-pointer list-none text-[12px] text-chalk-dim underline-offset-4 hover:text-chalk hover:underline [&::-webkit-details-marker]:hidden">
-        Never done a {name}?
-      </summary>
+      <summary className={hintSummary}>Never done a {name}?</summary>
       <div className="mt-2 rounded-sm border border-rule p-3">
         <p className="text-[12px] leading-relaxed text-chalk-dim">
           Typical one-rep max for a beginner, by bodyweight. Use yours to get
@@ -510,6 +539,29 @@ function NeverDone({
           Use {mine} kg × 1
         </button>
       </div>
+    </details>
+  );
+}
+
+// A small question under a lift row that opens an answer (NeverDone, ShoulderPress).
+const hintSummary =
+  "w-fit cursor-pointer list-none text-[12px] text-chalk-dim underline-offset-4 hover:text-chalk hover:underline [&::-webkit-details-marker]:hidden";
+
+/*
+  Plenty of college gyms do shoulder press, often seated with dumbbells,
+  rather than a standing barbell overhead press. Not the same lift, but
+  close enough to count, as long as dumbbells are added together.
+*/
+function ShoulderPress() {
+  return (
+    <details className="mt-2">
+      <summary className={hintSummary}>Only do shoulder press?</summary>
+      <p className="mt-2 rounded-sm border border-rule p-3 text-[12px] leading-relaxed text-chalk-dim">
+        Enter that. It isn&rsquo;t quite the same lift, but it&rsquo;s close
+        enough: seated or standing, barbell or dumbbells. With dumbbells, add
+        the two together: a pair of 20 kg dumbbells is{" "}
+        <span className="tnum text-chalk">40</span> kg.
+      </p>
     </details>
   );
 }
@@ -639,6 +691,9 @@ export function ProfileForm({
   college: React.ReactNode;
 }) {
   const [state, action, pending] = useActionState(saveProfileAction, initial);
+  // A first-timer who tried the board's calculator: their bodyweight from it.
+  const tried = useTryout();
+  const bodyweight = defaultBodyweight ?? tried?.bodyweight ?? "";
 
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -662,6 +717,9 @@ export function ProfileForm({
       <label className="flex flex-col gap-1.5">
         <span className="text-[12px] text-chalk-dim">Bodyweight in kg</span>
         <input
+          // Remounts when the saved bodyweight is read after hydration, so
+          // the uncontrolled input actually shows it.
+          key={bodyweight}
           name="bodyweightKg"
           type="number"
           inputMode="decimal"
@@ -669,7 +727,7 @@ export function ProfileForm({
           min="30"
           max="250"
           required
-          defaultValue={defaultBodyweight ?? ""}
+          defaultValue={bodyweight}
           className={`${field} w-full text-left`}
         />
       </label>

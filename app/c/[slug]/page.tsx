@@ -30,7 +30,7 @@ import {
 import { Calculator } from "@/app/calculator";
 import { SignInForm } from "@/app/sign-in";
 import { TabBar } from "@/app/tab-bar";
-import { DotsHelp, HowItWorks } from "@/app/help";
+import { DotsHelp } from "@/app/help";
 
 type Params = Promise<{ slug: string }>;
 type SearchParams = Promise<{ tab?: string }>;
@@ -128,21 +128,39 @@ async function CollegeBoard({
     <SignInForm redirectTo={redirectTo} label="Add yours" className={button} compact />
   );
 
-  const calculator = session?.user ? null : (
-    <Calculator
-      boardDots={rows.map((r) => r.dots)}
-      signInForm={
-        <SignInForm redirectTo={redirectTo} label="Save it" className={button} compact />
-      }
-    />
+  // Someone who hasn't signed up gets a simpler page: the board first, and
+  // instead of instructions, the calculator one tap away. Typing in their
+  // own numbers shows what to enter and what the score means faster than
+  // reading about it. Signed in, the page is unchanged.
+  const newcomer = !session?.user;
+  const tryIt = newcomer && (
+    <section className="rise card mb-6 p-4" style={{ "--i": 1 } as React.CSSProperties}>
+      <p className="text-[13px] leading-relaxed text-chalk-dim">
+        <span className="font-bold text-chalk">New here?</span> See where your
+        best squat, bench and deadlift would put you on this board. Nothing is
+        saved until you sign in.
+      </p>
+      <details className="mt-3">
+        <summary
+          className={`${button} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}
+        >
+          Where would I rank?
+        </summary>
+        <Calculator
+          boardDots={rows.map((r) => r.dots)}
+          signInForm={
+            <SignInForm redirectTo={redirectTo} label="Save it" className={button} compact />
+          }
+        />
+      </details>
+    </section>
   );
 
   return (
     <div>
-      <Header college={college} accountLink={accountLink} />
+      <Header college={college} accountLink={accountLink} legend={!newcomer} />
 
-      {/* Someone sent the link and hasn't signed up: three steps, until closed. */}
-      {!session?.user && <HowItWorks />}
+      {tryIt}
 
       <div className="rise pt-1" style={{ "--i": 1 } as React.CSSProperties}>
         <BoardTabs base={`/c/${college.slug}`} active={tab} />
@@ -168,13 +186,14 @@ async function CollegeBoard({
             A score needs a squat, a bench and a deadlift. Enter all three and
             you are first by default — then send the link to the gym group.
           </p>
-          {calculator}
         </section>
       ) : (
         <div className="pt-6">
-          <div className="rise mb-6" style={{ "--i": 1 } as React.CSSProperties}>
-            <Stats rows={rows} />
-          </div>
+          {!newcomer && (
+            <div className="rise mb-6" style={{ "--i": 1 } as React.CSSProperties}>
+              <Stats rows={rows} />
+            </div>
+          )}
 
           <div className="rise" style={{ "--i": 2 } as React.CSSProperties}>
             <Board
@@ -187,9 +206,12 @@ async function CollegeBoard({
             />
           </div>
 
-          <div className="rise" style={{ "--i": 3 } as React.CSSProperties}>
-            {calculator}
-          </div>
+          {/* A newcomer sees the ranking first; the numbers can wait. */}
+          {newcomer && (
+            <div className="rise mt-8" style={{ "--i": 3 } as React.CSSProperties}>
+              <Stats rows={rows} />
+            </div>
+          )}
 
           <ClassBoards
             rows={rows}
@@ -230,9 +252,12 @@ async function CollegeBoard({
 function Header({
   college,
   accountLink,
+  legend,
 }: {
   college: College;
   accountLink: React.ReactNode;
+  /** The weight-class colours; left out for newcomers, who don't need them yet. */
+  legend: boolean;
 }) {
   return (
     <header className="rise pb-5" style={{ "--i": 0 } as React.CSSProperties}>
@@ -246,7 +271,7 @@ function Header({
             {college.shortName}
           </h1>
           <p className="mt-2.5 text-[16px] font-bold leading-none tracking-[-0.02em]">
-            Pound for pound.
+            Your strength coefficient.
           </p>
           <p className="mt-2 text-[13px] leading-snug text-chalk-dim">
             {college.city} · every score adjusted for bodyweight
@@ -261,20 +286,22 @@ function Header({
         marks every lifter's row below, so this is the legend for the
         whole board rather than a rule.
       */}
-      <ul className="mt-5 flex gap-1.5 text-[11px] font-medium text-chalk-dim">
-        {WEIGHT_CLASSES.map((weightClass) => (
-          <li key={weightClass.label} className="flex flex-1 flex-col gap-1.5">
-            <span
-              aria-hidden
-              className="h-1 rounded-full"
-              style={{ background: plateFor(weightClass.label) }}
-            />
-            <span className="tnum whitespace-nowrap">
-              {shortClass(weightClass.label)}
-            </span>
-          </li>
-        ))}
-      </ul>
+      {legend && (
+        <ul className="mt-5 flex gap-1.5 text-[11px] font-medium text-chalk-dim">
+          {WEIGHT_CLASSES.map((weightClass) => (
+            <li key={weightClass.label} className="flex flex-1 flex-col gap-1.5">
+              <span
+                aria-hidden
+                className="h-1 rounded-full"
+                style={{ background: plateFor(weightClass.label) }}
+              />
+              <span className="tnum whitespace-nowrap">
+                {shortClass(weightClass.label)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </header>
   );
 }

@@ -13,6 +13,7 @@ import {
   validateBodyweight,
   validateLift,
 } from "@/lib/validate";
+import { saveTryout } from "@/lib/tryout";
 import { field } from "./forms";
 
 type Set = { kg: string; reps: string };
@@ -98,11 +99,11 @@ export function Calculator({
     setSets((s) => ({ ...s, [m]: { ...s[m], [key]: value } }));
   }
 
+  // The caller frames it (a card, a heading); this is just the sums.
   return (
-    <section className="mt-10 card p-4">
-      <h2 className="text-[15px] font-bold">Where would you land?</h2>
-      <p className="mt-1 text-[12px] leading-relaxed text-chalk-dim">
-        Your last real working set for each lift. Nothing here is saved.
+    <div className="mt-4">
+      <p className="text-[12px] leading-relaxed text-chalk-dim">
+        Your heaviest set of each: the weight, and the reps you got at it.
       </p>
 
       <div className="mt-4 flex flex-col gap-3">
@@ -196,8 +197,16 @@ export function Calculator({
             </p>
           </div>
         )}
-        {dots !== null && <div className="shrink-0">{signInForm}</div>}
+        {dots !== null && (
+          // "Save it" signs in; keep the numbers so sign-up starts with them.
+          <div
+            className="shrink-0"
+            onSubmitCapture={() => saveTryout({ bodyweight: bw, ...sets })}
+          >
+            {signInForm}
+          </div>
+        )}
       </div>
-    </section>
+    </div>
   );
 }

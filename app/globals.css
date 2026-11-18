@@ -155,11 +155,6 @@ body {
   border-radius: 0.75rem;
 }
 
-/* A first-timer's "How it works" card (app/help.tsx), gone once closed. */
-:root[data-howto="done"] .howto {
-  display: none;
-}
-
 /* Explanations opened by a "?" (HelpPop in app/help.tsx). */
 .help-pop::backdrop {
   background: rgb(0 0 0 / 0.55);
