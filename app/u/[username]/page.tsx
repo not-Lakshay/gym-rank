@@ -150,7 +150,12 @@ async function Profile({ params }: { params: Params }) {
         >
           <div className="flex items-center gap-4">
             <ViewTransition name={`avatar-${lifter.id}`} share="morph" default="none">
-              <Avatar name={lifter.displayName} ring={plateFor(weightClass)} size={64} />
+              <Avatar
+                name={lifter.displayName}
+                ring={plateFor(weightClass)}
+                size={64}
+                avatar={lifter.avatar}
+              />
             </ViewTransition>
             <div className="min-w-0">
               <h1 className="text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">

@@ -18,6 +18,8 @@ export type BoardRow = {
   batchYear: number | null;
   /** Fully or partially co-signed, once all three lifts are; see lib/cosign.ts. */
   cosign: CosignStatus;
+  /** A cartoon avatar id (lib/avatars.ts); null shows their initials. */
+  avatar: string | null;
 };
 
 /**
@@ -52,6 +54,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
         lf.display_name,
         lf.bodyweight_kg,
         lf.batch_year,
+        lf.avatar,
         c.slug       as college_slug,
         c.short_name as college_short,
         sum(l.est_1rm_kg) as total_kg,
@@ -73,7 +76,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
       ) cs
       where l.movement in ('squat', 'bench', 'deadlift')
         and (${collegeId}::int is null or lf.college_id = ${collegeId}::int)
-      group by lf.id, lf.username, lf.display_name, lf.bodyweight_kg, lf.batch_year, c.slug, c.short_name
+      group by lf.id, lf.username, lf.display_name, lf.bodyweight_kg, lf.batch_year, lf.avatar, c.slug, c.short_name
       having count(*) = 3
         and (
           not ${verifiedOnly}::boolean
@@ -86,6 +89,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
         username,
         display_name,
         batch_year,
+        avatar,
         college_slug,
         college_short,
         verified_count,
@@ -117,6 +121,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
       username,
       display_name,
       batch_year,
+      avatar,
       college_slug,
       college_short,
       weight_class,
@@ -144,6 +149,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
     collegeShort: row.college_short as string,
     batchYear: row.batch_year === null ? null : Number(row.batch_year),
     cosign: cosignStatus(row.witnesses as { id: string; name: string }[][]),
+    avatar: (row.avatar as string | null) ?? null,
   }));
 }
 
@@ -281,6 +287,7 @@ export type LiftRow = {
   collegeSlug: string;
   collegeShort: string;
   batchYear: number | null;
+  avatar: string | null;
 };
 
 export type LiftBoards = Record<Movement, LiftRow[]>;
@@ -297,6 +304,7 @@ export async function getLiftBoards(scope: BoardScope): Promise<LiftBoards> {
         lf.display_name,
         lf.bodyweight_kg,
         lf.batch_year,
+        lf.avatar,
         c.slug       as college_slug,
         c.short_name as college_short,
         l.movement,
@@ -339,7 +347,7 @@ export async function getLiftBoards(scope: BoardScope): Promise<LiftBoards> {
     )
     select
       id, username, display_name, weight_class, movement,
-      est_1rm_kg, reps, score, verified, college_slug, college_short, batch_year,
+      est_1rm_kg, reps, score, verified, college_slug, college_short, batch_year, avatar,
       rank() over (partition by movement order by score desc) as rank,
       rank() over (partition by movement, weight_class order by score desc) as class_rank
     from dotted
@@ -370,6 +378,7 @@ export async function getLiftBoards(scope: BoardScope): Promise<LiftBoards> {
       collegeSlug: row.college_slug as string,
       collegeShort: row.college_short as string,
       batchYear: row.batch_year === null ? null : Number(row.batch_year),
+      avatar: (row.avatar as string | null) ?? null,
     });
   }
   return boards;

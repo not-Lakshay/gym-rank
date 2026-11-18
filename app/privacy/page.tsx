@@ -50,7 +50,7 @@ export default function PrivacyPage() {
 
       <Section title="What other people can see">
         <p className={muted}>
-          Your display name, your college, your weight class, your lifts and
+          Your display name, the avatar you pick, your college, your weight class, your lifts and
           your score.
         </p>
         <p className={muted}>
@@ -108,7 +108,7 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
-      <p className="text-xs text-chalk-faint">Last updated 15 November 2026.</p>
+      <p className="text-xs text-chalk-faint">Last updated 18 November 2026.</p>
     </main>
     <TabBar />
     </>

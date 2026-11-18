@@ -144,6 +144,7 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
               defaultUsername={suggested}
               currentUsername={lifter?.username ?? null}
               defaultBodyweight={lifter?.bodyweightKg}
+              defaultAvatar={lifter?.avatar ?? null}
               submitLabel="Continue"
               college={collegeField}
             />
@@ -228,6 +229,7 @@ async function EditProfile({ lifter, email }: { lifter: Lifter; email: string })
       defaultUsername={lifter.username}
       currentUsername={lifter.username}
       defaultBodyweight={lifter.bodyweightKg}
+      defaultAvatar={lifter.avatar}
       submitLabel="Save profile"
       college={collegeField}
     />
@@ -389,7 +391,7 @@ function LifterView({
         )}
 
         <p className="mt-4 flex items-center gap-2.5 text-[14px] font-bold">
-          <Avatar name={lifter.displayName} ring={plate} size={32} />
+          <Avatar name={lifter.displayName} ring={plate} size={32} avatar={lifter.avatar} />
           <span className="min-w-0">
             {lifter.displayName}
             <span className="font-normal text-chalk-dim">

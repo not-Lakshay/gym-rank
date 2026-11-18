@@ -2,6 +2,7 @@
 
 import { refresh } from "next/cache";
 import { auth, signIn, signOut } from "@/auth";
+import { avatarFrom } from "@/lib/avatars";
 import { BATCH_COLLEGE, batchOptions } from "@/lib/batch";
 import { collegeForEmail, getCollegeBySlug } from "@/lib/colleges";
 import { getRankFor } from "@/lib/leaderboard";
@@ -134,6 +135,11 @@ export async function saveProfileAction(
   const existing = await getLifterByEmail(email);
   const before = existing ? (await getRankFor(existing.id))?.dots ?? null : null;
 
+  // Only ids on the list are kept; "" means initials. A form from before
+  // the picker existed sends nothing, and that keeps what they had.
+  const rawAvatar = formData.get("avatar");
+  const avatar = rawAvatar === null ? existing?.avatar ?? null : avatarFrom(rawAvatar);
+
   let saved: { id: string; isNew: boolean };
   try {
     saved = await upsertProfile({
@@ -143,6 +149,7 @@ export async function saveProfileAction(
       bodyweightKg,
       collegeId: college.id,
       batchYear,
+      avatar,
     });
   } catch (err) {
     if (err instanceof UsernameTakenError) return fail(`@${username} is taken.`);

@@ -20,11 +20,13 @@ export type Lifter = {
   college: College | null;
   /** LNMIIT only: the year they joined (2024 = Y24). Null otherwise. */
   batchYear: number | null;
+  /** A cartoon avatar id (lib/avatars.ts); null shows their initials. */
+  avatar: string | null;
 };
 
 // A constant column list, not user input — the one case sql.unsafe is for.
 const lifterColumns = sql.unsafe(`
-  lf.id, lf.email, lf.username, lf.display_name, lf.bodyweight_kg, lf.batch_year,
+  lf.id, lf.email, lf.username, lf.display_name, lf.bodyweight_kg, lf.batch_year, lf.avatar,
   c.id as college_id, c.slug as college_slug, c.name as college_name,
   c.short_name as college_short, c.city as college_city, c.state as college_state
 `);
@@ -37,6 +39,7 @@ function lifterFromRow(row: Record<string, unknown>): Lifter {
     displayName: row.display_name as string,
     bodyweightKg: num(row.bodyweight_kg),
     batchYear: row.batch_year === null ? null : Number(row.batch_year),
+    avatar: (row.avatar as string | null) ?? null,
     college:
       row.college_id === null
         ? null
@@ -130,18 +133,20 @@ export async function upsertProfile(params: {
   bodyweightKg: number;
   collegeId: number;
   batchYear: number | null;
+  avatar: string | null;
 }): Promise<{ id: string; isNew: boolean }> {
-  const { email, username, displayName, bodyweightKg, collegeId, batchYear } = params;
+  const { email, username, displayName, bodyweightKg, collegeId, batchYear, avatar } = params;
   try {
     const rows = await sql`
-      insert into lifters (email, username, display_name, bodyweight_kg, college_id, batch_year)
-      values (${email}, ${username}, ${displayName}, ${bodyweightKg}, ${collegeId}, ${batchYear})
+      insert into lifters (email, username, display_name, bodyweight_kg, college_id, batch_year, avatar)
+      values (${email}, ${username}, ${displayName}, ${bodyweightKg}, ${collegeId}, ${batchYear}, ${avatar})
       on conflict (email) do update
         set username      = excluded.username,
             display_name  = excluded.display_name,
             bodyweight_kg = excluded.bodyweight_kg,
             college_id    = excluded.college_id,
             batch_year    = excluded.batch_year,
+            avatar        = excluded.avatar,
             updated_at    = now()
       returning id, (xmax = 0) as is_new
     `;

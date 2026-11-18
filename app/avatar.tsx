@@ -1,19 +1,24 @@
+import Image from "next/image";
+import { avatarSrc } from "@/lib/avatars";
 import { initials } from "@/lib/format";
 
 /*
-  A lifter's initials in a disc, ringed in a colour: their weight-class
-  plate on rows and pages, a medal on the podium. Initials rather than
-  photos, so nobody's face is on a board they didn't choose. Decorative —
-  the name always sits next to it.
+  A lifter's disc, ringed in a colour: their weight-class plate on rows and
+  pages, a medal on the podium. Inside, the cartoon avatar they picked
+  (lib/avatars.ts), or their initials. Never a photo, so nobody's face is
+  on a board they didn't choose. Decorative — the name always sits next
+  to it.
 */
 export function Avatar({
   name,
   ring,
   size = 36,
+  avatar = null,
 }: {
   name: string;
   ring: string;
   size?: number;
+  avatar?: string | null;
 }) {
   return (
     <span
@@ -30,7 +35,20 @@ export function Avatar({
         } as React.CSSProperties
       }
     >
-      {initials(name)}
+      {avatar ? (
+        // Small static SVGs: nothing for the image optimiser to do. The big
+        // ones (podium, profile header) are above the fold; rows load lazily.
+        <Image
+          src={avatarSrc(avatar)}
+          alt=""
+          width={size}
+          height={size}
+          loading={size >= 48 ? "eager" : "lazy"}
+          unoptimized
+        />
+      ) : (
+        initials(name)
+      )}
     </span>
   );
 }

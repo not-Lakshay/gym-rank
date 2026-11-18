@@ -21,6 +21,8 @@ export type Arrival = {
   id: string;
   username: string;
   displayName: string;
+  /** Their cartoon avatar, or null for initials. */
+  avatar: string | null;
   /** Plate colour of their weight class. */
   ring: string;
   /** DOTS as shown on the board; null on lift boards, where it's kilos. */
@@ -110,7 +112,7 @@ function ArrivingHeader({ who }: { who: Arrival }) {
     <div className="pt-8">
       <div className="flex items-center gap-4">
         <ViewTransition name={`avatar-${who.id}`} share="morph" default="none">
-          <Avatar name={who.displayName} ring={who.ring} size={64} />
+          <Avatar name={who.displayName} ring={who.ring} size={64} avatar={who.avatar} />
         </ViewTransition>
         <div className="min-w-0">
           <p className="text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">

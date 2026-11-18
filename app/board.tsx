@@ -87,6 +87,7 @@ export function Board({
           id: row.id,
           username: row.username,
           displayName: row.displayName,
+          avatar: row.avatar,
           weightClass: row.weightClass,
           rank: rankOf(row),
           share: topDots > 0 ? row.dots / topDots : 0,
@@ -184,6 +185,8 @@ type Entry = {
   id: string;
   username: string;
   displayName: string;
+  /** Their cartoon avatar, or null for initials. */
+  avatar: string | null;
   weightClass: string;
   rank: number;
   /** The score as a share of #1's, for the bar under the name. */
@@ -260,7 +263,7 @@ function Ranked({
                       a screen reader gets. */}
                   <Link href={`/u/${e.username}`} tabIndex={-1} aria-hidden className="shrink-0">
                     <Morph id={e.id} part="avatar">
-                      <Avatar name={e.displayName} ring={ring} />
+                      <Avatar name={e.displayName} ring={ring} avatar={e.avatar} />
                     </Morph>
                   </Link>
                   <span className="row-name min-w-0 flex-1">
@@ -335,7 +338,12 @@ function Podium({ entries, viewerId }: { entries: Entry[]; viewerId: string | nu
                 style={{ animationDelay: `${AVATAR_DELAY[place]}ms` }}
               >
                 <Morph id={e.id} part="avatar">
-                  <Avatar name={e.displayName} ring={medal} size={first ? 64 : 48} />
+                  <Avatar
+                    name={e.displayName}
+                    ring={medal}
+                    size={first ? 64 : 48}
+                    avatar={e.avatar}
+                  />
                 </Morph>
               </Link>
               <Link
@@ -394,6 +402,7 @@ function arrivalFor(e: Entry) {
     id: e.id,
     username: e.username,
     displayName: e.displayName,
+    avatar: e.avatar,
     ring: plateFor(e.weightClass),
     score: e.dots === null ? null : e.dots.toFixed(1),
   };
@@ -703,6 +712,7 @@ export function LiftBoard({
           id: row.id,
           username: row.username,
           displayName: row.displayName,
+          avatar: row.avatar,
           weightClass: row.weightClass,
           rank: rankOf(row),
           share: topScore > 0 ? row.score / topScore : 0,

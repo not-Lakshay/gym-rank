@@ -21,6 +21,9 @@ import type { Lift } from "@/lib/lifters";
 import { STANDARD_BODYWEIGHTS, noviceOneRepMax } from "@/lib/standards";
 import { siteLabel } from "@/lib/site";
 import { clearTryout, parseTryout, readTryout } from "@/lib/tryout";
+import { ANIMALS, PEOPLE, avatarLabel, avatarSrc } from "@/lib/avatars";
+import { initials } from "@/lib/format";
+import Image from "next/image";
 import {
   USERNAME_MAX,
   USERNAME_MIN,
@@ -679,6 +682,7 @@ export function ProfileForm({
   defaultUsername,
   currentUsername = null,
   defaultBodyweight,
+  defaultAvatar = null,
   submitLabel,
   college,
 }: {
@@ -686,6 +690,8 @@ export function ProfileForm({
   defaultUsername: string;
   currentUsername?: string | null;
   defaultBodyweight?: number;
+  /** Their cartoon avatar so far; null is initials. */
+  defaultAvatar?: string | null;
   submitLabel: string;
   /** Rendered by the server (a CollegeField); the form just hosts it. */
   college: React.ReactNode;
@@ -732,6 +738,8 @@ export function ProfileForm({
         />
       </label>
 
+      <AvatarPicker name={defaultName} current={defaultAvatar} />
+
       {state.error && (
         <p role="alert" className="text-[12px] text-[var(--plate-25)]">
           {state.error}
@@ -742,6 +750,59 @@ export function ProfileForm({
         {pending ? "Saving…" : submitLabel}
       </button>
     </form>
+  );
+}
+
+/*
+  Initials, or one of the cartoon avatars (lib/avatars.ts). Plain radio
+  buttons under the pictures, so it works by keyboard and screen reader
+  and needs no state: the form posts whichever is checked.
+*/
+function AvatarPicker({ name, current }: { name: string; current: string | null }) {
+  const disc =
+    "flex aspect-square items-center justify-center overflow-hidden rounded-full border-2 border-rule bg-iron-raised transition-[border-color,box-shadow] peer-checked:border-accent peer-checked:shadow-[0_0_0_2px_var(--accent)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-chalk";
+  const group = (label: string, ids: string[]) => (
+    <>
+      <p className="caption mt-4">{label}</p>
+      <div className="mt-2 grid grid-cols-6 gap-2">
+        {ids.map((id) => (
+          <label key={id} className="press relative cursor-pointer">
+            <input
+              type="radio"
+              name="avatar"
+              value={id}
+              defaultChecked={current === id}
+              aria-label={avatarLabel(id)}
+              className="peer sr-only"
+            />
+            <span className={`${disc} w-full`}>
+              <Image src={avatarSrc(id)} alt="" width={48} height={48} unoptimized />
+            </span>
+          </label>
+        ))}
+      </div>
+    </>
+  );
+
+  return (
+    <fieldset>
+      <legend className="text-[12px] text-chalk-dim">Avatar</legend>
+      <label className="press relative mt-2 flex w-fit cursor-pointer items-center gap-3 whitespace-nowrap text-[14px]">
+        <input
+          type="radio"
+          name="avatar"
+          value=""
+          defaultChecked={current === null}
+          className="peer sr-only"
+        />
+        <span className={`${disc} tnum w-11 shrink-0 text-[14px] font-extrabold text-chalk`}>
+          {initials(name)}
+        </span>
+        Just my initials
+      </label>
+      {group("People", PEOPLE)}
+      {group("Animals", ANIMALS)}
+    </fieldset>
   );
 }
 

@@ -368,6 +368,8 @@ h1,
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  /* A picked avatar is a square picture; the disc crops it round. */
+  overflow: hidden;
   border-style: solid;
   border-color: var(--ring);
   border-radius: 9999px;

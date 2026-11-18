@@ -45,6 +45,10 @@ create unique index if not exists lifters_username_idx on lifters (lower(usernam
 alter table lifters add column if not exists batch_year smallint
   check (batch_year between 2000 and 2100);
 
+-- A cartoon avatar picked instead of initials: an id from lib/avatars.ts,
+-- checked there before it's saved. Null means initials.
+alter table lifters add column if not exists avatar text;
+
 create table if not exists lifts (
   id            uuid primary key default gen_random_uuid(),
   lifter_id     uuid not null references lifters(id) on delete cascade,
