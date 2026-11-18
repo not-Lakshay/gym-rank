@@ -49,25 +49,30 @@ import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
 import { siteUrl } from "@/lib/site";
 import { ShareButton } from "@/app/share";
-import { CountUp } from "@/app/score";
+import { Avatar } from "@/app/avatar";
+import { Roll } from "@/app/roll";
+import { TabBar } from "@/app/tab-bar";
 
 // `error` is set by Auth.js when a sign-in fails (pages.error in auth.ts).
 type SearchParams = Promise<{ college?: string; error?: string }>;
 
 export default function MePage({ searchParams }: { searchParams: SearchParams }) {
   return (
-    <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
-      <Suspense
-        fallback={
-          <>
-            <Bone className="h-11 w-36" />
-            <ProfileSkeleton />
-          </>
-        }
-      >
-        <Dashboard searchParams={searchParams} />
-      </Suspense>
-    </main>
+    <>
+      <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
+        <Suspense
+          fallback={
+            <>
+              <Bone className="h-11 w-36" />
+              <ProfileSkeleton />
+            </>
+          }
+        >
+          <Dashboard searchParams={searchParams} />
+        </Suspense>
+      </main>
+      <TabBar active="you" />
+    </>
   );
 }
 
@@ -300,8 +305,9 @@ function LifterView({
           </div>
         ) : (
           <div className="pt-4">
-            <p className="tnum text-[4.5rem] font-extrabold leading-[0.85] tracking-[-0.045em]">
-              <CountUp value={summary.dots} />
+            {/* Rolls in on arrival, and again after a save changes it. */}
+            <p className="tnum text-[4.5rem] font-extrabold leading-none tracking-[-0.045em]">
+              <Roll value={summary.dots} />
             </p>
             <p className="mt-3 text-[13px] text-chalk-dim">
               DOTS score
@@ -388,12 +394,15 @@ function LifterView({
           </div>
         )}
 
-        <p className="mt-4 text-[14px] font-bold">
-          {lifter.displayName}
-          <span className="font-normal text-chalk-dim">
-            {" "}
-            · @{lifter.username}
-            {lifter.batchYear !== null && ` · ${batchLabel(lifter.batchYear)}`} · {weightClass}
+        <p className="mt-4 flex items-center gap-2.5 text-[14px] font-bold">
+          <Avatar name={lifter.displayName} ring={plate} size={32} />
+          <span className="min-w-0">
+            {lifter.displayName}
+            <span className="font-normal text-chalk-dim">
+              {" "}
+              · @{lifter.username}
+              {lifter.batchYear !== null && ` · ${batchLabel(lifter.batchYear)}`} · {weightClass}
+            </span>
           </span>
         </p>
 

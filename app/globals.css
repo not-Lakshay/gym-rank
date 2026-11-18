@@ -58,28 +58,25 @@ html {
 }
 
 /*
-  Background: a warm glow at the top so the page has a light source, over
-  a faint diagonal knurl — the cross-hatch cut into a barbell's grip. Both
-  sit far below the text contrast floor; they give the iron some grain.
+  Background: a lifting platform under lights. A wide warm pool from above
+  in the page's accent, a narrower white beam inside it, and fine grain
+  over the iron so the black isn't flat. All of it sits far below the text
+  contrast floor.
 */
 body {
   background-color: var(--background);
   background-image:
     radial-gradient(
-      80rem 40rem at 50% -20rem,
-      color-mix(in oklab, var(--accent) 13%, transparent),
-      transparent 60%
+      34rem 28rem at 50% -10rem,
+      rgba(243, 239, 231, 0.07),
+      transparent 70%
     ),
-    repeating-linear-gradient(
-      45deg,
-      transparent 0 9px,
-      rgba(243, 239, 231, 0.035) 9px 10px
+    radial-gradient(
+      80rem 44rem at 50% -18rem,
+      color-mix(in oklab, var(--accent) 16%, transparent),
+      transparent 62%
     ),
-    repeating-linear-gradient(
-      -45deg,
-      transparent 0 9px,
-      rgba(243, 239, 231, 0.035) 9px 10px
-    );
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
   background-attachment: fixed;
   /* The score's .glow bleeds past the edges on a phone; without this the
      page pans sideways. clip, not hidden, so nothing becomes a scroller. */
@@ -133,30 +130,6 @@ h1,
 .rise {
   animation: rise 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   animation-delay: calc(var(--i, 0) * 70ms);
-}
-
-/* One pass of light across the leader's bar, after the bars have grown. */
-@keyframes sheen {
-  from {
-    transform: translateX(-120%) skewX(-18deg);
-  }
-  to {
-    transform: translateX(260%) skewX(-18deg);
-  }
-}
-
-.sheen::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  width: 40%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(243, 239, 231, 0.35),
-    transparent
-  );
-  animation: sheen 1100ms ease-out 900ms both;
 }
 
 /* The score on a dashboard sits in a pool of its class colour. */
@@ -263,11 +236,11 @@ h1,
   transform: scale(0.97);
 }
 
-/* Board rows: the name slides a touch right on hover, the bar brightens. */
+/* Board rows: the name slides a touch right on hover. */
 .row {
   transition: background-color 150ms ease;
 }
-/* The top three are outlined in their medal colour (--medal, set inline). */
+/* A medal outline, on boards too small for a podium (--medal, set inline). */
 .medal-row {
   box-shadow: inset 0 0 0 1px var(--medal);
 }
@@ -280,11 +253,216 @@ h1,
 .row:hover .row-name {
   transform: translateX(3px);
 }
-.row .row-bar {
-  transition: opacity 180ms ease;
+
+/* Initials disc (app/avatar.tsx); size and ring colour are set inline. */
+.avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-style: solid;
+  border-radius: 9999px;
+  background: var(--iron-raised);
+  color: var(--chalk);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
 }
-.row:hover .row-bar {
-  opacity: 0.3 !important;
+
+/*
+  Scoreboard digits (app/roll.tsx). The real digit is transparent and
+  holds the space; a reel of two rounds of 0–9 sits over it and spins
+  from 0 to land on the digit in the second round, each digit a beat after
+  the one before. One em per step, so the reel's lines are 1em tall.
+*/
+.roll-d {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+  -webkit-text-fill-color: transparent;
+  clip-path: inset(0 -0.1em);
+}
+.roll-d::before {
+  content: "0\A 1\A 2\A 3\A 4\A 5\A 6\A 7\A 8\A 9\A 0\A 1\A 2\A 3\A 4\A 5\A 6\A 7\A 8\A 9";
+  position: absolute;
+  top: 0;
+  left: 0;
+  white-space: pre;
+  -webkit-text-fill-color: currentColor;
+  transform: translateY(calc((var(--n) + 10) * -1em));
+  animation: roll 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--delay, 0ms) + var(--k, 0) * 70ms);
+}
+@keyframes roll {
+  from {
+    transform: translateY(0);
+  }
+}
+
+/* The podium: blocks rise from the floor, lifters land on them, and the
+   crown drops onto #1. Delays are set inline (app/board.tsx). */
+.podium-block {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  padding-top: 0.6rem;
+  border-top: 3px solid var(--medal);
+  background: color-mix(in oklab, var(--medal) 9%, var(--iron-raised));
+  transform-origin: bottom;
+  animation: podium-rise 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes podium-rise {
+  from {
+    transform: scaleY(0);
+  }
+}
+.podium-pop {
+  display: inline-flex;
+  animation: pop-in 500ms cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+@keyframes pop-in {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+.crown {
+  animation: crown-drop 500ms cubic-bezier(0.3, 1.5, 0.5, 1) 900ms both;
+}
+@keyframes crown-drop {
+  from {
+    transform: translateY(-14px) rotate(-14deg);
+    opacity: 0;
+  }
+}
+
+/* A loaded bar (app/barbell.tsx): plates slide onto each sleeve,
+   innermost first. Widths, heights and delays are set inline. */
+.barbell {
+  display: flex;
+  width: 7.5rem;
+  height: 30px;
+  flex-shrink: 0;
+  align-items: center;
+}
+.barbell-side {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  gap: 1px;
+}
+.barbell-left {
+  flex-direction: row-reverse;
+}
+.barbell-shaft {
+  height: 3px;
+  flex: 1 1 1rem;
+  background: var(--chalk-faint);
+}
+.barbell-end {
+  width: 6px;
+  height: 4px;
+  flex-shrink: 0;
+  background: var(--chalk-faint);
+}
+.barbell-collar {
+  width: 3px;
+  height: 10px;
+  flex-shrink: 0;
+  background: var(--chalk-dim);
+}
+.plate {
+  flex-shrink: 0;
+  border-radius: 1px;
+  animation: 450ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.barbell-left .plate {
+  animation-name: plate-in-left;
+}
+.barbell-right .plate {
+  animation-name: plate-in-right;
+}
+@keyframes plate-in-left {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+}
+@keyframes plate-in-right {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+/* A new personal record: a stamp slams down and throws up chalk dust. */
+.pr-stamp {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1.5px solid var(--gold);
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  transform: rotate(-8deg);
+  animation: stamp 450ms cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+@keyframes stamp {
+  from {
+    transform: scale(2.6) rotate(-16deg);
+    opacity: 0;
+  }
+}
+.dust {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px;
+  border-radius: 9999px;
+  background: var(--chalk);
+  opacity: 0;
+  animation: dust 900ms ease-out 150ms both;
+}
+@keyframes dust {
+  from {
+    transform: translate(0, 0) scale(0.4);
+    opacity: 0.9;
+  }
+  to {
+    transform: translate(var(--x), var(--y)) scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* "You passed …" after a save: drops in from the top of the screen. */
+.toast {
+  animation: toast-in 450ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes toast-in {
+  from {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+}
+
+/* Board to profile: the tapped avatar and score fly into the header
+   (app/morph.tsx). Taps during the flight go through to the page. */
+::view-transition-group(.morph) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+::view-transition {
+  pointer-events: none;
+}
+
+/* Room for the tab bar along the bottom of a phone (app/tab-bar.tsx). */
+@media (width < 48rem) {
+  body {
+    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+  }
 }
 
 /* Medal rank discs for the top three. */
@@ -349,6 +527,13 @@ input[type="number"] {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     transition-duration: 0.01ms !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { EncryptedBlock } from "@/components/ui/encrypted-block";
+import { TabBar } from "@/app/tab-bar";
 
 export const metadata = {
   title: "How scoring works — Gym Rank",
@@ -15,13 +15,12 @@ export const metadata = {
 */
 export default function ScoringPage() {
   return (
+    <>
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
       <Link href="/?all" className={navButton}>
         <ChevronLeft />
         Leaderboard
       </Link>
-
-      <EncryptedBlock>
 
       <h1 className="pt-8 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
         How scoring works
@@ -116,8 +115,9 @@ export default function ScoringPage() {
           strength scales slower than mass.
         </p>
       </Section>
-      </EncryptedBlock>
     </main>
+    <TabBar />
+    </>
   );
 }
 

@@ -33,7 +33,14 @@ function lifterCount(n: number) {
 
 export function CollegePicker({ colleges }: { colleges: CollegeOption[] }) {
   const [query, setQuery] = useState("");
-  const shown = matches(colleges, query);
+  // Before a search, only colleges with a board: a list of "no board yet"
+  // is the emptiest thing a front page can show. The rest turn up when
+  // searched for.
+  const withBoards = colleges.filter((c) => c.lifters > 0);
+  const shown =
+    query.trim() === "" && withBoards.length > 0
+      ? withBoards.slice(0, SHOWN)
+      : matches(colleges, query);
 
   return (
     <div>

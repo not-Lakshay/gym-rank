@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { EncryptedText } from "@/components/ui/encrypted-text";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { auth } from "@/auth";
@@ -30,6 +29,7 @@ import {
 } from "@/app/board";
 import { Calculator } from "@/app/calculator";
 import { SignInForm } from "@/app/sign-in";
+import { TabBar } from "@/app/tab-bar";
 
 type Params = Promise<{ slug: string }>;
 type SearchParams = Promise<{ tab?: string }>;
@@ -67,21 +67,24 @@ export default function CollegePage({
   searchParams: SearchParams;
 }) {
   return (
-    <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
-      <Suspense
-        fallback={
-          <>
-            <Bone className="h-11 w-36" />
-            <Bone className="mt-6 h-9 w-40" />
-            <Bone className="mt-3 h-4 w-32" />
-            <BoardSkeleton />
-          </>
-        }
-      >
-        <CollegeBoard params={params} searchParams={searchParams} />
-      </Suspense>
-      <Footer />
-    </main>
+    <>
+      <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
+        <Suspense
+          fallback={
+            <>
+              <Bone className="h-11 w-36" />
+              <Bone className="mt-6 h-9 w-40" />
+              <Bone className="mt-3 h-4 w-32" />
+              <BoardSkeleton />
+            </>
+          }
+        >
+          <CollegeBoard params={params} searchParams={searchParams} />
+        </Suspense>
+        <Footer />
+      </main>
+      <TabBar active="board" />
+    </>
   );
 }
 
@@ -236,15 +239,10 @@ function Header({
       <div className="mt-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-[2.25rem] font-extrabold leading-[0.9] tracking-[-0.04em]">
-            <EncryptedText text={college.shortName} charset="ABCDEFGHIJKLMNOPQRSTUVWXYZ" revealDelayMs={55} />
+            {college.shortName}
           </h1>
           <p className="mt-2.5 text-[16px] font-bold leading-none tracking-[-0.02em]">
-            <EncryptedText
-              text="Pound for pound."
-              encryptedClassName="text-chalk-faint"
-              revealedClassName="text-chalk"
-              revealDelayMs={60}
-            />
+            Pound for pound.
           </p>
           <p className="mt-2 text-[13px] leading-snug text-chalk-dim">
             {college.city} · every score adjusted for bodyweight

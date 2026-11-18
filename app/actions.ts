@@ -8,6 +8,7 @@ import { getRankFor } from "@/lib/leaderboard";
 import {
   MOVEMENTS,
   UsernameTakenError,
+  bestsFor,
   cosignLift,
   deleteLifter,
   getLifterByEmail,
@@ -20,9 +21,10 @@ import {
   upsertProfile,
 } from "@/lib/lifters";
 import { sendWelcome } from "@/lib/mail";
+import type { Movement } from "@/lib/movements";
 import { notifyCosigned, notifyPassed } from "@/lib/notifications";
 import { normalizeUsername, validateUsername } from "@/lib/username";
-import { liftChanges, validateBodyweight } from "@/lib/validate";
+import { liftChanges, recordsBroken, validateBodyweight } from "@/lib/validate";
 
 /**
  * Every action returns this instead of throwing. A thrown error inside a
@@ -30,7 +32,14 @@ import { liftChanges, validateBodyweight } from "@/lib/validate";
  * is the wrong response to someone typing 500 in a kilo box. The forms read
  * `error` via useActionState and show it next to the field.
  */
-export type ActionState = { error: string | null; savedAt?: number };
+export type ActionState = {
+  error: string | null;
+  savedAt?: number;
+  /** After saving lifts: the ones that beat their best-ever entry. */
+  prs?: Movement[];
+  /** After saving lifts: who on the college board you just went past. */
+  passed?: string[];
+};
 
 const ok = (): ActionState => ({ error: null, savedAt: Date.now() });
 const fail = (error: string): ActionState => ({ error });
@@ -58,7 +67,7 @@ async function requireEmail(): Promise<string | null> {
  * fail. A Neon hiccup while working out who got passed must not turn a
  * saved lift into an error message.
  */
-async function quietly(work: () => Promise<void>): Promise<void> {
+async function quietly(work: () => Promise<unknown>): Promise<void> {
   try {
     await work();
   } catch (err) {
@@ -193,20 +202,28 @@ export async function saveLiftsAction(
   const { changes } = parsed;
   if (changes.length === 0) return ok();
 
-  const before = (await getRankFor(lifter.id))?.dots ?? null;
+  const collegeId = lifter.college.id;
+  // Read before writing: the score to compare against, and the records a
+  // new entry has to beat to count as a PR. The PR check is decoration, so
+  // a failed read means no stamp, never a failed save.
+  const [card, bests] = await Promise.all([
+    getRankFor(lifter.id, collegeId),
+    bestsFor(lifter.id).catch(() => ({})),
+  ]);
+  const before = card?.dots ?? null;
 
   for (const change of changes) {
     await saveLift({ lifterId: lifter.id, ...change, bodyweightKg: lifter.bodyweightKg });
     await recordEvent(`lift_saved:${change.movement}`, lifter.id);
   }
 
-  const collegeId = lifter.college.id;
-  await quietly(() =>
-    notifyPassed({ lifterId: lifter.id, collegeId, dotsBefore: before }),
-  );
+  let passed: string[] = [];
+  await quietly(async () => {
+    passed = await notifyPassed({ lifterId: lifter.id, collegeId, dotsBefore: before });
+  });
 
   refresh();
-  return ok();
+  return { ...ok(), prs: recordsBroken(changes, bests), passed };
 }
 
 /**

@@ -235,6 +235,25 @@ export async function getLiftsFor(lifterId: string): Promise<Lift[]> {
 }
 
 /**
+ * Each lift's best-ever entry from history: est. 1RM, or reps for
+ * pull-ups. What a new entry has to beat to be a PR.
+ */
+export async function bestsFor(lifterId: string): Promise<Partial<Record<Movement, number>>> {
+  const rows = await sql`
+    select movement, max(est_1rm_kg) as best_kg, max(reps) as best_reps
+    from lift_history
+    where lifter_id = ${lifterId}
+    group by movement
+  `;
+  return Object.fromEntries(
+    rows.map((row) => [
+      row.movement as Movement,
+      num(row.movement === "pullups" ? row.best_reps : row.best_kg),
+    ]),
+  );
+}
+
+/**
  * Add a co-sign to a lift. Any number of witnesses can co-sign one lift,
  * but the same witness only once, and never the lift's owner —
  * self-attestation is exactly what a co-sign is meant to rule out.

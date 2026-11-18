@@ -2,26 +2,15 @@ import Link from "next/link";
 import type { BoardRow, LiftRow } from "@/lib/leaderboard";
 import { MOVEMENTS, type Movement } from "@/lib/movements";
 import { batchLabel, batchesFor } from "@/lib/batch";
+import { plateFor } from "@/lib/plates";
+import { WEIGHT_CLASSES } from "@/lib/scoring";
+import { Avatar } from "./avatar";
+import { Departure, Morph } from "./morph";
+import { Roll } from "./roll";
 
 /** Rank within a sub-board: one plus everyone strictly ahead (ties share). */
 export function rankWithin<T>(rows: T[], score: (r: T) => number) {
   return (row: T) => 1 + rows.filter((o) => score(o) > score(row)).length;
-}
-import { plateFor } from "@/lib/plates";
-import { WEIGHT_CLASSES } from "@/lib/scoring";
-import { EncryptedText } from "@/components/ui/encrypted-text";
-import { CountUp } from "./score";
-
-// Rank digits flip like a stadium board before settling, staggered down the list.
-function Digits({ value, index }: { value: number; index: number }) {
-  return (
-    <EncryptedText
-      text={String(value)}
-      charset="0123456789"
-      revealDelayMs={260 + Math.min(index, 8) * 45}
-      flipDelayMs={40}
-    />
-  );
 }
 
 export const MEDALS = ["var(--gold)", "var(--silver)", "var(--bronze)"];
@@ -55,7 +44,7 @@ function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="bg-iron px-3 py-2.5">
       <dd className="tnum display text-[22px] leading-none tracking-[-0.02em]">
-        <CountUp value={value} decimals={0} durationMs={900} />
+        <Roll value={value} decimals={0} />
       </dd>
       <dt className="caption mt-1 tracking-[0.04em]">{label}</dt>
     </div>
@@ -84,170 +73,343 @@ export function Board({
   showBatch?: boolean;
 }) {
   // Rows arrive sorted by DOTS descending, so the first is the yardstick
-  // every bar below is measured against.
+  // every bar is measured against.
   const topDots = rows[0]?.dots ?? 0;
 
   return (
     <section style={plate ? ({ "--accent": plate } as React.CSSProperties) : undefined}>
-      <h2 className="caption mb-2 flex items-center justify-between gap-2">
-        <span className="flex items-center gap-2">
-          {plate && (
-            <span
-              aria-hidden
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ background: plate }}
-            />
+      <Heading text={heading} plate={plate} note="bar = score vs #1" />
+      <Ranked
+        viewerId={viewerId}
+        medals={medals}
+        entries={rows.map((row) => ({
+          id: row.id,
+          username: row.username,
+          displayName: row.displayName,
+          weightClass: row.weightClass,
+          rank: rankOf(row),
+          share: topDots > 0 ? row.dots / topDots : 0,
+          value: row.dots,
+          decimals: 1,
+          unit: null,
+          dots: row.dots,
+          detail: `${row.totalKg.toFixed(0)} kg`,
+          where: showCollege ? row.collegeShort : null,
+          tag:
+            showBatch && row.batchYear !== null ? (
+              <span className="tnum shrink-0 rounded-sm border border-rule px-1 text-[10px] font-bold leading-[1.4] text-chalk-dim">
+                {batchLabel(row.batchYear)}
+              </span>
+            ) : null,
+          sub: <BoardSub row={row} showCollege={showCollege} />,
+        }))}
+      />
+    </section>
+  );
+}
+
+/* The line under a name on the overall board: the handle, then how the
+   lifts are vouched for (and the college, on the global board). */
+function BoardSub({ row, showCollege }: { row: BoardRow; showCollege: boolean }) {
+  return (
+    <>
+      {/* The handle is what tells two Rohans apart. */}
+      <span className="truncate text-chalk-faint">@{row.username}</span>
+      {showCollege ? (
+        <>
+          <span aria-hidden className="text-chalk-faint">·</span>
+          <Link
+            href={`/c/${row.collegeSlug}`}
+            className="truncate underline-offset-4 hover:underline"
+          >
+            {row.collegeShort}
+          </Link>
+          {/* Everyone here is co-signed; say how, without names so the
+              line stays short. */}
+          {row.cosign && (
+            <>
+              <span aria-hidden className="text-chalk-faint">·</span>
+              <span className={row.cosign.kind === "full" ? "" : "opacity-50"}>
+                <Check />
+              </span>
+              <span className="truncate">
+                {row.cosign.kind === "full" ? "fully" : "partially"} co-signed
+              </span>
+            </>
           )}
-          {heading}
+        </>
+      ) : (
+        row.verifiedCount > 0 && (
+          <>
+            <span aria-hidden className="text-chalk-faint">·</span>
+            {/* A dimmed tick for partial: every lift is vouched for, but
+                by different people. */}
+            <span className={row.cosign?.kind === "full" ? "" : "opacity-50"}>
+              <Check />
+            </span>
+            <span className="truncate">
+              {row.cosign
+                ? `${row.cosign.kind === "full" ? "fully" : "partially"} co-signed by ${row.cosign.names.join(", ")}`
+                : `${row.verifiedCount} of 3 co-signed`}
+            </span>
+          </>
+        )
+      )}
+    </>
+  );
+}
+
+function Heading({ text, plate, note }: { text: string; plate?: string; note: string }) {
+  return (
+    <h2 className="caption mb-2 flex items-center justify-between gap-2">
+      {plate ? (
+        // A weight-class board wears its plate: the label is filled with it.
+        <span className="rounded-sm px-2 py-0.5 text-iron" style={{ background: plate }}>
+          {text}
         </span>
-        <span className="text-[11px] font-normal normal-case tracking-normal text-chalk-faint">
-          bar = score vs #1
-        </span>
-      </h2>
+      ) : (
+        text
+      )}
+      <span className="text-[11px] font-normal normal-case tracking-normal text-chalk-faint">
+        {note}
+      </span>
+    </h2>
+  );
+}
 
-      <ol className="card px-3">
-        {rows.map((row, index) => {
-          const rank = rankOf(row);
-          const leading = rank === 1;
-          const isViewer = row.id === viewerId;
-          const medal = medals && rank <= 3 ? MEDALS[rank - 1] : null;
+/* One line of any board, whatever it ranks. Board and LiftBoard map their
+   rows into this, so the podium and the list are drawn in one place. */
+type Entry = {
+  id: string;
+  username: string;
+  displayName: string;
+  weightClass: string;
+  rank: number;
+  /** The score as a share of #1's, for the bar under the name. */
+  share: number;
+  /** The big number, and its unit if it isn't DOTS. */
+  value: number;
+  decimals: number;
+  unit: string | null;
+  /** Set on the overall board: the score that flies into a profile. */
+  dots: number | null;
+  /** Small print under the number. */
+  detail: string;
+  /** The college, on cross-college boards. */
+  where: string | null;
+  /** Beside the name, e.g. the batch. */
+  tag: React.ReactNode;
+  /** The line under the name. */
+  sub: React.ReactNode;
+};
 
-          // How this score reads against the leader's. A leaderboard is a
-          // ranking of magnitudes, and a column of numbers hides that —
-          // the bar is the only element here that shows the gaps.
-          const share = topDots > 0 ? row.dots / topDots : 0;
+/*
+  A board with medals and at least three people opens with a podium —
+  #2, #1, #3 — and the list carries on from #4. Every row has an avatar
+  ringed in its weight-class colour, and a thin bar under the name for
+  the gap to #1: a column of numbers hides how far apart they are.
+*/
+function Ranked({
+  entries,
+  viewerId,
+  medals,
+}: {
+  entries: Entry[];
+  viewerId: string | null;
+  medals: boolean;
+}) {
+  const podium = medals && entries.length >= 3;
+  const list = podium ? entries.slice(3) : entries;
 
-          return (
-            <li
-              key={row.id}
-              className={`row relative flex items-center gap-3 border-b border-rule last:border-b-0 ${
-                leading ? "py-4" : "py-3"
-              } ${isViewer || medal ? "-mx-2 rounded-sm px-2" : ""} ${
-                medal ? "medal-row" : isViewer ? "ring-1 ring-accent/60" : ""
-              }`}
-              style={medal ? ({ "--medal": medal } as React.CSSProperties) : undefined}
-            >
-              <span
+  return (
+    <>
+      {podium && <Podium entries={entries.slice(0, 3)} viewerId={viewerId} />}
+      {list.length > 0 && (
+        <ol className="card px-3">
+          {list.map((e, index) => {
+            const isViewer = e.id === viewerId;
+            const medal = medals && e.rank <= 3 ? MEDALS[e.rank - 1] : null;
+            const ring = plateFor(e.weightClass);
+            const delay = Math.min(index, 8) * 45;
+            return (
+              <li
+                key={e.id}
+                className={`row flex items-center gap-3 border-b border-rule py-3 last:border-b-0 ${
+                  isViewer || medal ? "-mx-2 rounded-sm px-2" : ""
+                } ${medal ? "medal-row" : isViewer ? "ring-1 ring-accent/60" : ""}`}
+                style={medal ? ({ "--medal": medal } as React.CSSProperties) : undefined}
+              >
+                <Departure arrival={arrivalFor(e)}>
+                  {medal ? (
+                    <span className="medal shrink-0" style={{ "--medal": medal } as React.CSSProperties}>
+                      {e.rank}
+                    </span>
+                  ) : (
+                    <span className="tnum w-6 shrink-0 text-center text-[13px] text-chalk-faint">
+                      {e.rank}
+                    </span>
+                  )}
+                  {/* A second way into the profile; the name link is the one
+                      a screen reader gets. */}
+                  <Link href={`/u/${e.username}`} tabIndex={-1} aria-hidden className="shrink-0">
+                    <Morph id={e.id} part="avatar">
+                      <Avatar name={e.displayName} ring={ring} />
+                    </Morph>
+                  </Link>
+                  <span className="row-name min-w-0 flex-1">
+                    <span className="flex items-center gap-1.5">
+                      <Link
+                        href={`/u/${e.username}`}
+                        className="truncate text-[14px] font-medium underline-offset-4 hover:underline"
+                      >
+                        {e.displayName}
+                      </Link>
+                      {e.tag}
+                      {isViewer && <YouTag />}
+                    </span>
+                    <span className="flex min-w-0 items-center gap-1 text-[11px] text-chalk-dim">
+                      {e.sub}
+                    </span>
+                    <span aria-hidden className="mt-1.5 block h-[3px] rounded-full bg-rule">
+                      <span
+                        className="bar-grow block h-full rounded-full"
+                        style={{
+                          width: `${Math.max(e.share * 100, 4)}%`,
+                          background: ring,
+                          animationDelay: `${delay}ms`,
+                        }}
+                      />
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-right">
+                    <span className="tnum block text-[17px] font-bold leading-none">
+                      <Score entry={e} delayMs={delay} />
+                    </span>
+                    <span className="tnum mt-1 block text-[11px] text-chalk-faint">{e.detail}</span>
+                  </span>
+                </Departure>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </>
+  );
+}
+
+// #2, #1, #3 from left to right, as on a real podium; #1's block tallest.
+const PODIUM_ORDER = [1, 0, 2];
+const BLOCK_HEIGHT = [84, 60, 44];
+// The blocks rise from the floor, #3 first; then the lifters land on them
+// and the crown drops onto #1 last.
+const BLOCK_DELAY = [200, 100, 0];
+const AVATAR_DELAY = [650, 500, 400];
+
+function Podium({ entries, viewerId }: { entries: Entry[]; viewerId: string | null }) {
+  return (
+    <ol aria-label="Top three" className="mb-3 flex items-end gap-2">
+      {PODIUM_ORDER.map((place) => {
+        const e = entries[place];
+        const medal = MEDALS[e.rank - 1];
+        const first = place === 0;
+        return (
+          <li
+            key={e.id}
+            className="flex min-w-0 flex-1 flex-col items-center text-center"
+            style={{ "--medal": medal } as React.CSSProperties}
+          >
+            <Departure arrival={arrivalFor(e)}>
+              {first && <Crown />}
+              <Link
+                href={`/u/${e.username}`}
+                tabIndex={-1}
                 aria-hidden
-                className={`row-bar bar-grow pointer-events-none absolute inset-y-px left-0 overflow-hidden rounded-sm ${
-                  leading ? "sheen" : ""
-                }`}
-                style={{
-                  width: `${Math.max(share * 100, 6)}%`,
-                  background: plateFor(row.weightClass),
-                  opacity: leading ? 0.18 : 0.09,
-                  animationDelay: `${Math.min(index, 8) * 45}ms`,
-                }}
-              />
-
-              <span
-                aria-hidden
-                className="relative h-9 w-[3px] shrink-0 rounded-full"
-                style={{
-                  background: plateFor(row.weightClass),
-                  opacity: leading ? 1 : 0.35,
-                }}
-              />
-
-              {medal ? (
-                <span
-                  className="medal relative shrink-0"
-                  style={{ "--medal": medal } as React.CSSProperties}
-                >
-                  <Digits value={rank} index={index} />
-                </span>
-              ) : (
-                <span className="tnum relative w-6 shrink-0 text-center text-[13px] text-chalk-faint">
-                  <Digits value={rank} index={index} />
+                className="podium-pop"
+                style={{ animationDelay: `${AVATAR_DELAY[place]}ms` }}
+              >
+                <Morph id={e.id} part="avatar">
+                  <Avatar name={e.displayName} ring={medal} size={first ? 64 : 48} />
+                </Morph>
+              </Link>
+              <Link
+                href={`/u/${e.username}`}
+                aria-label={e.displayName}
+                className="mt-2 max-w-full truncate text-[13px] font-bold underline-offset-4 hover:underline"
+              >
+                {e.displayName.split(/\s+/)[0]}
+              </Link>
+              {(e.where || e.id === viewerId) && (
+                <span className="flex max-w-full items-center gap-1 truncate text-[11px] text-chalk-faint">
+                  {e.where}
+                  {e.id === viewerId && <YouTag />}
                 </span>
               )}
-
-              <span className="row-name relative min-w-0 flex-1">
-                <span className="flex items-center gap-1.5">
-                  <Link
-                    href={`/u/${row.username}`}
-                    className={`truncate underline-offset-4 hover:underline ${
-                      leading
-                        ? "text-[15px] font-bold"
-                        : "text-[14px] font-medium"
-                    }`}
-                  >
-                    {row.displayName}
-                  </Link>
-                  {showBatch && row.batchYear !== null && (
-                    <span className="tnum shrink-0 rounded-sm border border-rule px-1 text-[10px] font-bold leading-[1.4] text-chalk-dim">
-                      {batchLabel(row.batchYear)}
-                    </span>
-                  )}
-                  {isViewer && (
-                    <span className="shrink-0 rounded-sm bg-accent px-1.5 text-[10px] font-bold uppercase text-iron">
-                      you
-                    </span>
-                  )}
-                </span>
-                {/* The handle is what tells two Rohans apart. */}
-                <span className="flex min-w-0 items-center gap-1 text-[11px] text-chalk-dim">
-                  <span className="truncate text-chalk-faint">@{row.username}</span>
-                  {showCollege ? (
-                    <>
-                      <span aria-hidden className="text-chalk-faint">·</span>
-                      <Link
-                        href={`/c/${row.collegeSlug}`}
-                        className="truncate underline-offset-4 hover:underline"
-                      >
-                        {row.collegeShort}
-                      </Link>
-                      {/* Everyone here is co-signed; say how, without names
-                          so the line stays short. */}
-                      {row.cosign && (
-                        <>
-                          <span aria-hidden className="text-chalk-faint">·</span>
-                          <span className={row.cosign.kind === "full" ? "" : "opacity-50"}>
-                            <Check />
-                          </span>
-                          <span className="truncate">
-                            {row.cosign.kind === "full" ? "fully" : "partially"} co-signed
-                          </span>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    row.verifiedCount > 0 && (
-                      <>
-                        <span aria-hidden className="text-chalk-faint">·</span>
-                        {/* A dimmed tick for partial: every lift is vouched
-                            for, but by different people. */}
-                        <span className={row.cosign?.kind === "full" ? "" : "opacity-50"}>
-                          <Check />
-                        </span>
-                        <span className="truncate">
-                          {row.cosign
-                            ? `${row.cosign.kind === "full" ? "fully" : "partially"} co-signed by ${row.cosign.names.join(", ")}`
-                            : `${row.verifiedCount} of 3 co-signed`}
-                        </span>
-                      </>
-                    )
-                  )}
+              <span
+                className={`display tnum mt-1 leading-none ${first ? "text-[26px]" : "text-[20px]"}`}
+                style={{ color: medal }}
+              >
+                <Score entry={e} delayMs={AVATAR_DELAY[place]} />
+              </span>
+              <span
+                className="podium-block mt-2"
+                style={{ height: BLOCK_HEIGHT[place], animationDelay: `${BLOCK_DELAY[place]}ms` }}
+              >
+                <span className="display tnum text-[28px] leading-none" style={{ color: medal }}>
+                  {e.rank}
                 </span>
               </span>
+            </Departure>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
 
-              <span className="relative shrink-0 text-right">
-                <span
-                  className={`tnum block leading-none ${
-                    leading ? "display text-[26px]" : "text-[17px] font-bold"
-                  }`}
-                >
-                  <CountUp value={row.dots} durationMs={700 + index * 60} />
-                </span>
-                <span className="tnum mt-1 block text-[11px] text-chalk-faint">
-                  {row.totalKg.toFixed(0)} kg
-                </span>
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-    </section>
+function Score({ entry: e, delayMs }: { entry: Entry; delayMs: number }) {
+  const number = <Roll value={e.value} decimals={e.decimals} delayMs={delayMs} />;
+  return (
+    <>
+      {e.dots !== null ? (
+        <Morph id={e.id} part="score">
+          {number}
+        </Morph>
+      ) : (
+        number
+      )}
+      {e.unit && <span className="text-[12px] font-medium text-chalk-dim"> {e.unit}</span>}
+    </>
+  );
+}
+
+function arrivalFor(e: Entry) {
+  return {
+    id: e.id,
+    username: e.username,
+    displayName: e.displayName,
+    ring: plateFor(e.weightClass),
+    score: e.dots === null ? null : e.dots.toFixed(1),
+  };
+}
+
+function YouTag() {
+  return (
+    <span className="shrink-0 rounded-sm bg-accent px-1.5 text-[10px] font-bold uppercase text-iron">
+      you
+    </span>
+  );
+}
+
+function Crown() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 24 16"
+      className="crown mb-1 h-4 w-6 text-gold"
+      fill="currentColor"
+    >
+      <path d="M2 4l5 4 5-7 5 7 5-4-2 11H4L2 4z" />
+    </svg>
   );
 }
 
@@ -345,8 +507,8 @@ export function BoardSkeleton({ rows = 5 }: { rows?: number }) {
       <ol className="mt-3">
         {Array.from({ length: rows }, (_, i) => (
           <li key={i} className="flex items-center gap-3 border-b border-rule py-3">
-            <Bone className="h-9 w-[3px]" />
             <Bone className="h-4 w-6" />
+            <span aria-hidden className="block h-9 w-9 shrink-0 animate-pulse rounded-full bg-iron-raised" />
             <span className="flex-1">
               <Bone className="h-4 w-32" />
               <Bone className="mt-1.5 h-3 w-20" />
@@ -482,141 +644,55 @@ export function LiftBoard({
 
   return (
     <section style={plate ? ({ "--accent": plate } as React.CSSProperties) : undefined}>
-      <h2 className="caption mb-2 flex items-center justify-between gap-2">
-        <span className="flex items-center gap-2">
-          {plate && (
-            <span
-              aria-hidden
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ background: plate }}
-            />
-          )}
-          {heading}
-        </span>
-        <span className="text-[11px] font-normal normal-case tracking-normal text-chalk-faint">
-          {isPullups ? "ranked by reps" : "ranked by kg, adjusted for bodyweight"}
-        </span>
-      </h2>
-
-      <ol className="card px-3">
-        {rows.map((row, index) => {
-          const rank = rankOf(row);
-          const leading = rank === 1;
-          const isViewer = row.id === viewerId;
-          const medal = medals && rank <= 3 ? MEDALS[rank - 1] : null;
-          const share = topScore > 0 ? row.score / topScore : 0;
-
-          return (
-            <li
-              key={row.id}
-              className={`row relative flex items-center gap-3 border-b border-rule last:border-b-0 ${
-                leading ? "py-4" : "py-3"
-              } ${isViewer || medal ? "-mx-2 rounded-sm px-2" : ""} ${
-                medal ? "medal-row" : isViewer ? "ring-1 ring-accent/60" : ""
-              }`}
-              style={medal ? ({ "--medal": medal } as React.CSSProperties) : undefined}
-            >
-              <span
-                aria-hidden
-                className={`row-bar bar-grow pointer-events-none absolute inset-y-px left-0 overflow-hidden rounded-sm ${
-                  leading ? "sheen" : ""
-                }`}
-                style={{
-                  width: `${Math.max(share * 100, 6)}%`,
-                  background: plateFor(row.weightClass),
-                  opacity: leading ? 0.18 : 0.09,
-                  animationDelay: `${Math.min(index, 8) * 45}ms`,
-                }}
-              />
-              <span
-                aria-hidden
-                className="relative h-9 w-[3px] shrink-0 rounded-full"
-                style={{
-                  background: plateFor(row.weightClass),
-                  opacity: leading ? 1 : 0.35,
-                }}
-              />
-
-              {medal ? (
-                <span
-                  className="medal relative shrink-0"
-                  style={{ "--medal": medal } as React.CSSProperties}
-                >
-                  <Digits value={rank} index={index} />
-                </span>
-              ) : (
-                <span className="tnum relative w-6 shrink-0 text-center text-[13px] text-chalk-faint">
-                  <Digits value={rank} index={index} />
-                </span>
-              )}
-
-              <span className="row-name relative min-w-0 flex-1">
-                <span className="flex items-center gap-1.5">
+      <Heading
+        text={heading}
+        plate={plate}
+        note={isPullups ? "ranked by reps" : "ranked by kg, adjusted for bodyweight"}
+      />
+      <Ranked
+        viewerId={viewerId}
+        medals={medals}
+        entries={rows.map((row) => ({
+          id: row.id,
+          username: row.username,
+          displayName: row.displayName,
+          weightClass: row.weightClass,
+          rank: rankOf(row),
+          share: topScore > 0 ? row.score / topScore : 0,
+          // The raw number is what people came to see; the adjusted score,
+          // which the rank is actually on, sits under it.
+          value: isPullups ? row.reps : (row.kg ?? 0),
+          decimals: isPullups ? 0 : 1,
+          unit: isPullups ? "reps" : "kg",
+          dots: null,
+          detail: isPullups ? row.weightClass : `${row.score.toFixed(1)} adj`,
+          where: showCollege ? row.collegeShort : null,
+          tag: null,
+          sub: (
+            <>
+              <span className="truncate text-chalk-faint">@{row.username}</span>
+              {showCollege && (
+                <>
+                  <span aria-hidden className="text-chalk-faint">·</span>
                   <Link
-                    href={`/u/${row.username}`}
-                    className={`truncate underline-offset-4 hover:underline ${
-                      leading ? "text-[15px] font-bold" : "text-[14px] font-medium"
-                    }`}
+                    href={`/c/${row.collegeSlug}`}
+                    className="truncate underline-offset-4 hover:underline"
                   >
-                    {row.displayName}
+                    {row.collegeShort}
                   </Link>
-                  {isViewer && (
-                    <span className="shrink-0 rounded-sm bg-accent px-1.5 text-[10px] font-bold uppercase text-iron">
-                      you
-                    </span>
-                  )}
-                </span>
-                <span className="flex min-w-0 items-center gap-1 text-[11px] text-chalk-dim">
-                  <span className="truncate text-chalk-faint">@{row.username}</span>
-                  {showCollege && (
-                    <>
-                      <span aria-hidden className="text-chalk-faint">·</span>
-                      <Link
-                        href={`/c/${row.collegeSlug}`}
-                        className="truncate underline-offset-4 hover:underline"
-                      >
-                        {row.collegeShort}
-                      </Link>
-                    </>
-                  )}
-                  {row.verified && (
-                    <>
-                      <span aria-hidden className="text-chalk-faint">·</span>
-                      <Check />
-                      <span>co-signed</span>
-                    </>
-                  )}
-                </span>
-              </span>
-
-              {/* The raw number is what people came to see; the adjusted
-                  score, which the rank is actually on, sits under it. */}
-              <span className="relative shrink-0 text-right">
-                <span
-                  className={`tnum block leading-none ${
-                    leading ? "display text-[26px]" : "text-[17px] font-bold"
-                  }`}
-                >
-                  {isPullups ? (
-                    <>
-                      {row.reps}
-                      <span className="text-[12px] font-medium text-chalk-dim"> reps</span>
-                    </>
-                  ) : (
-                    <>
-                      <CountUp value={row.kg ?? 0} durationMs={700 + index * 60} />
-                      <span className="text-[12px] font-medium text-chalk-dim"> kg</span>
-                    </>
-                  )}
-                </span>
-                <span className="tnum mt-1 block text-[11px] text-chalk-faint">
-                  {isPullups ? row.weightClass : `${row.score.toFixed(1)} adj`}
-                </span>
-              </span>
-            </li>
-          );
-        })}
-      </ol>
+                </>
+              )}
+              {row.verified && (
+                <>
+                  <span aria-hidden className="text-chalk-faint">·</span>
+                  <Check />
+                  <span>co-signed</span>
+                </>
+              )}
+            </>
+          ),
+        }))}
+      />
     </section>
   );
 }

@@ -2,7 +2,7 @@
  * Run:  node lib/validate.test.ts
  */
 import assert from "node:assert/strict";
-import { liftChanges } from "./validate.ts";
+import { liftChanges, recordsBroken } from "./validate.ts";
 
 const form = (fields: Record<string, string>) => (name: string) => fields[name] ?? "";
 const stored = [{ movement: "squat" as const, weightKg: 100, reps: 5 }];
@@ -26,5 +26,20 @@ assert.deepEqual(liftChanges(form({ "deadlift.kg": "120" }), [], 75), {
 // An invalid row fails too, before anything is saved.
 const bad = liftChanges(form({ "bench.kg": "60", "bench.reps": "8", "squat.kg": "100", "squat.reps": "40" }), [], 75);
 assert.ok("error" in bad && bad.error.startsWith("Squat:"));
+
+// PRs: beating the best-ever est. 1RM (or reps) counts; matching it, or a
+// first-ever entry, doesn't.
+assert.deepEqual(
+  recordsBroken(
+    [
+      { movement: "squat", weightKg: 100, reps: 5 }, // est. 116.7 > 110
+      { movement: "bench", weightKg: 60, reps: 1 }, // 60 = 60
+      { movement: "deadlift", weightKg: 140, reps: 1 }, // no history
+      { movement: "pullups", weightKg: null, reps: 12 }, // 12 > 10
+    ],
+    { squat: 110, bench: 60, pullups: 10 },
+  ),
+  ["squat", "pullups"],
+);
 
 console.log("validate: all passed");

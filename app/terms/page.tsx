@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { EncryptedBlock } from "@/components/ui/encrypted-block";
+import { TabBar } from "@/app/tab-bar";
 
 export const metadata = {
   title: "Terms — Gym Rank",
@@ -8,13 +8,12 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
+    <>
     <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-6 px-5 pb-16 pt-10">
       <Link href="/?all" className={navButton}>
         <ChevronLeft />
         Gym Rank
       </Link>
-
-      <EncryptedBlock>
 
       <h1 className="pt-2 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
         Terms of use
@@ -65,8 +64,9 @@ export default function TermsPage() {
       </Section>
 
       <p className="text-xs text-chalk-faint">Last updated 15 November 2026.</p>
-      </EncryptedBlock>
     </main>
+    <TabBar />
+    </>
   );
 }
 

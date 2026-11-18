@@ -13,6 +13,18 @@ export function timeAgo(date: Date, now: Date = new Date()): string {
   return `${w}w ago`;
 }
 
+/** "Lakshay Bhardwaj" → "LB", "sarthak" → "S": first and last word, first
+ *  letter or digit of each. For avatar discs, so never empty. */
+export function initials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  const ends = words.length > 1 ? [words[0], words[words.length - 1]] : words;
+  const out = ends
+    .map((w) => Array.from(w).find((ch) => /[\p{L}\p{N}]/u.test(ch)) ?? "")
+    .join("")
+    .toUpperCase();
+  return out || "?";
+}
+
 /** 1 → "1st", 2 → "2nd", 11 → "11th". Shared so the card and the
  *  dashboard never phrase the same rank two different ways. */
 export function ordinal(n: number): string {

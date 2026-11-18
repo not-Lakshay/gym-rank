@@ -125,6 +125,26 @@ export function liftChanges(
   return { changes };
 }
 
+/**
+ * Which of these changes beat the lifter's best-ever entry for that lift:
+ * est. 1RM, or reps for pull-ups (`bests`, from lift_history). A first
+ * entry beats nothing — a PR needs a record to break. The 0.05 slack
+ * covers est. 1RM being stored to two decimals.
+ */
+export function recordsBroken(
+  changes: LiftChange[],
+  bests: Partial<Record<Movement, number>>,
+): Movement[] {
+  return changes
+    .filter((c) => {
+      const best = bests[c.movement];
+      if (best === undefined) return false;
+      const value = c.weightKg === null ? c.reps : estimatedOneRepMax(c.weightKg, c.reps);
+      return value > best + 0.05;
+    })
+    .map((c) => c.movement);
+}
+
 /** A v4-ish UUID. Used to reject junk ids before they reach Postgres. */
 export function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);

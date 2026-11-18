@@ -71,9 +71,13 @@ export function LiftsForm({
     const t = setTimeout(() => setDismissedAt(state.savedAt!), 1800);
     return () => clearTimeout(t);
   }, [justSaved, state.savedAt]);
+  const prs = state.prs ?? [];
 
   return (
     <form action={action}>
+      {state.savedAt && (
+        <Celebration key={state.savedAt} prs={prs} passed={state.passed ?? []} />
+      )}
       {Object.keys(lifts).length === 0 && (
         <div className="mt-3 rounded-sm border border-rule p-3 text-[13px] leading-relaxed text-chalk-dim">
           <p className="font-bold text-chalk">What to enter</p>
@@ -99,6 +103,7 @@ export function LiftsForm({
           bodyweightKg={bodyweightKg}
           row={rows[movement.id]}
           onChange={(row) => setRows((all) => ({ ...all, [movement.id]: row }))}
+          pr={prs.includes(movement.id)}
         />
       ))}
 
@@ -126,6 +131,76 @@ export function LiftsForm({
   );
 }
 
+/*
+  After a save: a toast dropping in at the top of the screen, where the
+  save scrolls you, for a new PR or for passing someone on the board.
+  Keyed by savedAt, so each save plays it once.
+*/
+function Celebration({ prs, passed }: { prs: Movement[]; passed: string[] }) {
+  const [shown, setShown] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setShown(false), 5000);
+    return () => clearTimeout(t);
+  }, []);
+  if (!shown || (prs.length === 0 && passed.length === 0)) return null;
+
+  const lifts = prs.map((m) => MOVEMENTS.find((x) => x.id === m)?.label.toLowerCase() ?? m);
+  const others = passed.length - 1;
+  return (
+    <div
+      role="status"
+      className="toast fixed inset-x-0 top-3 z-50 mx-auto w-[min(22rem,calc(100%-2rem))] rounded-sm border border-rule bg-iron-raised px-4 py-3 text-[14px] shadow-[0_12px_32px_rgba(0,0,0,0.55)]"
+    >
+      {lifts.length > 0 && (
+        <p className="flex items-center gap-2.5 font-bold">
+          <Stamp />
+          New {listOf(lifts)} {lifts.length === 1 ? "PR" : "PRs"}
+        </p>
+      )}
+      {passed.length > 0 && (
+        <p className={`flex items-center gap-2 ${lifts.length > 0 ? "mt-2" : ""}`}>
+          <span aria-hidden className="text-[var(--plate-10)]">
+            ▲
+          </span>
+          <span>
+            You passed <span className="font-bold">{passed[0]}</span>
+            {others > 0 && ` and ${others} other${others === 1 ? "" : "s"}`}
+          </span>
+        </p>
+      )}
+    </div>
+  );
+}
+
+function listOf(words: string[]) {
+  return words.length < 2 ? words.join("") : `${words.slice(0, -1).join(", ")} and ${words.at(-1)}`;
+}
+
+// Where the chalk flies when a PR stamp lands, in px from its centre.
+const DUST = [
+  [-16, -12],
+  [14, -14],
+  [18, 6],
+  [-18, 8],
+  [2, 16],
+  [-4, -18],
+];
+
+function Stamp() {
+  return (
+    <span aria-hidden className="relative inline-flex shrink-0">
+      <span className="pr-stamp">PR</span>
+      {DUST.map(([x, y], i) => (
+        <span
+          key={i}
+          className="dust"
+          style={{ "--x": `${x}px`, "--y": `${y}px` } as React.CSSProperties}
+        />
+      ))}
+    </span>
+  );
+}
+
 function LiftRow({
   movement,
   existing,
@@ -134,6 +209,7 @@ function LiftRow({
   bodyweightKg,
   row,
   onChange,
+  pr,
 }: {
   movement: (typeof MOVEMENTS)[number];
   existing: Lift | undefined;
@@ -142,6 +218,8 @@ function LiftRow({
   bodyweightKg: number;
   row: Row;
   onChange: (row: Row) => void;
+  /** Just saved, and better than any entry before it. */
+  pr: boolean;
 }) {
   const isPullups = movement.id === "pullups";
   const optional = !TOTAL_MOVEMENTS.includes(movement.id);
@@ -159,6 +237,12 @@ function LiftRow({
               <span className="rounded-sm border border-rule px-1 text-[10px] font-bold uppercase leading-[1.4] tracking-wide text-chalk-faint">
                 optional
               </span>
+            )}
+            {pr && (
+              <>
+                <Stamp />
+                <span className="sr-only">new personal record</span>
+              </>
             )}
           </span>
           <span className={`tnum block text-[11px] text-chalk-faint ${vanishing ? "vanish" : ""}`}>

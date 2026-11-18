@@ -80,25 +80,26 @@ export async function notifyCosigned(params: {
  *
  * A lowered score passes nobody, and nobody needs a notice that someone
  * fell below them.
+ *
+ * Returns who was passed, best first, so the saver can be told too.
  */
 export async function notifyPassed(params: {
   lifterId: string;
   collegeId: number;
   dotsBefore: number | null;
-}): Promise<void> {
+}): Promise<string[]> {
   const { lifterId, collegeId, dotsBefore } = params;
 
   const board = await getLeaderboard({ collegeId });
   const me = board.find((r) => r.id === lifterId);
-  if (!me) return;
+  if (!me) return [];
 
   const floor = dotsBefore ?? -Infinity;
-  if (me.dots <= floor) return;
+  if (me.dots <= floor) return [];
 
   const passed = board.filter(
     (r) => r.id !== lifterId && r.dots < me.dots && r.dots >= floor,
   );
-  if (passed.length === 0) return;
 
   // One insert per lifter passed rather than a VALUES list: the Neon HTTP
   // driver's tagged template can't spread an array into rows, and a save
@@ -110,4 +111,5 @@ export async function notifyPassed(params: {
       on conflict do nothing
     `;
   }
+  return passed.map((r) => r.displayName);
 }
