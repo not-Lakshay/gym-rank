@@ -7,7 +7,6 @@ import { WEIGHT_CLASSES } from "@/lib/scoring";
 import { Avatar } from "./avatar";
 import { Departure, Morph } from "./morph";
 import { Roll } from "./roll";
-import { ThemeSwitch } from "./prefs";
 
 /** Rank within a sub-board: one plus everyone strictly ahead (ties share). */
 export function rankWithin<T>(rows: T[], score: (r: T) => number) {
@@ -33,10 +32,15 @@ export function Stats({ rows }: { rows: BoardRow[] }) {
   // One witness for the whole total; partial co-signs don't count here.
   const cosigned = rows.filter((r) => r.cosign?.kind === "full").length;
   return (
-    <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-sm border border-rule bg-rule">
+    // A zero here reads as a failure, so the third cell waits for the first co-sign.
+    <dl
+      className={`grid gap-px overflow-hidden rounded-sm border border-rule bg-rule ${
+        cosigned > 0 ? "grid-cols-3" : "grid-cols-2"
+      }`}
+    >
       <Stat label="lifters" value={rows.length} />
       <Stat label="kg on the board" value={totalKg} />
-      <Stat label="fully co-signed" value={cosigned} />
+      {cosigned > 0 && <Stat label="fully co-signed" value={cosigned} />}
     </dl>
   );
 }
@@ -79,7 +83,7 @@ export function Board({
 
   return (
     <section style={plate ? ({ "--accent": plate } as React.CSSProperties) : undefined}>
-      <Heading text={heading} plate={plate} note="bar = score vs #1" />
+      <Heading text={heading} plate={plate} />
       <Ranked
         viewerId={viewerId}
         medals={medals}
@@ -161,7 +165,7 @@ function BoardSub({ row, showCollege }: { row: BoardRow; showCollege: boolean })
   );
 }
 
-function Heading({ text, plate, note }: { text: string; plate?: string; note: string }) {
+function Heading({ text, plate, note }: { text: string; plate?: string; note?: string }) {
   return (
     <h2 className="caption mb-2 flex items-center justify-between gap-2">
       {plate ? (
@@ -488,10 +492,9 @@ export const button =
 export const navButton =
   "press inline-flex min-h-11 w-fit items-center gap-1.5 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk";
 
-// Footer navigation as real buttons: on a phone a row of underlined words
-// reads as prose, and these are the only way off the page.
+// Quiet text links; min-h-11 keeps them a full-size tap target.
 export const footerLink =
-  "footer-link press inline-flex min-h-11 items-center rounded-sm border border-rule px-3.5 text-[14px] text-chalk-dim hover:border-chalk-faint hover:text-chalk";
+  "footer-link inline-flex min-h-11 items-center px-1 text-[13px] text-chalk-dim hover:text-chalk";
 
 /*
   What a page looks like while its data is on the way. The same wait reads
@@ -600,34 +603,27 @@ export function ProfileSkeleton() {
   );
 }
 
-export function Footer({ i = 6, home = true }: { i?: number; home?: boolean }) {
+// Boards and colleges are in the tab bar and the back link; the footer keeps
+// only what has nowhere else to live. The theme switch moved to /me.
+export function Footer({ i = 6 }: { i?: number }) {
   return (
     <footer
-      className="rise mt-14 border-t border-rule pt-5"
+      className="rise mt-14 border-t border-rule pt-3"
       style={{ "--i": i } as React.CSSProperties}
     >
-      <p className="flex flex-wrap gap-2">
-        {home && (
-          <Link href="/?all" className={footerLink}>
-            All colleges
-          </Link>
-        )}
-        <Link href="/global" className={footerLink}>
-          Global board
-        </Link>
+      <p className="flex flex-wrap items-center gap-x-1 text-chalk-faint">
         <Link href="/scoring" className={footerLink}>
           How scoring works
         </Link>
+        <span aria-hidden>·</span>
         <Link href="/privacy" className={footerLink}>
           Privacy
         </Link>
+        <span aria-hidden>·</span>
         <Link href="/terms" className={footerLink}>
           Terms
         </Link>
       </p>
-      <div className="mt-5">
-        <ThemeSwitch />
-      </div>
     </footer>
   );
 }

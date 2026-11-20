@@ -133,18 +133,15 @@ async function CollegeBoard({
   // own numbers shows what to enter and what the score means faster than
   // reading about it. Signed in, the page is unchanged.
   const newcomer = !session?.user;
+  // Below the board, not above it: the board is what they came for, and one
+  // primary button ("Add yours") at the top is enough.
   const tryIt = newcomer && (
-    <section className="rise card mb-6 p-4" style={{ "--i": 1 } as React.CSSProperties}>
-      <p className="text-[13px] leading-relaxed text-chalk-dim">
-        <span className="font-bold text-chalk">New here?</span> See where your
-        best squat, bench and deadlift would put you on this board. Nothing is
-        saved until you sign in.
-      </p>
-      <details className="mt-3">
+    <section className="rise mt-8" style={{ "--i": 3 } as React.CSSProperties}>
+      <details>
         <summary
-          className={`${button} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}
+          className={`${navButton} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}
         >
-          Where would I rank?
+          Where would I rank? <span aria-hidden>›</span>
         </summary>
         <Calculator
           boardDots={rows.map((r) => r.dots)}
@@ -159,8 +156,6 @@ async function CollegeBoard({
   return (
     <div>
       <Header college={college} accountLink={accountLink} legend={!newcomer} />
-
-      {tryIt}
 
       <div className="rise pt-1" style={{ "--i": 1 } as React.CSSProperties}>
         <BoardTabs base={`/c/${college.slug}`} active={tab} />
@@ -245,6 +240,8 @@ async function CollegeBoard({
           )}
         </div>
       )}
+
+      {tryIt}
     </div>
   );
 }
@@ -261,19 +258,20 @@ function Header({
 }) {
   return (
     <header className="rise pb-5" style={{ "--i": 0 } as React.CSSProperties}>
-      <Link href="/?all" className={navButton}>
+      {/* A plain link, not a box: the tab bar already does the navigating. */}
+      <Link
+        href="/?all"
+        className="-ml-1 inline-flex min-h-11 items-center gap-1 text-[14px] text-chalk-dim hover:text-chalk"
+      >
         <ChevronLeft />
         All colleges
       </Link>
-      <div className="mt-6 flex items-start justify-between gap-4">
+      <div className="mt-3 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-[2.25rem] font-extrabold leading-[0.9] tracking-[-0.04em]">
             {college.shortName}
           </h1>
-          <p className="tagline mt-2.5 text-[16px] font-bold leading-none tracking-[-0.02em]">
-            Your strength coefficient.
-          </p>
-          <p className="mt-2 text-[13px] leading-snug text-chalk-dim">
+          <p className="mt-2.5 text-[13px] leading-snug text-chalk-dim">
             {college.city} · every score adjusted for bodyweight
             <DotsHelp />
           </p>

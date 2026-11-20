@@ -53,6 +53,7 @@ import { Avatar } from "@/app/avatar";
 import { Roll } from "@/app/roll";
 import { TabBar } from "@/app/tab-bar";
 import { DotsHelp } from "@/app/help";
+import { ThemeSwitch } from "@/app/prefs";
 
 // `error` is set by Auth.js when a sign-in fails (pages.error in auth.ts).
 type SearchParams = Promise<{ college?: string; error?: string }>;
@@ -71,6 +72,9 @@ export default function MePage({ searchParams }: { searchParams: SearchParams })
         >
           <Dashboard searchParams={searchParams} />
         </Suspense>
+        <div className="mt-14 border-t border-rule pt-5">
+          <ThemeSwitch />
+        </div>
       </main>
       <TabBar active="you" />
     </>

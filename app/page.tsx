@@ -64,7 +64,7 @@ export default function Home({ searchParams }: { searchParams: SearchParams }) {
           <Landing searchParams={searchParams} />
         </Suspense>
 
-        <Footer home={false} />
+        <Footer />
       </main>
       <TabBar active="board" />
     </>
