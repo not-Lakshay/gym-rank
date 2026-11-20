@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { BoardRow, LiftRow } from "@/lib/leaderboard";
-import { MOVEMENTS, type Movement } from "@/lib/movements";
+import { MOVEMENTS, TOTAL_MOVEMENTS, type Movement } from "@/lib/movements";
 import { batchLabel, batchesFor } from "@/lib/batch";
 import { plateFor } from "@/lib/plates";
 import { WEIGHT_CLASSES } from "@/lib/scoring";
@@ -632,9 +632,14 @@ export function Footer({ i = 6 }: { i?: number }) {
    Per-lift boards: the tab strip and the board itself.
    ------------------------------------------------------------------------ */
 
+// Only the scored lifts get a tab, so the row fits a phone. OHP and pull-ups
+// stay on profiles and the form; old ?tab= links to them fall back to Overall.
 export const BOARD_TABS = [
   { id: "all", label: "Overall" },
-  ...MOVEMENTS.map((m) => ({ id: m.id, label: m.label })),
+  ...MOVEMENTS.filter((m) => TOTAL_MOVEMENTS.includes(m.id)).map((m) => ({
+    id: m.id,
+    label: m.label,
+  })),
 ] as const;
 
 export type BoardTab = (typeof BOARD_TABS)[number]["id"];
