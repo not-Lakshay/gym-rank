@@ -1,5 +1,5 @@
 /**
- * Weight class to its colour: indigo to ice, brighter for each heavier class
+ * Weight class to its colour: ice to indigo, darker for each heavier class
  * (--class-1 … --class-4 in globals.css), so the order reads at a glance,
  * colour-blind or not. These used to be the plate colours, whose order
  * only lifters who know the plate code could see. Plates keep theirs for
@@ -13,10 +13,10 @@
 const PLATE_BY_CLASS: Record<string, { cssVar: string; hex: string }> = {
   // The hex is the default (Iron) theme's: a share card can't know which
   // theme its viewer picked.
-  "Up to 65kg": { cssVar: "var(--class-1)", hex: "#8160eb" },
-  "65-75kg": { cssVar: "var(--class-2)", hex: "#62a4f7" },
-  "75-85kg": { cssVar: "var(--class-3)", hex: "#19e0f7" },
-  "85kg+": { cssVar: "var(--class-4)", hex: "#daf2e6" },
+  "Up to 65kg": { cssVar: "var(--class-1)", hex: "#cbf6ff" },
+  "65-75kg": { cssVar: "var(--class-2)", hex: "#19e0f7" },
+  "75-85kg": { cssVar: "var(--class-3)", hex: "#62a4f7" },
+  "85kg+": { cssVar: "var(--class-4)", hex: "#8160eb" },
 };
 
 export function plateFor(weightClass: string): string {

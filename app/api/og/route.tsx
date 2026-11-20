@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
-import { getRankFor, type RankCard } from "@/lib/leaderboard";
-import { getLifterById } from "@/lib/lifters";
+import type { RankCard } from "@/lib/leaderboard";
+import { lifterById, rankFor } from "@/lib/cached";
 import { plateHexFor } from "@/lib/plates";
 import { siteLabel } from "@/lib/site";
 import { ordinal } from "@/lib/format";
@@ -44,9 +44,9 @@ export async function GET(request: Request) {
   let fallbackName: string | null = null;
 
   if (id) {
-    card = await getRankFor(id).catch(() => null);
+    card = await rankFor(id).catch(() => null);
     if (!card) {
-      const lifter = await getLifterById(id).catch(() => null);
+      const lifter = await lifterById(id).catch(() => null);
       fallbackName = lifter?.displayName ?? null;
     }
   }

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { auth } from "@/auth";
-import { getCollegeOptions } from "@/lib/colleges";
+import { collegeOptions } from "@/lib/cached";
 import { getLifterByEmail } from "@/lib/lifters";
 import { Bone, Footer, button } from "./board";
 import { CollegePicker } from "./college-picker";
@@ -91,7 +91,7 @@ async function AccountLink() {
 async function Landing({ searchParams }: { searchParams: SearchParams }) {
   await connection();
   const [colleges, session, { all }] = await Promise.all([
-    getCollegeOptions(),
+    collegeOptions(),
     auth(),
     searchParams,
   ]);

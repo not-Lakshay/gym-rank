@@ -14,7 +14,8 @@ import {
   validateLift,
 } from "@/lib/validate";
 import { saveTryout } from "@/lib/tryout";
-import { field } from "./forms";
+import { estimatedLift } from "@/lib/standards";
+import { field, hintSummary } from "./forms";
 
 type Set = { kg: string; reps: string };
 const empty: Set = { kg: "", reps: "" };
@@ -95,6 +96,15 @@ export function Calculator({
   const rank = ahead + 1;
   const of = boardDots.length + 1;
 
+  // A likely one-rep max for an empty row: scaled from the lifts already
+  // filled in, or a beginner's at this bodyweight if none are.
+  function beginner(m: (typeof lifts)[number]): number | null {
+    if (sets[m].kg !== "" || sets[m].reps !== "") return null;
+    if (bw.trim() === "" || validateBodyweight(bodyweight) !== null)
+      return null;
+    return estimatedLift(m, bodyweight, oneRm)?.kg ?? null;
+  }
+
   function update(m: keyof typeof sets, key: keyof Set, value: string) {
     setSets((s) => ({ ...s, [m]: { ...s[m], [key]: value } }));
   }
@@ -140,6 +150,23 @@ export function Calculator({
                 <span className="tnum text-[11px] text-chalk-faint">
                   est. 1RM {oneRm[id].toFixed(1)} kg
                 </span>
+              )}
+              {/* Quiet on purpose: only while the row is empty and bodyweight
+                  is known, so someone who knows their lift never sees it. */}
+              {beginner(id) !== null && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSets((s) => ({
+                      ...s,
+                      [id]: { kg: String(beginner(id)), reps: "1" },
+                    }))
+                  }
+                  className={`${hintSummary} tnum mt-0.5 block text-left`}
+                >
+                  Never done it? Use{" "}
+                  <span className="whitespace-nowrap">{beginner(id)} kg</span>
+                </button>
               )}
             </span>
             <input

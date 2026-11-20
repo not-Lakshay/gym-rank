@@ -18,7 +18,8 @@ import {
 } from "@/app/actions";
 import { MOVEMENTS, TOTAL_MOVEMENTS, type Movement } from "@/lib/movements";
 import type { Lift } from "@/lib/lifters";
-import { STANDARD_BODYWEIGHTS, noviceOneRepMax } from "@/lib/standards";
+import { STANDARD_BODYWEIGHTS, estimatedLift, noviceOneRepMax } from "@/lib/standards";
+import { estimatedOneRepMax } from "@/lib/scoring";
 import { siteLabel } from "@/lib/site";
 import { clearTryout, parseTryout, readTryout } from "@/lib/tryout";
 import { AVATAR_SETS, avatarSrc } from "@/lib/avatars";
@@ -84,6 +85,13 @@ export function LiftsForm({
   // What's been typed since, over the starting numbers.
   const [edits, setEdits] = useState<Record<string, Row>>({});
   const rows = { ...start, ...edits };
+  // Each scored row's 1RM as typed (or saved), for the "Never done" estimates.
+  const known = Object.fromEntries(
+    TOTAL_MOVEMENTS.map((m) => [
+      m,
+      estimatedOneRepMax(Number(rows[m].kg), Number(rows[m].reps)) || 0,
+    ]),
+  ) as Partial<Record<Movement, number>>;
   const dirty = MOVEMENTS.some(
     (m) => rows[m.id].kg !== stored[m.id].kg || rows[m.id].reps !== stored[m.id].reps,
   );
@@ -134,6 +142,7 @@ export function LiftsForm({
           standing={standings[movement.id] ?? null}
           boardHref={`${boardHref}?tab=${movement.id}`}
           bodyweightKg={bodyweightKg}
+          known={known}
           row={rows[movement.id]}
           onChange={(row) => setEdits((all) => ({ ...all, [movement.id]: row }))}
           pr={prs.includes(movement.id)}
@@ -142,7 +151,7 @@ export function LiftsForm({
 
       <p className="mt-3 text-[12px] leading-relaxed text-chalk-faint">
         Your DOTS score only needs squat, bench and deadlift. Overhead press
-        and pull-ups are optional — they just put you on those lift boards.
+        and pull-ups are optional — they show on your profile.
       </p>
 
       {state.error && (
@@ -240,6 +249,7 @@ function LiftRow({
   standing,
   boardHref,
   bodyweightKg,
+  known,
   row,
   onChange,
   pr,
@@ -249,6 +259,7 @@ function LiftRow({
   standing: { rank: number; of: number } | null;
   boardHref: string;
   bodyweightKg: number;
+  known: Partial<Record<Movement, number>>;
   row: Row;
   onChange: (row: Row) => void;
   /** Just saved, and better than any entry before it. */
@@ -353,6 +364,7 @@ function LiftRow({
         <NeverDone
           movement={movement}
           bodyweightKg={bodyweightKg}
+          known={known}
           onUse={(kg) => onChange({ kg: String(kg), reps: "1" })}
         />
       )}
@@ -486,51 +498,70 @@ function TrashIcon() {
 }
 
 /*
-  For someone who has never done this lift: what a beginner of each
-  bodyweight typically lifts, with theirs picked out, and a button that
-  puts it in the row as a single. Only shown until the lift is entered.
+  For someone who has never done this lift: a likely one-rep max and a
+  button that puts it in the row as a single. Scaled from their other lifts
+  when they've entered any; otherwise what a beginner of each bodyweight
+  typically lifts, with theirs picked out. Only shown until it's entered.
 */
 function NeverDone({
   movement,
   bodyweightKg,
+  known,
   onUse,
 }: {
   movement: (typeof MOVEMENTS)[number];
   bodyweightKg: number;
+  /** 1RMs from the other rows, typed or saved. */
+  known: Partial<Record<Movement, number>>;
   onUse: (kg: number) => void;
 }) {
-  const mine = noviceOneRepMax(movement.id, bodyweightKg);
-  if (mine === null) return null;
+  const estimate = estimatedLift(movement.id, bodyweightKg, known);
+  if (estimate === null) return null;
+  const mine = estimate.kg;
   const name = movement.label.toLowerCase();
+  const fromNames = estimate.from
+    .map((m) => MOVEMENTS.find((x) => x.id === m)!.label.toLowerCase())
+    .join(" and ");
 
   return (
     <details className="group mt-2">
       <summary className={hintSummary}>Never done a {name}?</summary>
       <div className="mt-2 rounded-sm border border-rule p-3">
-        <p className="text-[12px] leading-relaxed text-chalk-dim">
-          Typical one-rep max for a beginner, by bodyweight. Use yours to get
-          a score now, and replace it once you&rsquo;ve done the lift.
-        </p>
-        <table className="tnum mt-2 w-full text-[12px]">
-          <thead>
-            <tr className="text-left text-chalk-faint">
-              <th className="py-1 font-medium">Bodyweight</th>
-              <th className="py-1 text-right font-medium">Typical {name}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {STANDARD_BODYWEIGHTS.map((bw) => (
-              <tr key={bw} className="border-t border-rule text-chalk-dim">
-                <td className="py-1">{bw} kg</td>
-                <td className="py-1 text-right">{noviceOneRepMax(movement.id, bw)} kg</td>
-              </tr>
-            ))}
-            <tr className="border-t border-rule font-bold text-chalk">
-              <td className="py-1">You · {bodyweightKg} kg</td>
-              <td className="py-1 text-right">{mine} kg</td>
-            </tr>
-          </tbody>
-        </table>
+        {estimate.from.length > 0 ? (
+          <p className="text-[12px] leading-relaxed text-chalk-dim">
+            From your {fromNames}, you&rsquo;d likely manage about{" "}
+            <span className="tnum font-bold text-chalk">{mine} kg</span> for one.
+            Use it to get a score now, and replace it once you&rsquo;ve done the
+            lift.
+          </p>
+        ) : (
+          <>
+            <p className="text-[12px] leading-relaxed text-chalk-dim">
+              Typical one-rep max for a beginner, by bodyweight. Use yours to get
+              a score now, and replace it once you&rsquo;ve done the lift.
+            </p>
+            <table className="tnum mt-2 w-full text-[12px]">
+              <thead>
+                <tr className="text-left text-chalk-faint">
+                  <th className="py-1 font-medium">Bodyweight</th>
+                  <th className="py-1 text-right font-medium">Typical {name}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {STANDARD_BODYWEIGHTS.map((bw) => (
+                  <tr key={bw} className="border-t border-rule text-chalk-dim">
+                    <td className="py-1">{bw} kg</td>
+                    <td className="py-1 text-right">{noviceOneRepMax(movement.id, bw)} kg</td>
+                  </tr>
+                ))}
+                <tr className="border-t border-rule font-bold text-chalk">
+                  <td className="py-1">You · {bodyweightKg} kg</td>
+                  <td className="py-1 text-right">{mine} kg</td>
+                </tr>
+              </tbody>
+            </table>
+          </>
+        )}
         <button
           type="button"
           onClick={(e) => {
@@ -547,7 +578,7 @@ function NeverDone({
 }
 
 // A small question under a lift row that opens an answer (NeverDone, ShoulderPress).
-const hintSummary =
+export const hintSummary =
   "w-fit cursor-pointer list-none text-[12px] text-chalk-dim underline-offset-4 hover:text-chalk hover:underline [&::-webkit-details-marker]:hidden";
 
 /*

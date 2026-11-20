@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getRankFor } from "@/lib/leaderboard";
+import { rankFor } from "@/lib/cached";
 import type { Lifter } from "@/lib/lifters";
 
 /*
@@ -16,7 +16,7 @@ import type { Lifter } from "@/lib/lifters";
   generic card.
 */
 export async function lifterMetadata(lifter: Lifter | null): Promise<Metadata> {
-  const card = lifter ? await getRankFor(lifter.id).catch(() => null) : null;
+  const card = lifter ? await rankFor(lifter.id).catch(() => null) : null;
   const image = {
     url: `/api/og?id=${lifter?.id ?? ""}`,
     width: 1200,

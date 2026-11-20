@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { auth } from "@/auth";
-import { getLeaderboard, getLiftBoards } from "@/lib/leaderboard";
+import { leaderboard, liftBoardsFor } from "@/lib/cached";
 import { getLifterByEmail } from "@/lib/lifters";
 import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
@@ -70,8 +70,8 @@ async function GlobalBoard({ searchParams }: { searchParams: SearchParams }) {
   const { tab: rawTab } = await searchParams;
   const tab = tabFrom(rawTab);
   const [rows, liftBoards, session] = await Promise.all([
-    getLeaderboard({ global: true }),
-    getLiftBoards({ global: true }),
+    leaderboard({ global: true }),
+    liftBoardsFor({ global: true }),
     auth(),
   ]);
   const viewer = session?.user?.email

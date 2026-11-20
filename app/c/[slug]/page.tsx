@@ -4,8 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { auth } from "@/auth";
-import { getCollegeBySlug, type College } from "@/lib/colleges";
-import { getLeaderboard, getLiftBoards } from "@/lib/leaderboard";
+import type { College } from "@/lib/colleges";
+import { collegeBySlug, leaderboard, liftBoardsFor } from "@/lib/cached";
 import { getLifterByEmail } from "@/lib/lifters";
 import { plateFor } from "@/lib/plates";
 import { WEIGHT_CLASSES, weightClassFor } from "@/lib/scoring";
@@ -31,6 +31,7 @@ import { Calculator } from "@/app/calculator";
 import { SignInForm } from "@/app/sign-in";
 import { TabBar } from "@/app/tab-bar";
 import { DotsHelp } from "@/app/help";
+import { Welcome } from "@/app/welcome";
 
 type Params = Promise<{ slug: string }>;
 type SearchParams = Promise<{ tab?: string }>;
@@ -41,7 +42,7 @@ export async function generateMetadata({
   params: Params;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const college = await getCollegeBySlug(slug).catch(() => null);
+  const college = await collegeBySlug(slug).catch(() => null);
   if (!college) return { title: "Gym Rank" };
   const title = `${college.shortName} — Gym Rank`;
   const description = `The ${college.shortName} gym leaderboard, every score adjusted for bodyweight.`;
@@ -99,14 +100,14 @@ async function CollegeBoard({
   await connection();
   const [{ slug }, { tab: rawTab }] = await Promise.all([params, searchParams]);
   const tab = tabFrom(rawTab);
-  const college = await getCollegeBySlug(slug).catch(() => null);
+  const college = await collegeBySlug(slug).catch(() => null);
   if (!college) notFound();
 
   // Both boards in parallel: the overall one feeds the stats strip and the
   // calculator's projected rank whichever tab is showing.
   const [rows, liftBoards, session] = await Promise.all([
-    getLeaderboard({ collegeId: college.id }),
-    getLiftBoards({ collegeId: college.id }),
+    leaderboard({ collegeId: college.id }),
+    liftBoardsFor({ collegeId: college.id }),
     auth(),
   ]);
 
@@ -156,6 +157,8 @@ async function CollegeBoard({
   return (
     <div>
       <Header college={college} accountLink={accountLink} legend={!newcomer} />
+
+      {newcomer && <Welcome />}
 
       <div className="rise pt-1" style={{ "--i": 1 } as React.CSSProperties}>
         <BoardTabs base={`/c/${college.slug}`} active={tab} />

@@ -20,11 +20,9 @@ import {
   MOVEMENTS,
   TOTAL_MOVEMENTS,
   getLifterByEmail,
-  getLifterByUsername,
-  getLiftsFor,
   summarise,
 } from "@/lib/lifters";
-import { getRankFor } from "@/lib/leaderboard";
+import { lifterByUsername, liftsFor, rankFor } from "@/lib/cached";
 import { batchLabel } from "@/lib/batch";
 import { cosignStatus, cosignText } from "@/lib/cosign";
 import { plateFor } from "@/lib/plates";
@@ -46,7 +44,7 @@ export async function generateMetadata({
   params: Params;
 }): Promise<Metadata> {
   const { username } = await params;
-  const lifter = await getLifterByUsername(username).catch(() => null);
+  const lifter = await lifterByUsername(username).catch(() => null);
   return lifterMetadata(lifter);
 }
 
@@ -96,15 +94,15 @@ async function Profile({ params }: { params: Params }) {
   // then everything about them at once. Each wait is a trip to a database
   // a region away, and this page is opened by tapping a name.
   const [lifter, session] = await Promise.all([
-    getLifterByUsername(username).catch(() => null),
+    lifterByUsername(username).catch(() => null),
     auth(),
   ]);
   if (!lifter) notFound();
 
   const [lifts, card, viewer] = await Promise.all([
-    getLiftsFor(lifter.id),
+    liftsFor(lifter.id),
     // No college, no board, no rank — and passing the id saves a lookup.
-    lifter.college ? getRankFor(lifter.id, lifter.college.id).catch(() => null) : null,
+    lifter.college ? rankFor(lifter.id, lifter.college.id).catch(() => null) : null,
     session?.user?.email ? getLifterByEmail(session.user.email) : null,
   ]);
 

@@ -1,6 +1,7 @@
 "use server";
 
-import { refresh } from "next/cache";
+import { refresh, updateTag } from "next/cache";
+import { DATA_TAG } from "@/lib/cached";
 import { auth, signIn, signOut } from "@/auth";
 import { avatarFrom } from "@/lib/avatars";
 import { BATCH_COLLEGE, batchOptions } from "@/lib/batch";
@@ -186,6 +187,7 @@ export async function saveProfileAction(
     );
   }
 
+  updateTag(DATA_TAG);
   refresh();
   return ok();
 }
@@ -237,6 +239,7 @@ export async function saveLiftsAction(
     passed = await notifyPassed({ lifterId: lifter.id, collegeId, dotsBefore: before });
   });
 
+  updateTag(DATA_TAG);
   refresh();
   return { ...ok(), prs: recordsBroken(changes, bests), passed };
 }
@@ -266,6 +269,7 @@ export async function removeLiftAction(
   }
   await recordEvent(`lift_removed:${movement.id}`, lifter.id);
 
+  updateTag(DATA_TAG);
   refresh();
   return ok();
 }
@@ -310,6 +314,7 @@ export async function cosignLiftAction(
     }),
   );
 
+  updateTag(DATA_TAG);
   refresh();
   return ok();
 }
@@ -333,6 +338,7 @@ export async function deleteMyAccountAction(
   const done = await deleteLifter(lifter.id);
   if (!done) return fail("Couldn't delete the account. Email the address on the privacy page.");
 
+  updateTag(DATA_TAG);
   await signOut({ redirectTo: "/" });
   return ok();
 }

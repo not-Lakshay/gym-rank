@@ -7,7 +7,7 @@
   Commonly cited figures, not a measured study — good enough to stand in
   for a lift you have not done, and easy to beat once you do it.
 */
-import type { Movement } from "./movements";
+import { MOVEMENTS, type Movement } from "./movements.ts";
 
 // shortcut: male ratios only, matching the male-only DOTS in lib/scoring.ts;
 // add female ratios when the app scores women.
@@ -25,4 +25,32 @@ export function noviceOneRepMax(movement: Movement, bodyweightKg: number): numbe
   const multiple = NOVICE_MULTIPLE[movement];
   if (multiple === undefined) return null;
   return Math.round((bodyweightKg * multiple) / 2.5) * 2.5;
+}
+
+/**
+ * A stand-in 1RM for a lift not done yet. Scaled from the lifter's other
+ * squat/bench/deadlift 1RMs when there are any (a 150 kg squatter is no
+ * beginner at deadlift), using the same ratios as the table; bodyweight
+ * alone otherwise. `from` names the lifts it was scaled from, empty when
+ * it's the bodyweight figure.
+ */
+export function estimatedLift(
+  movement: Movement,
+  bodyweightKg: number,
+  known: Partial<Record<Movement, number>>,
+): { kg: number; from: Movement[] } | null {
+  const target = NOVICE_MULTIPLE[movement];
+  if (target === undefined) return null;
+  const from = (Object.keys(NOVICE_MULTIPLE) as Movement[]).filter(
+    (m) => m !== movement && (known[m] ?? 0) > 0,
+  );
+  if (from.length === 0) {
+    return { kg: noviceOneRepMax(movement, bodyweightKg)!, from };
+  }
+  const raw =
+    from.reduce((sum, m) => sum + (known[m]! * target) / NOVICE_MULTIPLE[m]!, 0) /
+    from.length;
+  // Never past the plausibility cap, whatever was typed into the other rows.
+  const cap = MOVEMENTS.find((m) => m.id === movement)?.maxKg ?? Infinity;
+  return { kg: Math.min(Math.round(raw / 2.5) * 2.5, cap), from };
 }

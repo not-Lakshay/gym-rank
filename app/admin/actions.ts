@@ -1,6 +1,7 @@
 "use server";
 
-import { refresh } from "next/cache";
+import { refresh, updateTag } from "next/cache";
+import { DATA_TAG } from "@/lib/cached";
 import type { ActionState } from "@/app/actions";
 import { currentAdmin } from "@/lib/admin";
 import { addCollege } from "@/lib/colleges";
@@ -29,6 +30,7 @@ export async function deleteLifterAction(
   const done = await deleteLifter(id);
   if (!done) return fail("No such lifter.");
   await recordEvent("admin:lifter_deleted", null);
+  updateTag(DATA_TAG);
   refresh();
   return ok();
 }
@@ -43,6 +45,7 @@ export async function deleteLiftAction(
   const done = await adminDeleteLift(id);
   if (!done) return fail("No such lift.");
   await recordEvent("admin:lift_deleted", null);
+  updateTag(DATA_TAG);
   refresh();
   return ok();
 }
@@ -57,6 +60,7 @@ export async function clearCosignAction(
   const done = await adminClearCosign(id);
   if (!done) return fail("No such lift.");
   await recordEvent("admin:cosign_cleared", null);
+  updateTag(DATA_TAG);
   refresh();
   return ok();
 }
@@ -96,6 +100,7 @@ export async function addCollegeAction(
     throw err;
   }
   await recordEvent("admin:college_added", null);
+  updateTag(DATA_TAG);
   refresh();
   return ok();
 }

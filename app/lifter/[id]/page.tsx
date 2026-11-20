@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { connection } from "next/server";
 import { lifterMetadata } from "@/app/lifter-metadata";
-import { getLifterById } from "@/lib/lifters";
+import { lifterById } from "@/lib/cached";
 import { isUuid } from "@/lib/validate";
 
 // The redirect happens after the shell streams, so link previewers that
@@ -14,7 +14,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const lifter = isUuid(id) ? await getLifterById(id).catch(() => null) : null;
+  const lifter = isUuid(id) ? await lifterById(id).catch(() => null) : null;
   return lifterMetadata(lifter);
 }
 
@@ -47,7 +47,7 @@ async function Redirector({
 }): Promise<React.ReactNode> {
   await connection();
   const { id } = await params;
-  const lifter = isUuid(id) ? await getLifterById(id).catch(() => null) : null;
+  const lifter = isUuid(id) ? await lifterById(id).catch(() => null) : null;
   if (!lifter) notFound();
   permanentRedirect(`/u/${lifter.username}`);
 }

@@ -34,15 +34,15 @@
   --plate-20: #5c93d6;
   --plate-25: #da4e58;
 
-  /* Weight classes, lightest first: indigo, blue, cyan, ice. Brightness
-     rises with each heavier class, so the order reads at a glance and
-     survives colour blindness; the hue walks too, so neighbours are easy to
-     tell apart (OKLab ΔE >= 15, colour-blind >= 9). The dimmest still
-     clears 4.5:1 on iron. */
-  --class-1: #8160eb;
-  --class-2: #62a4f7;
-  --class-3: #19e0f7;
-  --class-4: #daf2e6;
+  /* Weight classes, lightest first: ice, cyan, blue, indigo. Darker for
+     each heavier class, because dark reads as heavy, so the order needs no
+     legend and survives colour blindness; the hue walks too, so neighbours
+     are easy to tell apart (OKLab ΔE >= 14). The darkest still clears 4.5:1
+     on iron. */
+  --class-1: #cbf6ff;
+  --class-2: #19e0f7;
+  --class-3: #62a4f7;
+  --class-4: #8160eb;
 
   /* Status, kept apart from every data colour: green and red no longer
      double as weight classes. Softened to sit with the matte iron. */
@@ -82,12 +82,12 @@
   --plate-20: #3d9cff;
   --plate-25: #ff3d5e;
 
-  /* The same ramp, its first step pulled toward blue so it stays clear of
-     the violet buttons. Cool colours only, one family with the cyan. */
-  --class-1: #6266fe;
-  --class-2: #3ba8ff;
-  --class-3: #19e0f7;
-  --class-4: #daf2e6;
+  /* The same ramp, its darkest step pulled toward blue so it stays clear
+     of the violet buttons. Cool colours only, one family with the cyan. */
+  --class-1: #cbf6ff;
+  --class-2: #19e0f7;
+  --class-3: #3ba8ff;
+  --class-4: #6266fe;
 
   --success: #3ddc97;
   --danger: #ff5c7a;
