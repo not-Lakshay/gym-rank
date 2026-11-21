@@ -118,14 +118,15 @@ export function Board({
   );
 }
 
-/* The line under a name on the overall board: the handle, then how the
-   lifts are vouched for (and the college, on the global board). */
+/* The line under a name on the overall board: the handle (and the college,
+   on cross-college boards). How the lifts are vouched for is the trust
+   badge beside the name, so it isn't spelled out here too. */
 function BoardSub({ row, showCollege }: { row: BoardRow; showCollege: boolean }) {
   return (
     <>
       {/* The handle is what tells two Rohans apart. */}
       <span className="truncate text-chalk-faint">@{row.username}</span>
-      {showCollege ? (
+      {showCollege && (
         <>
           <span aria-hidden className="text-chalk-faint">·</span>
           <Link
@@ -134,36 +135,7 @@ function BoardSub({ row, showCollege }: { row: BoardRow; showCollege: boolean })
           >
             {row.collegeShort}
           </Link>
-          {/* Everyone here is co-signed; say how, without names so the
-              line stays short. */}
-          {row.cosign && (
-            <>
-              <span aria-hidden className="text-chalk-faint">·</span>
-              <span className={row.cosign.kind === "full" ? "" : "opacity-50"}>
-                <Check />
-              </span>
-              <span className="truncate">
-                {row.cosign.kind === "full" ? "fully" : "partially"} co-signed
-              </span>
-            </>
-          )}
         </>
-      ) : (
-        row.verifiedCount > 0 && (
-          <>
-            <span aria-hidden className="text-chalk-faint">·</span>
-            {/* A dimmed tick for partial: every lift is vouched for, but
-                by different people. */}
-            <span className={row.cosign?.kind === "full" ? "" : "opacity-50"}>
-              <Check />
-            </span>
-            <span className="truncate">
-              {row.cosign
-                ? `${row.cosign.kind === "full" ? "fully" : "partially"} co-signed by ${row.cosign.names.join(", ")}`
-                : `${row.verifiedCount} of 3 co-signed`}
-            </span>
-          </>
-        )
       )}
     </>
   );
