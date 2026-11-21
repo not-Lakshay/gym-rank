@@ -124,26 +124,18 @@ export function Board({
   );
 }
 
-/* The line under a name on the overall board: the handle (and the college,
-   on cross-college boards). How the lifts are vouched for is the trust
-   badge beside the name, so it isn't spelled out here too. */
+/* The line under a name on the overall board: just the college, on
+   cross-college boards. The handle is one tap away on the profile, and
+   the trust badge beside the name says how the lifts are vouched for. */
 function BoardSub({ row, showCollege }: { row: BoardRow; showCollege: boolean }) {
+  if (!showCollege) return null;
   return (
-    <>
-      {/* The handle is what tells two Rohans apart. */}
-      <span className="truncate text-chalk-faint">@{row.username}</span>
-      {showCollege && (
-        <>
-          <span aria-hidden className="text-chalk-faint">·</span>
-          <Link
-            href={`/c/${row.collegeSlug}`}
-            className="truncate underline-offset-4 hover:underline"
-          >
-            {row.collegeShort}
-          </Link>
-        </>
-      )}
-    </>
+    <Link
+      href={`/c/${row.collegeSlug}`}
+      className="truncate underline-offset-4 hover:underline"
+    >
+      {row.collegeShort}
+    </Link>
   );
 }
 
@@ -813,21 +805,19 @@ export function LiftBoard({
           tag: null,
           sub: (
             <>
-              <span className="truncate text-chalk-faint">@{row.username}</span>
               {showCollege && (
-                <>
-                  <span aria-hidden className="text-chalk-faint">·</span>
-                  <Link
-                    href={`/c/${row.collegeSlug}`}
-                    className="truncate underline-offset-4 hover:underline"
-                  >
-                    {row.collegeShort}
-                  </Link>
-                </>
+                <Link
+                  href={`/c/${row.collegeSlug}`}
+                  className="truncate underline-offset-4 hover:underline"
+                >
+                  {row.collegeShort}
+                </Link>
+              )}
+              {showCollege && row.verified && (
+                <span aria-hidden className="text-chalk-faint">·</span>
               )}
               {row.verified && (
                 <>
-                  <span aria-hidden className="text-chalk-faint">·</span>
                   <Check />
                   <span>co-signed</span>
                 </>
