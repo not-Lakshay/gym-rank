@@ -52,7 +52,7 @@ export function Welcome() {
   return (
     <aside
       aria-label="Welcome"
-      className="welcome mb-5 flex items-start gap-2 rounded-sm border border-rule bg-iron-raised py-3 pl-4 pr-1 text-[13px] leading-relaxed text-chalk-dim"
+      className="welcome mb-5 flex items-start gap-2 rounded-sm border border-rule bg-iron-raised py-3 pl-4 pr-1 text-[14px] leading-relaxed text-chalk-dim"
     >
       <p className="pt-0.5">
         <span className="font-bold text-chalk">Your college&rsquo;s gym leaderboard.</span>{" "}
@@ -64,9 +64,9 @@ export function Welcome() {
         type="button"
         onClick={close}
         aria-label="Dismiss"
-        className="press -my-1 inline-flex size-11 shrink-0 items-center justify-center rounded-sm text-[18px] text-chalk-faint hover:text-chalk"
+        className="press -my-1 inline-flex size-11 shrink-0 items-center justify-center rounded-sm text-chalk-faint hover:text-chalk"
       >
-        ✕
+        <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
       </button>
     </aside>
   );

@@ -623,6 +623,14 @@ export function Footer({ i = 6 }: { i?: number }) {
         <Link href="/terms" className={footerLink}>
           Terms
         </Link>
+        <span aria-hidden>·</span>
+        <a
+          href="mailto:getgymrank@gmail.com?subject=Bug%20report"
+          title="getgymrank@gmail.com"
+          className={footerLink}
+        >
+          Report a bug
+        </a>
       </p>
     </footer>
   );

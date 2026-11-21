@@ -30,10 +30,10 @@ export default function Home({ searchParams }: { searchParams: SearchParams }) {
               <h1 className="text-[clamp(1.5rem,8.2vw,2.5rem)] font-extrabold leading-[0.88] tracking-[-0.045em]">
                 Gym Rank
               </h1>
-              <p className="tagline mt-1.5 text-[clamp(1.3rem,6.9vw,2.1rem)] font-extrabold italic leading-none tracking-[-0.045em]">
-                Your strength coefficient.
+              <p className="tagline mt-1.5 text-[clamp(1.3rem,6.9vw,2.1rem)] font-extrabold leading-none tracking-[-0.045em]">
+                Your strength coefficient
               </p>
-              <p className="mt-2 text-[13px] leading-snug text-chalk-dim">
+              <p className="mt-2 text-[14px] leading-snug text-chalk-dim">
                 College gym leaderboards, every score adjusted for bodyweight.
               </p>
             </div>
@@ -115,21 +115,21 @@ async function Landing({ searchParams }: { searchParams: SearchParams }) {
       {viewer?.college && (
         <Link
           href={`/c/${viewer.college.slug}`}
-          className="rise mb-6 flex items-center justify-between rounded-sm border border-rule bg-iron-raised px-4 py-3 text-[13px] text-chalk-dim transition-colors hover:border-chalk-faint hover:text-chalk"
+          className="rise mb-6 flex items-center justify-between rounded-sm border border-rule bg-iron-raised px-4 py-3 text-[14px] text-chalk-dim transition-colors hover:border-chalk-faint hover:text-chalk"
           style={{ "--i": 1 } as React.CSSProperties}
         >
           <span>
             Your board:{" "}
             <span className="font-bold text-chalk">{viewer.college.shortName}</span>
           </span>
-          <span aria-hidden>›</span>
+          <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
         </Link>
       )}
 
       <section className="rise" style={{ "--i": 1 } as React.CSSProperties}>
         <h2 className="flex items-center justify-between caption">
           Your college
-          <span className="tnum text-[11px] font-normal text-chalk-faint">
+          <span className="tnum text-[12px] font-normal text-chalk-faint">
             {withBoards} with boards · {colleges.length} listed
           </span>
         </h2>
