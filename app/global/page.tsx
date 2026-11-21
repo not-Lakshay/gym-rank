@@ -16,6 +16,7 @@ import {
   tabFrom,
 } from "@/app/board";
 import { TabBar } from "@/app/tab-bar";
+import { TrustHelp } from "@/app/help";
 
 export const metadata = {
   title: "Global board — Gym Rank",
@@ -124,7 +125,9 @@ async function GlobalBoard({ searchParams }: { searchParams: SearchParams }) {
           viewerId={viewer?.id ?? null}
           medals
           showCollege
+          badgeHelp
         />
+        <TrustHelp />
       </div>
 
       <ClassBoards

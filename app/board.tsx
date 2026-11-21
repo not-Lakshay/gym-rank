@@ -67,6 +67,7 @@ export function Board({
   medals = false,
   showCollege = false,
   showBatch = false,
+  badgeHelp = false,
 }: {
   heading: string;
   plate?: string;
@@ -78,6 +79,11 @@ export function Board({
   showCollege?: boolean;
   /** LNMIIT's overall board: a "Y24" tag beside each name. */
   showBatch?: boolean;
+  /**
+   * A "What the badges mean" button in the heading. Opens #trust-help, so
+   * the page must render <TrustHelp /> (app/help.tsx) once.
+   */
+  badgeHelp?: boolean;
 }) {
   // Rows arrive sorted by DOTS descending, so the first is the yardstick
   // every bar is measured against.
@@ -85,7 +91,7 @@ export function Board({
 
   return (
     <section style={plate ? ({ "--accent": plate } as React.CSSProperties) : undefined}>
-      <Heading text={heading} plate={plate} />
+      <Heading text={heading} plate={plate} note={badgeHelp ? <BadgeHelpButton /> : undefined} />
       <Ranked
         viewerId={viewerId}
         medals={medals}
@@ -141,7 +147,15 @@ function BoardSub({ row, showCollege }: { row: BoardRow; showCollege: boolean })
   );
 }
 
-function Heading({ text, plate, note }: { text: string; plate?: string; note?: string }) {
+function Heading({
+  text,
+  plate,
+  note,
+}: {
+  text: string;
+  plate?: string;
+  note?: React.ReactNode;
+}) {
   return (
     <h2 className="caption mb-2 flex items-center justify-between gap-2">
       {plate ? (
@@ -476,6 +490,20 @@ export function TrustBadge({
       </span>
       {mostTrusted && <MostTrustedTag />}
     </>
+  );
+}
+
+/** Opens the badge guide (#trust-help); see Board's badgeHelp. */
+function BadgeHelpButton() {
+  return (
+    <button
+      type="button"
+      popoverTarget="trust-help"
+      className="press inline-flex min-h-8 items-center gap-1.5 rounded-full border border-rule px-2.5 text-[12px] text-chalk-dim hover:border-chalk-faint hover:text-chalk"
+    >
+      <TrustBadge tier="verified" size={13} named />
+      What the badges mean
+    </button>
   );
 }
 

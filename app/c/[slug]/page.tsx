@@ -30,7 +30,7 @@ import {
 import { Calculator } from "@/app/calculator";
 import { SignInForm } from "@/app/sign-in";
 import { TabBar } from "@/app/tab-bar";
-import { DotsHelp } from "@/app/help";
+import { DotsHelp, TrustHelp } from "@/app/help";
 import { Welcome } from "@/app/welcome";
 
 type Params = Promise<{ slug: string }>;
@@ -202,7 +202,9 @@ async function CollegeBoard({
               viewerId={viewer?.id ?? null}
               medals
               showBatch={college.slug === BATCH_COLLEGE}
+              badgeHelp
             />
+            <TrustHelp />
           </div>
 
           {/* A newcomer sees the ranking first; the numbers can wait. */}

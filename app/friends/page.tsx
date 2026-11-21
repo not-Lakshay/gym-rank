@@ -22,6 +22,7 @@ import {
 } from "@/app/board";
 import { SignInForm } from "@/app/sign-in";
 import { TabBar } from "@/app/tab-bar";
+import { TrustHelp } from "@/app/help";
 
 export const metadata = { title: "Friends board — Gym Rank", robots: { index: false } };
 
@@ -186,7 +187,9 @@ async function FriendsBoard({ searchParams }: { searchParams: SearchParams }) {
           viewerId={viewer.id}
           medals
           showCollege
+          badgeHelp
         />
+        <TrustHelp />
       </div>
       <ClassBoards
         rows={rows}
