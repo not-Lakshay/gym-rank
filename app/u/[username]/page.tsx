@@ -29,7 +29,7 @@ import {
 } from "@/lib/lifters";
 import { lifterByUsername, liftsFor, mostTrusted, rankFor } from "@/lib/cached";
 import { batchLabel } from "@/lib/batch";
-import { TRUST_LABEL, cosignStatus, cosignText, trustTier } from "@/lib/cosign";
+import { TRUST_LABEL, trustTier } from "@/lib/cosign";
 import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
 import { Avatar } from "@/app/avatar";
@@ -134,7 +134,6 @@ async function Profile({ params }: { params: Params }) {
     const lift = byMovement.get(m);
     return lift && !lift.disputed ? lift.cosigners : [];
   });
-  const cosign = cosignStatus(perLift);
   const tier = trustTier(perLift);
   const vouchers = new Set(perLift.flat().map((w) => w.id)).size;
   const isMostTrusted = holders.some((h) => h.lifterId === lifter.id);
@@ -266,14 +265,6 @@ async function Profile({ params }: { params: Params }) {
           {lifts.length === 0 && (
             <p className="pt-4 text-[13px] text-chalk-faint">Nothing entered yet.</p>
           )}
-          {cosign && (
-            <p className="flex items-center gap-1.5 pt-3 text-[13px] text-chalk-dim">
-              <span className={cosign.kind === "full" ? "" : "opacity-50"}>
-                <Check />
-              </span>
-              {cosignText(cosign)}
-            </p>
-          )}
           {MOVEMENTS.map((movement, i) => {
             const lift = byMovement.get(movement.id);
             if (!lift) return null;
@@ -296,16 +287,11 @@ async function Profile({ params }: { params: Params }) {
                   )}
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {/* A count, not names: the lifter sees who on their own page. */}
                   {lift.cosigners.length > 0 && (
-                    <span className="flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-[color-mix(in_oklab,var(--success)_50%,transparent)] bg-[color-mix(in_oklab,var(--success)_14%,transparent)] px-2.5 py-1 text-[12px] text-chalk">
+                    <span className="tnum flex shrink-0 items-center gap-1.5 rounded-full border border-[color-mix(in_oklab,var(--success)_50%,transparent)] bg-[color-mix(in_oklab,var(--success)_14%,transparent)] px-2.5 py-1 text-[12px] font-bold text-chalk">
                       <Check />
-                      <span className="tnum shrink-0 font-bold">
-                        {lift.cosigners.length} co-sign{lift.cosigners.length === 1 ? "" : "s"}
-                      </span>
-                      <span className="text-chalk-dim">·</span>
-                      <span className="truncate font-medium">
-                        {lift.cosigners.map((c) => c.name).join(", ")}
-                      </span>
+                      {lift.cosigners.length} co-sign{lift.cosigners.length === 1 ? "" : "s"}
                     </span>
                   )}
                   {/* A count only: who doubted stays private. */}

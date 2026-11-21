@@ -1056,7 +1056,12 @@ export function CosignButton({ liftId }: { liftId: string }) {
   return (
     <form action={action} className="shrink-0 text-right">
       <input type="hidden" name="liftId" value={liftId} />
-      <button type="submit" disabled={pending} className={secondary}>
+      {/* A pill, the same size as the counts beside it, so a lift's row stays one tidy line. */}
+      <button
+        type="submit"
+        disabled={pending}
+        className="press inline-flex min-h-8 items-center gap-1.5 rounded-full border border-[color-mix(in_oklab,var(--success)_50%,transparent)] px-3 text-[12px] font-bold text-chalk hover:bg-[color-mix(in_oklab,var(--success)_14%,transparent)] disabled:opacity-50"
+      >
         {pending ? "…" : "I saw this"}
       </button>
       {state.error && (
@@ -1164,17 +1169,11 @@ export function DoubtButton({ liftId, doubted }: { liftId: string; doubted: bool
       {doubted && <input type="hidden" name="undo" value="1" />}
 
       {doubted ? (
-        <span className={`inline-flex items-center gap-2 rounded-full border py-1 pl-3 pr-1 text-[12px] text-chalk ${tint}`}>
+        // The doubt count beside it already includes yours; this just takes it back.
+        <button type="submit" disabled={pending} className={`${pill} text-chalk ${tint}`}>
           <Flag />
-          You doubted this
-          <button
-            type="submit"
-            disabled={pending}
-            className="press rounded-full px-2 py-0.5 text-chalk-dim underline-offset-4 hover:text-chalk hover:underline disabled:opacity-50"
-          >
-            {pending ? "…" : "Undo"}
-          </button>
-        </span>
+          {pending ? "…" : "Undo doubt"}
+        </button>
       ) : armed ? (
         <div role="group" aria-label="Doubt this lift?" className={`rounded-sm border p-3 ${tint}`}>
           <p className="flex items-center gap-2 text-[13px] font-bold text-chalk">

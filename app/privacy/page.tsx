@@ -77,9 +77,10 @@ export default function PrivacyPage() {
           class band it falls into is displayed.
         </p>
         <p className={muted}>
-          <strong className="font-medium text-chalk">Co-signs are public.</strong>{" "}
-          Each lift shows who co-signed it, by name — so if you co-sign
-          someone&rsquo;s lift, your name appears on their page.
+          <strong className="font-medium text-chalk">Co-signs are counted publicly.</strong>{" "}
+          A lift shows how many people co-signed it, not who. If you co-sign
+          someone&rsquo;s lift, they see your name on their own You page and
+          in their notifications.
         </p>
         <p className={muted}>
           <strong className="font-medium text-chalk">Doubts are counted, not named.</strong>{" "}
