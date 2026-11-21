@@ -972,45 +972,95 @@ export function DoubtButton({ liftId, doubted }: { liftId: string; doubted: bool
   const [state, action, pending] = useActionState(doubtLiftAction, initial);
   const [armed, setArmed] = useState(false);
 
-  // Two taps, like account deletion: the first explains, the second sends.
+  const tint =
+    "border-[color-mix(in_oklab,var(--danger)_45%,transparent)] bg-[color-mix(in_oklab,var(--danger)_12%,transparent)]";
+  const pill =
+    "press inline-flex min-h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] disabled:opacity-50";
+
+  // Two steps, like account deletion: the first explains, the second sends.
   // Taking a doubt back needs no warning.
   return (
     <form
       action={action}
-      onSubmit={(e) => {
-        if (!doubted && !armed) {
-          e.preventDefault();
-          setArmed(true);
-          setTimeout(() => setArmed(false), 10000);
-        } else {
-          setArmed(false);
-        }
-      }}
-      className={armed ? "basis-full" : "shrink-0"}
+      onSubmit={() => setArmed(false)}
+      className={armed ? "basis-full" : "ml-auto shrink-0"}
     >
       <input type="hidden" name="liftId" value={liftId} />
       {doubted && <input type="hidden" name="undo" value="1" />}
-      {armed && (
-        <p className="pt-1 text-[12px] leading-relaxed text-chalk-dim">
-          Only doubt a lift you&rsquo;re fairly sure isn&rsquo;t real, not just one
-          you didn&rsquo;t see. Tap again to confirm.
-        </p>
+
+      {doubted ? (
+        <span className={`inline-flex items-center gap-2 rounded-full border py-1 pl-3 pr-1 text-[12px] text-chalk ${tint}`}>
+          <Flag />
+          You doubted this
+          <button
+            type="submit"
+            disabled={pending}
+            className="press rounded-full px-2 py-0.5 text-chalk-dim underline-offset-4 hover:text-chalk hover:underline disabled:opacity-50"
+          >
+            {pending ? "…" : "Undo"}
+          </button>
+        </span>
+      ) : armed ? (
+        <div role="group" aria-label="Doubt this lift?" className={`rounded-sm border p-3 ${tint}`}>
+          <p className="flex items-center gap-2 text-[13px] font-bold text-chalk">
+            <Flag />
+            Doubt this lift?
+          </p>
+          <p className="mt-1 text-[12px] leading-relaxed text-chalk-dim">
+            Only if you&rsquo;re fairly sure it isn&rsquo;t real, not just one you
+            didn&rsquo;t see.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <button
+              type="submit"
+              disabled={pending}
+              className="press inline-flex min-h-9 items-center rounded-sm bg-[var(--danger)] px-4 text-[13px] font-bold text-white hover:opacity-85 disabled:opacity-60"
+            >
+              {pending ? "…" : "Yes, doubt it"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setArmed(false)}
+              className="press inline-flex min-h-9 items-center rounded-sm border border-rule px-4 text-[13px] text-chalk-dim hover:border-chalk-dim hover:text-chalk"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setArmed(true)}
+          className={`${pill} border-rule text-chalk-faint hover:border-[var(--danger)] hover:text-[var(--danger)]`}
+        >
+          <Flag />
+          Doubt
+        </button>
       )}
-      <button
-        type="submit"
-        disabled={pending}
-        className={`press min-h-11 px-2 text-[12px] underline-offset-4 hover:underline disabled:opacity-50 ${
-          armed ? "text-[var(--danger)]" : "text-chalk-faint hover:text-chalk"
-        }`}
-      >
-        {pending ? "…" : doubted ? "Doubted · undo" : armed ? "Yes, doubt it" : "Doubt this"}
-      </button>
+
       {state.error && (
         <p role="alert" className="mt-1 text-[11px] text-[var(--danger)]">
           {state.error}
         </p>
       )}
     </form>
+  );
+}
+
+function Flag() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 16 16"
+      className="h-3 w-3 shrink-0 text-[var(--danger)]"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3.5 14V2.5M3.5 3h8l-1.8 3 1.8 3h-8" />
+    </svg>
   );
 }
 
