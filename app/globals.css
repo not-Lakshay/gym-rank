@@ -705,3 +705,31 @@ input[type="number"] {
 :root[data-welcome="off"] .welcome {
   display: none;
 }
+
+/* The bell on /me: with unread notifications the bell rings now and then and
+   its badge pops in. Pure CSS, keyed off the badge being there. */
+.bell-wrap:has(.bell-badge) {
+  color: var(--chalk);
+}
+.bell-wrap:has(.bell-badge) svg {
+  transform-origin: 50% 10%;
+  animation: bell-ring 3.2s ease-in-out 600ms infinite;
+}
+.bell-badge {
+  box-shadow: 0 0 calc(10px * var(--glow)) var(--accent);
+  animation: pop-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1.4) both;
+}
+@keyframes bell-ring {
+  0%, 18%, 100% { transform: rotate(0); }
+  3% { transform: rotate(14deg); }
+  6% { transform: rotate(-12deg); }
+  9% { transform: rotate(8deg); }
+  12% { transform: rotate(-6deg); }
+  15% { transform: rotate(3deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bell-wrap:has(.bell-badge) svg,
+  .bell-badge {
+    animation: none;
+  }
+}

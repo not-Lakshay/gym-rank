@@ -160,7 +160,7 @@ a witness.
 
 ### Notifications are rows, not emails
 
-`/me` shows what happened while you were away: who co-signed a set, who
+The bell on `/me` opens `/notifications`, which shows what happened while you were away: who co-signed a set, who
 passed your score. "Passed" isn't stored anywhere as a rank — the board
 computes ranks on every read — so it's detected at save time by comparing
 DOTS before and after: anyone on the same board whose score sits in
@@ -213,7 +213,8 @@ app/
   global/page.tsx           every college, co-signed lifters only
   u/[username]/page.tsx     a lifter's public page; co-signing happens here
   lifter/[id]/page.tsx      old lifter URL, redirects to /u/<username>
-  me/page.tsx               profile, lift entry, notifications
+  me/page.tsx               profile, lift entry
+  notifications/page.tsx    opened from the bell on /me: co-signs, doubts, passed-you
   admin/page.tsx            delete lifters/lifts, clear co-signs (ADMIN_EMAILS only)
   board.tsx                 the board component, stats strip, shared chrome
   college-picker.tsx        college search (landing links / profile field)

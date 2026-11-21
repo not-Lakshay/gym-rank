@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { after, connection } from "next/server";
+import { connection } from "next/server";
 import { auth } from "@/auth";
 import { DeleteAccountButton, Drawer, LiftsForm, ProfileForm, primary } from "@/app/forms";
 import { SignInForm, SignOutForm } from "@/app/sign-in";
@@ -37,12 +37,8 @@ import {
   type RankCard,
 } from "@/lib/leaderboard";
 import type { Movement } from "@/lib/movements";
-import {
-  getNotificationsFor,
-  markNotificationsSeen,
-  type Notification,
-} from "@/lib/notifications";
-import { ordinal, timeAgo } from "@/lib/format";
+import { ordinal } from "@/lib/format";
+import { unseenCountFor } from "@/lib/notifications";
 import { batchLabel } from "@/lib/batch";
 import { cosignStatus, cosignText } from "@/lib/cosign";
 import { plateFor } from "@/lib/plates";
@@ -153,20 +149,16 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
   // Everything the dashboard shows, in one round trip. The database is a
   // region away and each sequential stage is ~80 ms of nothing, so the
   // whole page is two stages: who you are, then everything about you.
-  const [lifts, card, globalCard, notifications, liftBoards] = await Promise.all([
+  // The notifications themselves live on /notifications; here just the
+  // unread count for the bell.
+  const [lifts, card, globalCard, liftBoards, unseen] = await Promise.all([
     getLiftsFor(lifter.id),
     getRankFor(lifter.id, lifter.college.id).catch(() => null),
     getGlobalRankFor(lifter.id).catch(() => null),
-    getNotificationsFor(lifter.id).catch(() => [] as Notification[]),
     getLiftBoards({ collegeId: lifter.college.id }).catch(() => null),
+    unseenCountFor(email).catch(() => 0),
   ]);
   const standings = liftBoards ? standingsFor(liftBoards, lifter.id) : {};
-
-  // Rendered once as "new", then they're just history. The write happens
-  // after the response is sent, so it never slows the page.
-  if (notifications.some((n) => !n.seen)) {
-    after(() => markNotificationsSeen(lifter.id).catch(() => {}));
-  }
 
   return (
     <LifterView
@@ -175,8 +167,8 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
       lifts={lifts}
       card={card}
       globalCard={globalCard}
-      notifications={notifications}
       standings={standings}
+      unseen={unseen ?? 0}
       editForm={
         // Collapsed by default and needs the 159-college list, so it
         // streams in behind the dashboard instead of holding it up.
@@ -259,8 +251,8 @@ function LifterView({
   lifts,
   card,
   globalCard,
-  notifications,
   standings,
+  unseen,
   editForm,
 }: {
   lifter: Lifter;
@@ -268,8 +260,8 @@ function LifterView({
   lifts: Lift[];
   card: RankCard | null;
   globalCard: RankCard | null;
-  notifications: Notification[];
   standings: Partial<Record<Movement, { rank: number; of: number }>>;
+  unseen: number;
   editForm: React.ReactNode;
 }) {
   const summary = summarise(lifts, lifter.bodyweightKg);
@@ -283,14 +275,40 @@ function LifterView({
   );
   const weightClass = weightClassFor(lifter.bodyweightKg);
   const plate = plateFor(weightClass);
-  const unseen = notifications.filter((n) => !n.seen).length;
 
   return (
     <div>
-      <Link href={`/c/${college.slug}`} className={navButton}>
-        <ChevronLeft />
-        {college.shortName} board
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link href={`/c/${college.slug}`} className={navButton}>
+          <ChevronLeft />
+          {college.shortName} board
+        </Link>
+        <Link
+          href="/notifications"
+          aria-label={unseen > 0 ? `Notifications, ${unseen} new` : "Notifications"}
+          className={`${navButton} bell-wrap relative px-3`}
+        >
+          <svg
+            aria-hidden
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 2.5v1.2" />
+            <path d="M5.5 17.5h13c-1.2-1.3-1.9-2.9-1.9-5.2v-1.6a4.6 4.6 0 0 0-9.2 0v1.6c0 2.3-.7 3.9-1.9 5.2z" />
+            <path d="M9.8 20.2a2.4 2.4 0 0 0 4.4 0" />
+          </svg>
+          {unseen > 0 && (
+            <span className="bell-badge tnum absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[11px] font-extrabold leading-none text-iron ring-2 ring-iron">
+              {unseen > 9 ? "9+" : unseen}
+            </span>
+          )}
+        </Link>
+      </div>
 
       <div className="pt-8">
       {/* The one loud thing on the page — this is what gets screenshotted. */}
@@ -480,48 +498,6 @@ function LifterView({
         </section>
       )}
 
-      {/* Always here, even empty: the bell links to it. */}
-      <section
-        id="notifications"
-        className="rise scroll-mt-6 pt-10"
-        style={{ "--i": 1 } as React.CSSProperties}
-      >
-          <h2 className="flex items-center justify-between border-b border-rule pb-2 caption">
-            Notifications
-            {unseen > 0 && (
-              <span className="rounded-sm bg-chalk px-1.5 text-[10px] font-bold uppercase text-iron">
-                {unseen} new
-              </span>
-            )}
-          </h2>
-          <ol className="scroll-list max-h-[14rem]">
-            {notifications.map((n) => (
-              <li
-                key={n.id}
-                className="flex items-center gap-3 border-b border-rule py-2.5 text-[13px]"
-              >
-                <span
-                  aria-hidden
-                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                    n.seen ? "bg-rule" : "bg-chalk"
-                  }`}
-                />
-                <span className={`min-w-0 flex-1 ${n.seen ? "text-chalk-dim" : ""}`}>
-                  <NoticeText notice={n} />
-                </span>
-                <span className="tnum shrink-0 text-[11px] text-chalk-faint">
-                  {timeAgo(n.createdAt)}
-                </span>
-              </li>
-            ))}
-          </ol>
-          {notifications.length === 0 && (
-            <p className="py-3 text-[13px] text-chalk-dim">
-              Nothing yet. You&apos;ll see co-signs, doubts and anyone who passes your score here.
-            </p>
-          )}
-        </section>
-
       {/* Folded away once there's something in it, so the page reads at a glance. */}
       <Drawer
         summary="Your lifts"
@@ -605,42 +581,6 @@ function Step({
       </div>
     </li>
   );
-}
-
-function NoticeText({ notice }: { notice: Notification }) {
-  const who = notice.actorUsername ? (
-    <Link
-      href={`/u/${notice.actorUsername}`}
-      className="font-bold text-chalk underline-offset-4 hover:underline"
-    >
-      {notice.actorName ?? "Someone"}
-      <span className="font-normal text-chalk-dim"> @{notice.actorUsername}</span>
-    </Link>
-  ) : (
-    <span className="font-bold text-chalk">Someone</span>
-  );
-
-  if (notice.kind === "cosign") {
-    const label =
-      MOVEMENTS.find((m) => m.id === notice.movement)?.label.toLowerCase() ??
-      "a lift";
-    return (
-      <>
-        <Check /> {who} co-signed your {label}
-      </>
-    );
-  }
-  if (notice.kind === "doubt") {
-    const label =
-      MOVEMENTS.find((m) => m.id === notice.movement)?.label.toLowerCase() ??
-      "a lift";
-    return (
-      <>
-        A gym-mate questioned your {label}. Keep more co-signs than doubts on it.
-      </>
-    );
-  }
-  return <>{who} passed you on the board</>;
 }
 
 const quietButton =
