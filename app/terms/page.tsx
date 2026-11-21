@@ -1,3 +1,4 @@
+import { Footer } from "@/app/board";
 import Link from "next/link";
 import { TabBar } from "@/app/tab-bar";
 
@@ -60,6 +61,7 @@ export default function TermsPage() {
       </Section>
 
       <p className="text-xs text-chalk-faint">Last updated 15 November 2026.</p>
+      <Footer />
     </main>
     <TabBar />
     </>

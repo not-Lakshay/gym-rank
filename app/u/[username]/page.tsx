@@ -12,6 +12,7 @@ import {
   LifterHeaderSkeleton,
   LiftsSkeleton,
   navButton,
+  Footer,
 } from "@/app/board";
 import { CosignButton, DoubtButton, FriendButton } from "@/app/forms";
 import { relationshipWith } from "@/lib/friends";
@@ -81,6 +82,7 @@ export default function LifterPage({ params }: { params: Params }) {
         >
           <Profile params={params} />
         </Suspense>
+        <Footer />
       </main>
       <TabBar />
     </>

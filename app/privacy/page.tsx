@@ -1,3 +1,4 @@
+import { Footer } from "@/app/board";
 import { TabBar } from "@/app/tab-bar";
 
 export const metadata = {
@@ -104,6 +105,7 @@ export default function PrivacyPage() {
       </Section>
 
       <p className="text-xs text-chalk-faint">Last updated 18 November 2026.</p>
+      <Footer />
     </main>
     <TabBar />
     </>

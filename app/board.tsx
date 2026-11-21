@@ -7,6 +7,7 @@ import { WEIGHT_CLASSES } from "@/lib/scoring";
 import { Avatar } from "./avatar";
 import { Departure, Morph } from "./morph";
 import { Roll } from "./roll";
+import { ReportProblem } from "./report";
 
 /** Rank within a sub-board: one plus everyone strictly ahead (ties share). */
 export function rankWithin<T>(rows: T[], score: (r: T) => number) {
@@ -627,13 +628,7 @@ export function Footer({ i = 6 }: { i?: number }) {
           Terms
         </Link>
         <span aria-hidden>·</span>
-        <a
-          href="mailto:getgymrank@gmail.com?subject=Bug%20report"
-          title="getgymrank@gmail.com"
-          className={footerLink}
-        >
-          Report a bug
-        </a>
+        <ReportProblem className={footerLink} />
       </p>
     </footer>
   );

@@ -1,3 +1,4 @@
+import { Footer } from "@/app/board";
 import { TabBar } from "@/app/tab-bar";
 
 export const metadata = {
@@ -110,6 +111,7 @@ export default function ScoringPage() {
           strength scales slower than mass.
         </p>
       </Section>
+      <Footer />
     </main>
     <TabBar />
     </>

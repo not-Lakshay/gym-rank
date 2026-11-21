@@ -12,6 +12,7 @@ import {
   ChevronRight,
   ProfileSkeleton,
   navButton,
+  Footer,
 } from "@/app/board";
 import {
   collegeForEmail,
@@ -71,6 +72,7 @@ export default function MePage({ searchParams }: { searchParams: SearchParams })
         <div className="mt-14 border-t border-rule pt-5">
           <ThemeSwitch />
         </div>
+        <Footer />
       </main>
       <TabBar active="you" />
     </>
