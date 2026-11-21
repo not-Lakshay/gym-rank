@@ -4,7 +4,9 @@ import Google from "next-auth/providers/google";
 // Reads AUTH_SECRET, AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET from the
 // environment automatically — no need to pass them here.
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  providers: [Google],
+  // Always show Google's account chooser: signing out here leaves you signed
+  // in to Google, which otherwise signs you straight back into the same account.
+  providers: [Google({ authorization: { params: { prompt: "select_account" } } })],
   // The built-in error page says "Server error" for any failed callback.
   // The usual one is harmless: a phone or in-app browser loading Google's
   // one-time return link twice, after the first load already signed them
