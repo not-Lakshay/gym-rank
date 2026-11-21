@@ -1024,3 +1024,33 @@ export function DeleteAccountButton() {
     </form>
   );
 }
+
+/**
+ * A <details> that starts open or closed and is then the visitor's to
+ * toggle. The open state is frozen at first render, so a save that
+ * refreshes the page (and changes what decided it) never snaps it shut.
+ */
+export function Drawer({
+  summary,
+  defaultOpen = false,
+  className,
+  style,
+  children,
+}: {
+  summary: React.ReactNode;
+  defaultOpen?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+  children: React.ReactNode;
+}) {
+  const [open] = useState(defaultOpen);
+  return (
+    <details open={open} className={`drawer ${className ?? ""}`} style={style}>
+      <summary className="press flex min-h-11 cursor-pointer list-none items-center justify-between rounded-sm border border-rule px-4 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk [&::-webkit-details-marker]:hidden">
+        {summary}
+        <span aria-hidden className="text-chalk-faint">+</span>
+      </summary>
+      {children}
+    </details>
+  );
+}

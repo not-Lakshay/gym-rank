@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { after, connection } from "next/server";
 import { auth } from "@/auth";
-import { DeleteAccountButton, LiftsForm, ProfileForm, primary } from "@/app/forms";
+import { DeleteAccountButton, Drawer, LiftsForm, ProfileForm, primary } from "@/app/forms";
 import { SignInForm, SignOutForm } from "@/app/sign-in";
 import { CollegeField } from "@/app/college-picker";
 import {
@@ -420,13 +420,9 @@ function LifterView({
       </section>
 
       {/* Up here, by the name and avatar it changes, not under everything. */}
-      <details className="rise pt-6" style={{ "--i": 1 } as React.CSSProperties}>
-        <summary className="press flex min-h-11 cursor-pointer list-none items-center justify-between rounded-sm border border-rule px-4 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk [&::-webkit-details-marker]:hidden">
-          Edit profile
-          <span aria-hidden className="text-chalk-faint">+</span>
-        </summary>
+      <Drawer summary="Edit profile" className="rise pt-6" style={{ "--i": 1 } as React.CSSProperties}>
         <div className="pt-5">{editForm}</div>
-      </details>
+      </Drawer>
 
       {/*
         After the first save: what to do next, until all three lifts are
@@ -509,10 +505,13 @@ function LifterView({
         </section>
       )}
 
-      <section className="rise pt-10" style={{ "--i": 2 } as React.CSSProperties}>
-        <h2 className="border-b border-rule pb-2 caption">
-          Your lifts
-        </h2>
+      {/* Folded away once there's something in it, so the page reads at a glance. */}
+      <Drawer
+        summary="Your lifts"
+        defaultOpen={lifts.length === 0}
+        className="rise pt-10"
+        style={{ "--i": 2 } as React.CSSProperties}
+      >
         {cosign && (
           <p className="flex items-center gap-1.5 pt-3 text-[13px] text-chalk-dim">
             <span className={cosign.kind === "full" ? "" : "opacity-50"}>
@@ -528,7 +527,7 @@ function LifterView({
           boardHref={`/c/${college.slug}`}
           bodyweightKg={lifter.bodyweightKg}
         />
-      </section>
+      </Drawer>
 
       <section className="rise pt-10" style={{ "--i": 3 } as React.CSSProperties}>
         <h2 className="border-b border-rule pb-2 caption">
