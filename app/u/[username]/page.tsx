@@ -13,12 +13,13 @@ import {
   LiftsSkeleton,
   navButton,
 } from "@/app/board";
-import { CosignButton } from "@/app/forms";
+import { CosignButton, DoubtButton } from "@/app/forms";
 import { lifterMetadata } from "@/app/lifter-metadata";
 import { SignInForm } from "@/app/sign-in";
 import {
   MOVEMENTS,
   TOTAL_MOVEMENTS,
+  doubtedBy,
   getLifterByEmail,
   summarise,
 } from "@/lib/lifters";
@@ -111,6 +112,8 @@ async function Profile({ params }: { params: Params }) {
   const sameCollege =
     viewer?.college != null && viewer.college.id === lifter.college?.id;
   const canCosign = viewer !== null && !isOwner && sameCollege;
+  // Private to the viewer: the page never learns who else doubted.
+  const myDoubts = canCosign ? await doubtedBy(viewer.id, lifter.id) : new Set<string>();
 
   const summary = summarise(lifts, lifter.bodyweightKg);
   const byMovement = new Map(lifts.map((l) => [l.movement, l]));
@@ -259,7 +262,7 @@ async function Profile({ params }: { params: Params }) {
                       </span>
                     </span>
                   )}
-                  {canAdd ? (
+                  {canAdd && !myDoubts.has(lift.id) ? (
                     <CosignButton liftId={lift.id} />
                   ) : lift.cosigners.length === 0 ? (
                     // Tap to learn what it means and how to fix it.
@@ -271,6 +274,9 @@ async function Profile({ params }: { params: Params }) {
                       unverified <span aria-hidden>?</span>
                     </button>
                   ) : null}
+                  {canAdd && (
+                    <DoubtButton liftId={lift.id} doubted={myDoubts.has(lift.id)} />
+                  )}
                 </div>
               </div>
             );

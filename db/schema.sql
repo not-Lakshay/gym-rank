@@ -87,6 +87,19 @@ create table if not exists lift_cosigns (
 
 create index if not exists lift_cosigns_witness_idx on lift_cosigns (witness_id);
 
+-- The opposite of a co-sign: a same-college lifter who doubts the number.
+-- Never shown publicly; only the admin queue reads it. A co-sign on the
+-- lift or a re-save clears its rows. `doubts_dismissed_at` is set when an
+-- admin reviews the lift and blocks new doubts until it is re-saved.
+create table if not exists lift_doubts (
+  lift_id    uuid not null references lifts(id) on delete cascade,
+  doubter_id uuid not null references lifters(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (lift_id, doubter_id)
+);
+
+alter table lifts add column if not exists doubts_dismissed_at timestamptz;
+
 -- The old single-witness column. Its co-signs were copied into
 -- lift_cosigns on 2026-11-17, and nothing reads or writes it now.
 alter table lifts drop column if exists verified_by;
@@ -131,11 +144,16 @@ create table if not exists notifications (
   id         bigserial primary key,
   lifter_id  uuid not null references lifters(id) on delete cascade,
   actor_id   uuid references lifters(id) on delete cascade,
-  kind       text not null check (kind in ('cosign', 'passed')),
+  kind       text not null check (kind in ('cosign', 'passed', 'doubt')),
   movement   text,
   created_at timestamptz not null default now(),
   seen_at    timestamptz
 );
+
+-- 'doubt' was added later; the inline check above only applies to a fresh table.
+alter table notifications drop constraint if exists notifications_kind_check;
+alter table notifications add constraint notifications_kind_check
+  check (kind in ('cosign', 'passed', 'doubt'));
 
 create index if not exists notifications_lifter_created_idx
   on notifications (lifter_id, created_at desc);

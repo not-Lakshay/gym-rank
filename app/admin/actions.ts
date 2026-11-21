@@ -8,6 +8,7 @@ import { addCollege } from "@/lib/colleges";
 import {
   adminClearCosign,
   adminDeleteLift,
+  adminDismissDoubts,
   deleteLifter,
   recordEvent,
 } from "@/lib/lifters";
@@ -61,6 +62,20 @@ export async function clearCosignAction(
   if (!done) return fail("No such lift.");
   await recordEvent("admin:cosign_cleared", null);
   updateTag(DATA_TAG);
+  refresh();
+  return ok();
+}
+
+export async function dismissDoubtsAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const admin = await currentAdmin();
+  if (!admin) return fail("Not allowed.");
+  const id = String(formData.get("liftId") ?? "");
+  const done = await adminDismissDoubts(id);
+  if (!done) return fail("No such lift.");
+  await recordEvent("admin:doubts_dismissed", null);
   refresh();
   return ok();
 }

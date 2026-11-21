@@ -12,6 +12,7 @@ import {
   checkUsernameAction,
   cosignLiftAction,
   deleteMyAccountAction,
+  doubtLiftAction,
   removeLiftAction,
   saveLiftsAction,
   saveProfileAction,
@@ -956,6 +957,30 @@ export function CosignButton({ liftId }: { liftId: string }) {
       <input type="hidden" name="liftId" value={liftId} />
       <button type="submit" disabled={pending} className={secondary}>
         {pending ? "…" : "I saw this"}
+      </button>
+      {state.error && (
+        <p role="alert" className="mt-1 text-[11px] text-[var(--danger)]">
+          {state.error}
+        </p>
+      )}
+    </form>
+  );
+}
+
+/** Quiet on purpose: a doubt goes to the admin, not the board. */
+export function DoubtButton({ liftId, doubted }: { liftId: string; doubted: boolean }) {
+  const [state, action, pending] = useActionState(doubtLiftAction, initial);
+
+  return (
+    <form action={action} className="shrink-0">
+      <input type="hidden" name="liftId" value={liftId} />
+      {doubted && <input type="hidden" name="undo" value="1" />}
+      <button
+        type="submit"
+        disabled={pending}
+        className="press min-h-11 px-2 text-[12px] text-chalk-faint underline-offset-4 hover:text-chalk hover:underline disabled:opacity-50"
+      >
+        {pending ? "…" : doubted ? "Doubted · undo" : "Doubt this"}
       </button>
       {state.error && (
         <p role="alert" className="mt-1 text-[11px] text-[var(--danger)]">

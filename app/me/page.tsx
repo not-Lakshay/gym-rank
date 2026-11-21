@@ -613,6 +613,16 @@ function NoticeText({ notice }: { notice: Notification }) {
       </>
     );
   }
+  if (notice.kind === "doubt") {
+    const label =
+      MOVEMENTS.find((m) => m.id === notice.movement)?.label.toLowerCase() ??
+      "a lift";
+    return (
+      <>
+        A gym-mate questioned your {label}. Get it co-signed to clear it.
+      </>
+    );
+  }
   return <>{who} passed you on the board</>;
 }
 

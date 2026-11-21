@@ -7,6 +7,7 @@ import { currentAdmin } from "@/lib/admin";
 import { timeAgo } from "@/lib/format";
 import {
   MOVEMENTS,
+  adminDoubtedLifts,
   adminListLifters,
   adminStats,
   getLifterById,
@@ -17,6 +18,7 @@ import {
   ClearCosignButton,
   DeleteLiftButton,
   DeleteLifterButton,
+  DismissDoubtsButton,
 } from "./forms";
 
 export const metadata = { title: "Admin — Gym Rank", robots: { index: false } };
@@ -43,10 +45,11 @@ async function Admin({ searchParams }: { searchParams: SearchParams }) {
   const admin = await currentAdmin();
   if (!admin) notFound();
 
-  const [{ lifter: focusId }, stats, lifters] = await Promise.all([
+  const [{ lifter: focusId }, stats, lifters, doubted] = await Promise.all([
     searchParams,
     adminStats(),
     adminListLifters(),
+    adminDoubtedLifts(),
   ]);
   const focus = focusId ? await getLifterById(focusId).catch(() => null) : null;
   const focusLifts = focus ? await getLiftsFor(focus.id) : [];
@@ -73,6 +76,40 @@ async function Admin({ searchParams }: { searchParams: SearchParams }) {
         <Stat label="sign-ups, 7d" value={stats.signupsLast7} />
         <Stat label="lifts saved, 7d" value={stats.liftsSavedLast7} />
       </dl>
+
+      {doubted.length > 0 && (
+        <section className="mt-10">
+          <h2 className="border-b border-rule pb-2 caption">
+            Doubted lifts · {doubted.length}
+          </h2>
+          {doubted.map((d) => (
+            <div key={d.id} className="flex items-center gap-3 border-b border-rule py-3">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[14px] font-medium">
+                  <Link href={`/u/${d.username}`} className="underline-offset-4 hover:underline">
+                    {d.displayName}
+                  </Link>
+                  {" · "}
+                  {MOVEMENTS.find((m) => m.id === d.movement)?.label}
+                </p>
+                <p className="tnum text-[11px] text-chalk-faint">
+                  {d.movement === "pullups"
+                    ? `${d.reps} reps`
+                    : `${d.weightKg} kg × ${d.reps} · est. 1RM ${d.est1rmKg?.toFixed(1)} kg · ${((d.est1rmKg ?? 0) / d.bodyweightKg).toFixed(2)}× bw`}
+                  {` · at ${d.bodyweightKg} kg`}
+                </p>
+                <p className="text-[11px] text-chalk-faint">
+                  <span className="text-[var(--danger)]">{d.doubters.length} doubt</span>:{" "}
+                  {d.doubters.join(", ")}
+                  {d.cosigners.length > 0 && ` · co-signed by ${d.cosigners.join(", ")}`}
+                </p>
+              </div>
+              <DismissDoubtsButton liftId={d.id} />
+              <DeleteLiftButton liftId={d.id} />
+            </div>
+          ))}
+        </section>
+      )}
 
       {focus && (
         <section className="mt-10 rounded-sm border border-rule bg-iron-raised p-4">

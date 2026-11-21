@@ -4,7 +4,7 @@ import type { Movement } from "./movements";
 
 export type Notification = {
   id: number;
-  kind: "cosign" | "passed";
+  kind: "cosign" | "passed" | "doubt";
   actorName: string | null;
   actorUsername: string | null;
   actorId: string | null;
@@ -66,6 +66,27 @@ export async function notifyCosigned(params: {
     insert into notifications (lifter_id, actor_id, kind, movement)
     values (${lifterId}, ${witnessId}, 'cosign', ${movement})
     on conflict do nothing
+  `;
+}
+
+/**
+ * Someone questioned one of this lifter's sets. No actor: who doubted is
+ * never shown. At most one per lift per day, since the null actor slips
+ * past the dedupe index.
+ */
+export async function notifyDoubted(params: {
+  lifterId: string;
+  movement: Movement;
+}): Promise<void> {
+  const { lifterId, movement } = params;
+  await sql`
+    insert into notifications (lifter_id, kind, movement)
+    select ${lifterId}, 'doubt', ${movement}
+    where not exists (
+      select 1 from notifications
+      where lifter_id = ${lifterId} and kind = 'doubt' and movement = ${movement}
+        and created_at > now() - interval '1 day'
+    )
   `;
 }
 

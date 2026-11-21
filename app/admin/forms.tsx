@@ -8,6 +8,7 @@ import {
   clearCosignAction,
   deleteLiftAction,
   deleteLifterAction,
+  dismissDoubtsAction,
 } from "./actions";
 
 const initial: ActionState = { error: null };
@@ -97,6 +98,12 @@ export function DeleteLiftButton({ liftId }: { liftId: string }) {
 export function ClearCosignButton({ liftId }: { liftId: string }) {
   return (
     <ArmedButton action={clearCosignAction} hidden={{ liftId }} label="Clear co-sign" />
+  );
+}
+
+export function DismissDoubtsButton({ liftId }: { liftId: string }) {
+  return (
+    <ArmedButton action={dismissDoubtsAction} hidden={{ liftId }} label="Keep" />
   );
 }
 

@@ -174,6 +174,11 @@ export async function clearCosignsFor(lifterId: string): Promise<void> {
     delete from lift_cosigns
     where lift_id in (select id from lifts where lifter_id = ${lifterId})
   `;
+  // Doubts are "I'm at your gym and don't buy it": void elsewhere too.
+  await sql`
+    delete from lift_doubts
+    where lift_id in (select id from lifts where lifter_id = ${lifterId})
+  `;
 }
 
 export async function getLiftById(liftId: string): Promise<{
@@ -291,7 +296,51 @@ export async function cosignLift(
     on conflict do nothing
     returning lift_id
   `;
+  // Someone who watched it outweighs anyone who doubts it.
+  if (rows.length > 0) await sql`delete from lift_doubts where lift_id = ${liftId}`;
   return rows.length > 0;
+}
+
+/**
+ * Doubt a lift. Same rules as a co-sign (not your own, once each), plus:
+ * not one you co-signed, and not one an admin has already reviewed.
+ * Returns the lift's doubt count after adding, or null if nothing was added.
+ */
+export async function doubtLift(liftId: string, doubterId: string): Promise<number | null> {
+  const rows = await sql`
+    insert into lift_doubts (lift_id, doubter_id)
+    select id, ${doubterId}::uuid from lifts
+    where id = ${liftId} and lifter_id <> ${doubterId}::uuid
+      and doubts_dismissed_at is null
+      and not exists (
+        select 1 from lift_cosigns c
+        where c.lift_id = ${liftId} and c.witness_id = ${doubterId}::uuid
+      )
+    on conflict do nothing
+    returning lift_id
+  `;
+  if (rows.length === 0) return null;
+  const [r] = await sql`select count(*) as n from lift_doubts where lift_id = ${liftId}`;
+  return Number(r.n);
+}
+
+/** Take a doubt back. Returns false if there was none. */
+export async function undoubtLift(liftId: string, doubterId: string): Promise<boolean> {
+  const rows = await sql`
+    delete from lift_doubts where lift_id = ${liftId} and doubter_id = ${doubterId}
+    returning lift_id
+  `;
+  return rows.length > 0;
+}
+
+/** Which of this lifter's lifts the viewer doubts. Only ever the viewer's own. */
+export async function doubtedBy(viewerId: string, lifterId: string): Promise<Set<string>> {
+  const rows = await sql`
+    select d.lift_id from lift_doubts d
+    join lifts l on l.id = d.lift_id
+    where d.doubter_id = ${viewerId} and l.lifter_id = ${lifterId}
+  `;
+  return new Set(rows.map((r) => r.lift_id as string));
 }
 
 /**
@@ -331,6 +380,13 @@ export async function saveLift(params: {
       select id from lifts where lifter_id = ${lifterId} and movement = ${movement}
     )
   `;
+  // A new number is a new claim to doubt, too.
+  await sql`
+    delete from lift_doubts
+    where lift_id = (
+      select id from lifts where lifter_id = ${lifterId} and movement = ${movement}
+    )
+  `;
 
   await sql`
     insert into lifts
@@ -342,7 +398,8 @@ export async function saveLift(params: {
           reps          = excluded.reps,
           est_1rm_kg    = excluded.est_1rm_kg,
           bodyweight_kg = excluded.bodyweight_kg,
-          recorded_at   = now()
+          recorded_at   = now(),
+          doubts_dismissed_at = null
   `;
 
   // Append-only. The Neon HTTP driver has no multi-statement transaction
@@ -462,6 +519,58 @@ export async function adminClearCosign(liftId: string): Promise<boolean> {
   const rows = await sql`
     delete from lift_cosigns where lift_id = ${liftId} returning lift_id
   `;
+  return rows.length > 0;
+}
+
+export type DoubtedLift = {
+  id: string;
+  movement: Movement;
+  weightKg: number | null;
+  reps: number;
+  est1rmKg: number | null;
+  bodyweightKg: number;
+  lifterId: string;
+  username: string;
+  displayName: string;
+  doubters: string[];
+  cosigners: string[];
+};
+
+/** Lifts with open doubts, most doubted first. */
+export async function adminDoubtedLifts(): Promise<DoubtedLift[]> {
+  const rows = await sql`
+    select l.id, l.movement, l.weight_kg, l.reps, l.est_1rm_kg, l.bodyweight_kg,
+           lf.id as lifter_id, lf.username, lf.display_name,
+           array(select w.display_name from lift_doubts d join lifters w on w.id = d.doubter_id
+                 where d.lift_id = l.id order by d.created_at) as doubters,
+           array(select w.display_name from lift_cosigns c join lifters w on w.id = c.witness_id
+                 where c.lift_id = l.id order by c.created_at) as cosigners
+    from lifts l
+    join lifters lf on lf.id = l.lifter_id
+    where exists (select 1 from lift_doubts d where d.lift_id = l.id)
+    order by (select count(*) from lift_doubts d where d.lift_id = l.id) desc
+  `;
+  return rows.map((r) => ({
+    id: r.id as string,
+    movement: r.movement as Movement,
+    weightKg: r.weight_kg === null ? null : num(r.weight_kg),
+    reps: num(r.reps),
+    est1rmKg: r.est_1rm_kg === null ? null : num(r.est_1rm_kg),
+    bodyweightKg: num(r.bodyweight_kg),
+    lifterId: r.lifter_id as string,
+    username: r.username as string,
+    displayName: r.display_name as string,
+    doubters: r.doubters as string[],
+    cosigners: r.cosigners as string[],
+  }));
+}
+
+/** Reviewed and kept: clear the doubts and block new ones until a re-save. */
+export async function adminDismissDoubts(liftId: string): Promise<boolean> {
+  const rows = await sql`
+    update lifts set doubts_dismissed_at = now() where id = ${liftId} returning id
+  `;
+  await sql`delete from lift_doubts where lift_id = ${liftId}`;
   return rows.length > 0;
 }
 

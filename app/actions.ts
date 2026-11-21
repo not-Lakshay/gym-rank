@@ -14,6 +14,7 @@ import {
   clearCosignsFor,
   cosignLift,
   deleteLifter,
+  doubtLift,
   getLifterByEmail,
   getLiftById,
   getLiftsFor,
@@ -21,11 +22,12 @@ import {
   recordEvent,
   removeLift,
   saveLift,
+  undoubtLift,
   upsertProfile,
 } from "@/lib/lifters";
 import { sendWelcome } from "@/lib/mail";
 import type { Movement } from "@/lib/movements";
-import { notifyCosigned, notifyPassed } from "@/lib/notifications";
+import { notifyCosigned, notifyDoubted, notifyPassed } from "@/lib/notifications";
 import { normalizeUsername, validateUsername } from "@/lib/username";
 import { liftChanges, recordsBroken, validateBodyweight } from "@/lib/validate";
 
@@ -315,6 +317,47 @@ export async function cosignLiftAction(
   );
 
   updateTag(DATA_TAG);
+  refresh();
+  return ok();
+}
+
+/**
+ * Doubt someone's lift, or take a doubt back (`undo`). Same server checks
+ * as a co-sign. Only the admin sees doubts; the lifter gets one anonymous
+ * nudge on the first.
+ */
+export async function doubtLiftAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const email = await requireEmail();
+  if (!email) return fail("Sign in first.");
+
+  const doubter = await getLifterByEmail(email);
+  if (!doubter) return fail("Set up your own profile first.");
+
+  const liftId = String(formData.get("liftId") ?? "");
+  if (formData.get("undo")) {
+    await undoubtLift(liftId, doubter.id);
+    refresh();
+    return ok();
+  }
+
+  const lift = await getLiftById(liftId);
+  if (!lift) return fail("That lift no longer exists.");
+  if (lift.lifterId === doubter.id) return fail("That's your own lift.");
+  if (!doubter.college || lift.collegeId !== doubter.college.id) {
+    return fail("Only lifters at the same college can doubt a lift.");
+  }
+
+  const count = await doubtLift(liftId, doubter.id);
+  if (count === null) return fail("Can't doubt this one: already doubted, co-signed by you, or reviewed.");
+
+  await recordEvent("lift_doubted", doubter.id);
+  if (count === 1) {
+    await quietly(() => notifyDoubted({ lifterId: lift.lifterId, movement: lift.movement }));
+  }
+
   refresh();
   return ok();
 }
