@@ -139,7 +139,8 @@ export function LiftsForm({
           key={movement.id}
           movement={movement}
           existing={lifts[movement.id]}
-          standing={standings[movement.id] ?? null}
+          // OHP and pull-ups have no board tab any more, so no rank link.
+          standing={TOTAL_MOVEMENTS.includes(movement.id) ? standings[movement.id] ?? null : null}
           boardHref={`${boardHref}?tab=${movement.id}`}
           bodyweightKg={bodyweightKg}
           known={known}

@@ -13,9 +13,10 @@ import { sql } from "@/lib/db";
   keep Vercel warm and Neon asleep. It is deliberately trivial, because
   this runs ~270 times a day.
 
-  Hours are limited on purpose. Always-on would burn ~186 of the free
-  plan's ~191 compute-hours a month; 18 hours a day is ~140 and leaves
-  room for real traffic. Running out suspends the database outright.
+  Hours are limited on purpose. The free plan has 100 compute-hours a
+  month and running out suspends the database outright. At 0.25 CU,
+  always-on is ~186 and 18 hours a day ~140, both over; about 10 hours
+  a day (~78) leaves room for real traffic.
 */
 export async function GET() {
   // Never prerendered: a cached "up" from build time would be worse than

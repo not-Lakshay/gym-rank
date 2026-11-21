@@ -15,11 +15,12 @@ assert.equal(noviceOneRepMax("overhead_press", 70), null);
 
 // Nothing else known: the bodyweight figure.
 assert.deepEqual(estimatedLift("deadlift", 70, {}), { kg: 87.5, from: [] });
-// Scaled from a known squat: 116.7 x 1.25 = 145.9 -> 145.
-assert.deepEqual(estimatedLift("deadlift", 72, { squat: 116.7 }), { kg: 145, from: ["squat"] });
-// Averaged over two: squat 100 -> 75, deadlift 160 -> 96; mean 85.5 -> 85.
+// Scaled from a known squat, then 0.9 so a guess stays beatable:
+// 116.7 x 1.25 x 0.9 = 131.3 -> 132.5.
+assert.deepEqual(estimatedLift("deadlift", 72, { squat: 116.7 }), { kg: 132.5, from: ["squat"] });
+// Averaged over two: squat 100 -> 75, deadlift 160 -> 96; mean 85.5 x 0.9 = 76.95 -> 77.5.
 assert.deepEqual(estimatedLift("bench", 80, { squat: 100, deadlift: 160 }), {
-  kg: 85,
+  kg: 77.5,
   from: ["squat", "deadlift"],
 });
 // Its own value and optional lifts don't count; zeros are ignored.
@@ -30,5 +31,7 @@ assert.deepEqual(estimatedLift("squat", 70, { squat: 200, overhead_press: 60, be
 // Capped at the movement's plausibility limit (deadlift 450).
 assert.equal(estimatedLift("deadlift", 70, { squat: 1000 })!.kg, 450);
 assert.equal(estimatedLift("pullups", 70, { squat: 100 }), null);
+// A tiny half-typed number never suggests 0 kg.
+assert.equal(estimatedLift("bench", 70, { squat: 1 })!.kg, 2.5);
 
 console.log("standards: all passed");

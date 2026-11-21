@@ -276,10 +276,14 @@ npm run dev
 
 Neon's free plan suspends the database after five idle minutes, and the
 next visitor pays a multi-second wake-up. A cron-job.org job hits
-`/api/health` (which runs `select 1`) every four minutes from 06:00 to
-00:00 IST. The hours are limited on purpose: always-on would use ~186 of
-the plan's ~191 compute-hours a month, and running out suspends the
-database outright; 18 hours a day is ~140.
+`/api/health` (which runs `select 1`) every four minutes during gym
+hours. The hours are limited on purpose: the free plan has 100
+compute-hours a month, and running out suspends the database outright.
+At the smallest size (0.25 CU) each awake hour costs 0.25, so always-on
+is ~186 a month and 18 hours a day is ~140, both over the limit. Keep
+the window to about 10 hours a day (~78 a month). Since boards and
+profiles are cached, a sleeping database only slows `/me` and saving,
+by about a second.
 
 ---
 

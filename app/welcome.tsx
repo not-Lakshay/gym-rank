@@ -8,7 +8,7 @@ import { useSyncExternalStore } from "react";
   most first visits come from a link to a board, and the board is the point.
 */
 
-const KEY = "welcome-dismissed";
+const KEY = "welcome-dismissed"; // also read by the before-paint script in prefs.tsx
 const listeners = new Set<() => void>();
 
 function dismissed() {
@@ -39,18 +39,20 @@ function close() {
 }
 
 export function Welcome() {
-  // Server renders nothing (true), so a returning visitor never sees it flash.
+  // Server renders it, so a first visit doesn't jump when it appears after
+  // load; for a returning visitor the before-paint script has already set
+  // <html data-welcome="off">, which hides it until hydration removes it.
   const hidden = useSyncExternalStore(
     subscribe,
     () => closedThisVisit || dismissed(),
-    () => true,
+    () => false,
   );
   if (hidden) return null;
 
   return (
     <aside
       aria-label="Welcome"
-      className="mb-5 flex items-start gap-2 rounded-sm border border-rule bg-iron-raised py-3 pl-4 pr-1 text-[13px] leading-relaxed text-chalk-dim"
+      className="welcome mb-5 flex items-start gap-2 rounded-sm border border-rule bg-iron-raised py-3 pl-4 pr-1 text-[13px] leading-relaxed text-chalk-dim"
     >
       <p className="pt-0.5">
         <span className="font-bold text-chalk">Your college&rsquo;s gym leaderboard.</span>{" "}

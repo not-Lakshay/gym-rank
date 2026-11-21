@@ -702,3 +702,9 @@ input[type="number"] {
     animation-delay: 0s !important;
   }
 }
+
+/* A welcome strip closed on an earlier visit (app/welcome.tsx): hidden
+   before first paint by the script in prefs.tsx. */
+:root[data-welcome="off"] .welcome {
+  display: none;
+}

@@ -47,10 +47,13 @@ export function estimatedLift(
   if (from.length === 0) {
     return { kg: noviceOneRepMax(movement, bodyweightKg)!, from };
   }
+  // 0.9: a saved guess counts on the board like a real lift, so keep it a
+  // little under what they'd likely pull, easy to beat once they do it.
   const raw =
-    from.reduce((sum, m) => sum + (known[m]! * target) / NOVICE_MULTIPLE[m]!, 0) /
+    (0.9 * from.reduce((sum, m) => sum + (known[m]! * target) / NOVICE_MULTIPLE[m]!, 0)) /
     from.length;
-  // Never past the plausibility cap, whatever was typed into the other rows.
+  // Never past the plausibility cap, whatever was typed into the other rows,
+  // and never "0 kg" while a tiny number is mid-typing in another row.
   const cap = MOVEMENTS.find((m) => m.id === movement)?.maxKg ?? Infinity;
-  return { kg: Math.min(Math.round(raw / 2.5) * 2.5, cap), from };
+  return { kg: Math.max(2.5, Math.min(Math.round(raw / 2.5) * 2.5, cap)), from };
 }

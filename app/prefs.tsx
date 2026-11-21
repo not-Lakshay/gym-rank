@@ -8,9 +8,10 @@ import { useLayoutEffect, useSyncExternalStore } from "react";
   account or cookie is involved and every page stays static.
 */
 
-// Applies the saved theme before first paint, so Neon never flashes Iron.
+// Applies the saved theme before first paint, so Neon never flashes Iron,
+// and hides a dismissed welcome strip (app/welcome.tsx) before it can show.
 // Inline in <head>.
-const apply = `try{if(localStorage.getItem("theme")==="neon")document.documentElement.dataset.theme="neon"}catch(e){}`;
+const apply = `try{var s=localStorage,h=document.documentElement;if(s.getItem("theme")==="neon")h.dataset.theme="neon";if(s.getItem("welcome-dismissed")==="1")h.dataset.welcome="off"}catch(e){}`;
 
 /**
  * The before-paint script, for the root layout's <head>. The pattern is
@@ -24,6 +25,9 @@ export function BeforePaint() {
     try {
       if (localStorage.getItem("theme") === "neon") {
         document.documentElement.dataset.theme = "neon";
+      }
+      if (localStorage.getItem("welcome-dismissed") === "1") {
+        document.documentElement.dataset.welcome = "off";
       }
     } catch {
       // No storage: defaults.
