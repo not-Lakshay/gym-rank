@@ -366,7 +366,10 @@ function LifterView({
               <button
                 type="button"
                 popoverTarget="trust-help"
-                className="press mt-3 inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-full border border-rule py-1 pl-2 pr-3 text-[13px] text-chalk hover:border-chalk-faint"
+                className={`press mt-3 inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-full border border-rule py-1 pl-2 pr-3 text-[13px] text-chalk hover:border-chalk-faint ${
+                  // No name plate on your own page; the pill wears the aurora.
+                  isMostTrusted ? "aurora" : ""
+                }`}
               >
                 <TrustBadge tier={tier} size={16} named />
                 <span className="font-bold">{TRUST_LABEL[tier]}</span>

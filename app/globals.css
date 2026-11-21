@@ -743,3 +743,45 @@ input[type="number"] {
 .trust-glow {
   filter: drop-shadow(0 0 calc(5px * var(--glow)) var(--success));
 }
+
+/* Aurora: the "Most trusted" lifter's row and profile header. Soft bands
+   of the trust green drifting into teal and cyan, like northern lights,
+   blurred and faint enough that the text on top stays easy to read.
+   Green ties it to the trust shield; it keeps clear of the medal golds and
+   the weight-class plate colours. Brighter in Neon (--glow: 1). One
+   lifter per college wears it. */
+.aurora {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.aurora::after {
+  content: "";
+  position: absolute;
+  inset: -60% -30%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(30% 55% at 18% 55%, color-mix(in oklab, var(--success) 70%, transparent), transparent 70%),
+    radial-gradient(26% 50% at 50% 40%, color-mix(in oklab, #2dd4bf 60%, transparent), transparent 70%),
+    radial-gradient(30% 55% at 82% 60%, color-mix(in oklab, #38bdf8 55%, transparent), transparent 70%);
+  filter: blur(16px);
+  opacity: calc(0.55 + 0.25 * var(--glow));
+  animation: aurora-drift 11s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift {
+  0% {
+    transform: translateX(-14%) skewX(-8deg);
+  }
+  50% {
+    transform: translateX(2%) skewX(4deg) scaleY(1.15);
+  }
+  100% {
+    transform: translateX(14%) skewX(-4deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora::after {
+    animation: none;
+  }
+}

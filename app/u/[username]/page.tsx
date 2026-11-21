@@ -169,7 +169,12 @@ async function Profile({ params }: { params: Params }) {
           className="glow"
           style={{ "--glow-color": plateFor(weightClass) } as React.CSSProperties}
         >
-          <div className="flex items-center gap-4">
+          {/* The Most trusted lifter's name plate wears the aurora. */}
+          <div
+            className={`flex items-center gap-4 ${
+              isMostTrusted ? "aurora -mx-3 rounded-sm px-3 py-3" : ""
+            }`}
+          >
             <ViewTransition name={`avatar-${lifter.id}`} share="morph" default="none">
               <Avatar
                 name={lifter.displayName}
