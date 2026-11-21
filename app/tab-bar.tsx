@@ -1,3 +1,7 @@
+import { Suspense } from "react";
+import { connection } from "next/server";
+import { auth } from "@/auth";
+import { unseenCountFor } from "@/lib/notifications";
 import { TabLink } from "./tab-link";
 
 /*
@@ -49,6 +53,23 @@ const TABS: {
   },
 ];
 
+/**
+ * A red dot on You while there are unread notifications. Streams in on its
+ * own, so the bar and the page around it stay cached; nothing when signed
+ * out or all read.
+ */
+async function UnreadDot() {
+  await connection();
+  const email = (await auth())?.user?.email;
+  const unseen = email ? await unseenCountFor(email).catch(() => 0) : 0;
+  if (!unseen) return null;
+  return (
+    <span className="absolute -right-1 -top-0.5 h-2.5 w-2.5 rounded-full bg-[var(--danger)] ring-2 ring-iron">
+      <span className="sr-only">, {unseen} new notifications</span>
+    </span>
+  );
+}
+
 export function TabBar({ active }: { active?: Tab }) {
   return (
     <nav
@@ -70,18 +91,26 @@ export function TabBar({ active }: { active?: Tab }) {
                     : "text-chalk-faint hover:text-chalk"
                 }`}
               >
-                <svg
-                  aria-hidden
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  {tab.icon}
-                </svg>
+                <span className="relative">
+                  <svg
+                    aria-hidden
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    {tab.icon}
+                  </svg>
+                  {/* Not while on You or its pages: the bell there shows the count. */}
+                  {tab.id === "you" && !current && (
+                    <Suspense fallback={null}>
+                      <UnreadDot />
+                    </Suspense>
+                  )}
+                </span>
                 {tab.label}
               </TabLink>
             </li>
