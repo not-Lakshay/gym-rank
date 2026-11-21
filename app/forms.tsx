@@ -970,17 +970,40 @@ export function CosignButton({ liftId }: { liftId: string }) {
 /** Quiet on purpose: a doubt goes to the admin, not the board. */
 export function DoubtButton({ liftId, doubted }: { liftId: string; doubted: boolean }) {
   const [state, action, pending] = useActionState(doubtLiftAction, initial);
+  const [armed, setArmed] = useState(false);
 
+  // Two taps, like account deletion: the first explains, the second sends.
+  // Taking a doubt back needs no warning.
   return (
-    <form action={action} className="shrink-0">
+    <form
+      action={action}
+      onSubmit={(e) => {
+        if (!doubted && !armed) {
+          e.preventDefault();
+          setArmed(true);
+          setTimeout(() => setArmed(false), 10000);
+        } else {
+          setArmed(false);
+        }
+      }}
+      className={armed ? "basis-full" : "shrink-0"}
+    >
       <input type="hidden" name="liftId" value={liftId} />
       {doubted && <input type="hidden" name="undo" value="1" />}
+      {armed && (
+        <p className="pt-1 text-[12px] leading-relaxed text-chalk-dim">
+          Only doubt a lift you&rsquo;re fairly sure isn&rsquo;t real, not just one
+          you didn&rsquo;t see. Tap again to confirm.
+        </p>
+      )}
       <button
         type="submit"
         disabled={pending}
-        className="press min-h-11 px-2 text-[12px] text-chalk-faint underline-offset-4 hover:text-chalk hover:underline disabled:opacity-50"
+        className={`press min-h-11 px-2 text-[12px] underline-offset-4 hover:underline disabled:opacity-50 ${
+          armed ? "text-[var(--danger)]" : "text-chalk-faint hover:text-chalk"
+        }`}
       >
-        {pending ? "…" : doubted ? "Doubted · undo" : "Doubt this"}
+        {pending ? "…" : doubted ? "Doubted · undo" : armed ? "Yes, doubt it" : "Doubt this"}
       </button>
       {state.error && (
         <p role="alert" className="mt-1 text-[11px] text-[var(--danger)]">
