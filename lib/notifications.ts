@@ -48,6 +48,20 @@ export async function getNotificationsFor(
   }));
 }
 
+/** Unread count for the bell; null when this email has no lifter yet. One query. */
+export async function unseenCountFor(email: string): Promise<number | null> {
+  const rows = await sql`
+    select lf.id,
+           (select count(*) from notifications n
+            where n.lifter_id = lf.id and n.seen_at is null
+              and n.created_at > now() - interval '30 days') as unseen
+    from lifters lf
+    where lf.email = ${email}
+    limit 1
+  `;
+  return rows.length === 0 ? null : Number(rows[0].unseen);
+}
+
 export async function markNotificationsSeen(lifterId: string): Promise<void> {
   await sql`
     update notifications set seen_at = now()

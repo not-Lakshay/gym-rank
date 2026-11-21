@@ -2,7 +2,7 @@
  * Run:  node lib/cosign.test.ts
  */
 import assert from "node:assert/strict";
-import { cosignStatus, cosignText } from "./cosign.ts";
+import { cosignStatus, cosignText, isDisputed } from "./cosign.ts";
 
 const a = { id: "a", name: "Sarthak" };
 const b = { id: "b", name: "Ekagrah" };
@@ -22,5 +22,14 @@ assert.deepEqual(cosignStatus([[a, b], [a], [a, c]]), { kind: "full", names: ["S
 // Any lift without a witness: no status at all.
 assert.equal(cosignStatus([[a], [], [a]]), null);
 assert.equal(cosignStatus([]), null);
+
+// One doubter alone never disputes a lift.
+assert.equal(isDisputed(0, 1), false);
+// Two doubts, nobody vouching: disputed.
+assert.equal(isDisputed(0, 2), true);
+// Doubts must outnumber co-signs; a tie stays co-signed.
+assert.equal(isDisputed(2, 2), false);
+assert.equal(isDisputed(2, 3), true);
+assert.equal(isDisputed(4, 3), false);
 
 console.log("cosign: all passed");

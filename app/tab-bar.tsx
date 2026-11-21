@@ -1,4 +1,8 @@
+import { Suspense } from "react";
 import Link from "next/link";
+import { connection } from "next/server";
+import { auth } from "@/auth";
+import { unseenCountFor } from "@/lib/notifications";
 
 /*
   The bottom tab bar, on every screen size, so the app moves like an app. Each page
@@ -40,8 +44,57 @@ const TABS: { id: Tab; href: string; label: string; icon: React.ReactNode }[] = 
   },
 ];
 
+/*
+  The notification bell, top right in the gap above every page's header
+  (absolute, not fixed: a fixed bell would sit on the headers' own
+  buttons once you scroll). Only for signed-in lifters; it streams in on
+  its own so the rest of the page stays cached.
+*/
+async function Bell() {
+  await connection();
+  const email = (await auth())?.user?.email;
+  const unseen = email ? await unseenCountFor(email).catch(() => null) : null;
+  if (unseen === null) return null;
+
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-30">
+      <div className="mx-auto flex max-w-md justify-end px-3 pt-1">
+        <Link
+          href="/me#notifications"
+          aria-label={unseen > 0 ? `Notifications, ${unseen} new` : "Notifications"}
+          className={`press pointer-events-auto relative flex h-9 w-9 items-center justify-center rounded-full ${
+            unseen > 0 ? "text-chalk" : "text-chalk-faint hover:text-chalk"
+          }`}
+        >
+          <svg
+            aria-hidden
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+          </svg>
+          {unseen > 0 && (
+            <span className="tnum absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold leading-none text-iron">
+              {unseen > 9 ? "9+" : unseen}
+            </span>
+          )}
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export function TabBar({ active }: { active?: Tab }) {
   return (
+    <>
+    <Suspense fallback={null}>
+      <Bell />
+    </Suspense>
     <nav
       aria-label="Main"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-rule bg-iron pb-[env(safe-area-inset-bottom)]"
@@ -79,5 +132,6 @@ export function TabBar({ active }: { active?: Tab }) {
         })}
       </ul>
     </nav>
+    </>
   );
 }

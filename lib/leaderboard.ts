@@ -67,11 +67,21 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
       -- would multiply the lift (and the total) by its number of witnesses.
       cross join lateral (
         select
-          exists (select 1 from lift_cosigns x where x.lift_id = l.id) as cosigned,
+          (select count(*) from lift_cosigns x where x.lift_id = l.id) as cosigns,
+          (select count(*) from lift_doubts d
+           where d.lift_id = l.id and d.created_at > now() - interval '30 days') as doubts
+      ) n
+      -- isDisputed in lib/cosign.ts: a disputed lift counts as not co-signed.
+      cross join lateral (
+        select n.doubts >= 2 and n.doubts > n.cosigns as disputed
+      ) dp
+      cross join lateral (
+        select
+          n.cosigns > 0 and not dp.disputed as cosigned,
           coalesce((
             select json_agg(json_build_object('id', w.id, 'name', w.display_name))
             from lift_cosigns x join lifters w on w.id = x.witness_id
-            where x.lift_id = l.id
+            where x.lift_id = l.id and not dp.disputed
           ), '[]'::json) as witnesses
       ) cs
       where l.movement in ('squat', 'bench', 'deadlift')
@@ -310,13 +320,22 @@ export async function getLiftBoards(scope: BoardScope): Promise<LiftBoards> {
         l.movement,
         l.est_1rm_kg,
         l.reps,
-        exists (select 1 from lift_cosigns x where x.lift_id = l.id) as verified
+        v.verified
       from lifts l
       join lifters lf on lf.id = l.lifter_id
       join colleges c on c.id = lf.college_id
+      cross join lateral (
+        select
+          (select count(*) from lift_cosigns x where x.lift_id = l.id) as cosigns,
+          (select count(*) from lift_doubts d
+           where d.lift_id = l.id and d.created_at > now() - interval '30 days') as doubts
+      ) n
+      -- Co-signed and not disputed (isDisputed in lib/cosign.ts).
+      cross join lateral (
+        select n.cosigns > 0 and not (n.doubts >= 2 and n.doubts > n.cosigns) as verified
+      ) v
       where (${collegeId}::int is null or lf.college_id = ${collegeId}::int)
-        and (not ${verifiedOnly}::boolean
-             or exists (select 1 from lift_cosigns x where x.lift_id = l.id))
+        and (not ${verifiedOnly}::boolean or v.verified)
     ),
     scored as (
       select

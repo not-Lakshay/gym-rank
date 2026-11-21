@@ -355,6 +355,7 @@ export async function doubtLiftAction(
   const liftId = String(formData.get("liftId") ?? "");
   if (formData.get("undo")) {
     await undoubtLift(liftId, doubter.id);
+    updateTag(DATA_TAG); // profiles show the doubt count
     refresh();
     return ok();
   }
@@ -374,6 +375,7 @@ export async function doubtLiftAction(
     await quietly(() => notifyDoubted({ lifterId: lift.lifterId, movement: lift.movement }));
   }
 
+  updateTag(DATA_TAG);
   refresh();
   return ok();
 }

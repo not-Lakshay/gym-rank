@@ -2,6 +2,7 @@ import { cache } from "react";
 import { sql } from "./db";
 import type { College } from "./colleges";
 import { dotsScore, estimatedOneRepMax } from "./scoring";
+import { isDisputed } from "./cosign";
 
 export {
   MOVEMENTS,
@@ -66,6 +67,10 @@ export type Lift = {
   verified: boolean;
   /** Everyone who co-signed it, first co-sign first. */
   cosigners: { id: string; name: string }[];
+  /** Doubts from the last 30 days; shown publicly, never who. */
+  doubts: number;
+  /** Doubted past its co-signs; stops counting as co-signed. */
+  disputed: boolean;
   /**
    * The est. 1RM (or reps, for pull-ups) of the entry this one replaced,
    * from lift_history. Null for a first entry.
@@ -232,6 +237,8 @@ export async function getLiftsFor(lifterId: string): Promise<Lift[]> {
         join lifters w on w.id = c.witness_id
         where c.lift_id = l.id
       ), '[]'::json) as cosigners,
+      (select count(*) from lift_doubts d
+       where d.lift_id = l.id and d.created_at > now() - interval '30 days') as doubts,
       prev.est_1rm_kg as prev_est_1rm_kg,
       prev.reps       as prev_reps
     from lifts l
@@ -258,6 +265,8 @@ export async function getLiftsFor(lifterId: string): Promise<Lift[]> {
       bodyweightKg: num(row.bodyweight_kg),
       verified: cosigners.length > 0,
       cosigners,
+      doubts: num(row.doubts),
+      disputed: isDisputed(cosigners.length, num(row.doubts)),
       previousValue: prevRaw === null || prevRaw === undefined ? null : num(prevRaw),
     };
   });
@@ -300,8 +309,11 @@ export async function cosignLift(
     on conflict do nothing
     returning lift_id
   `;
-  // Someone who watched it outweighs anyone who doubts it.
-  if (rows.length > 0) await sql`delete from lift_doubts where lift_id = ${liftId}`;
+  // Only the witness's own doubt goes: other doubts stand and are weighed
+  // against co-signs by count (isDisputed in lib/cosign.ts).
+  if (rows.length > 0) {
+    await sql`delete from lift_doubts where lift_id = ${liftId} and doubter_id = ${witnessId}::uuid`;
+  }
   return rows.length > 0;
 }
 

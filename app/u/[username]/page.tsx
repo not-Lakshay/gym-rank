@@ -118,7 +118,11 @@ async function Profile({ params }: { params: Params }) {
   const summary = summarise(lifts, lifter.bodyweightKg);
   const byMovement = new Map(lifts.map((l) => [l.movement, l]));
   const cosign = cosignStatus(
-    TOTAL_MOVEMENTS.map((m) => byMovement.get(m)?.cosigners ?? []),
+    // A disputed lift counts as not co-signed.
+    TOTAL_MOVEMENTS.map((m) => {
+      const lift = byMovement.get(m);
+      return lift && !lift.disputed ? lift.cosigners : [];
+    }),
   );
   const weightClass = weightClassFor(lifter.bodyweightKg);
   const boardHref = lifter.college ? `/c/${lifter.college.slug}` : "/colleges";
@@ -256,11 +260,26 @@ async function Profile({ params }: { params: Params }) {
                   {lift.cosigners.length > 0 && (
                     <span className="flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-[color-mix(in_oklab,var(--success)_50%,transparent)] bg-[color-mix(in_oklab,var(--success)_14%,transparent)] px-2.5 py-1 text-[12px] text-chalk">
                       <Check />
-                      <span className="text-chalk-dim">by</span>
+                      <span className="tnum shrink-0 font-bold">
+                        {lift.cosigners.length} co-sign{lift.cosigners.length === 1 ? "" : "s"}
+                      </span>
+                      <span className="text-chalk-dim">·</span>
                       <span className="truncate font-medium">
                         {lift.cosigners.map((c) => c.name).join(", ")}
                       </span>
                     </span>
+                  )}
+                  {/* A count only: who doubted stays private. */}
+                  {lift.doubts > 0 && (
+                    <button
+                      type="button"
+                      popoverTarget="disputed-help"
+                      className="press tnum shrink-0 rounded-full border border-[color-mix(in_oklab,var(--danger)_45%,transparent)] bg-[color-mix(in_oklab,var(--danger)_12%,transparent)] px-2.5 py-1 text-[12px] font-bold text-chalk"
+                    >
+                      {lift.disputed && <>Disputed · </>}
+                      {lift.doubts} doubt{lift.doubts === 1 ? "" : "s"}{" "}
+                      <span aria-hidden className="font-normal text-chalk-dim">?</span>
+                    </button>
                   )}
                   {canAdd && !myDoubts.has(lift.id) ? (
                     <CosignButton liftId={lift.id} />
@@ -291,6 +310,20 @@ async function Profile({ params }: { params: Params }) {
             <span className="mt-1.5 block">
               With all three of squat, bench and deadlift co-signed, a lifter
               joins the global board.
+            </span>
+          </HelpPop>
+          <HelpPop id="disputed-help">
+            <span className="block font-bold text-chalk">Doubts</span>
+            <span className="mt-1.5 block">
+              Gym-mates at the same college can doubt a set they don&rsquo;t
+              believe. The count is public; who doubted isn&rsquo;t. Doubts
+              expire after 30 days.
+            </span>
+            <span className="mt-1.5 block">
+              With two or more doubts and more doubts than co-signs, a set is
+              disputed: it stops counting as co-signed, which takes the lifter
+              off the global board. Their college score stays. More co-signs,
+              or redoing and re-saving the set, clears it.
             </span>
           </HelpPop>
         </section>

@@ -126,6 +126,17 @@ board; the board and their page say which.
 Whether people actually bother to co-sign is an open question; the
 `lift_cosigned` event will answer it.
 
+### Doubts, settled by count rather than by an admin
+
+The opposite of a co-sign: a gym-mate can doubt a set. Profiles show how
+many doubts a set has, never who. A set with at least two doubts from the
+last 30 days, and more doubts than co-signs, is *disputed*: it stops
+counting as co-signed, which drops the lifter off the global board, while
+their college score stands (`isDisputed` in `lib/cosign.ts`, mirrored in
+the board SQL). More co-signs or a re-save clears it. An admin review
+queue was the first version; it needed one person to stay available
+forever, and a count of gym-mates scales where that doesn't.
+
 ### One board per college, and a global one that costs something
 
 A board only works when the people on it know each other: a campus board

@@ -1065,7 +1065,7 @@ export function CosignButton({ liftId }: { liftId: string }) {
   );
 }
 
-/** Quiet on purpose: a doubt goes to the admin, not the board. */
+/** A doubt goes to the admin; the profile shows only how many, never who. */
 export function DoubtButton({ liftId, doubted }: { liftId: string; doubted: boolean }) {
   const [state, action, pending] = useActionState(doubtLiftAction, initial);
   const [armed, setArmed] = useState(false);
@@ -1106,7 +1106,7 @@ export function DoubtButton({ liftId, doubted }: { liftId: string; doubted: bool
           </p>
           <p className="mt-1 text-[12px] leading-relaxed text-chalk-dim">
             Only if you&rsquo;re fairly sure it isn&rsquo;t real, not just one you
-            didn&rsquo;t see.
+            didn&rsquo;t see. The number of doubts is public; your name isn&rsquo;t.
           </p>
           <div className="mt-3 flex gap-2">
             <button

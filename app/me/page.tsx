@@ -275,7 +275,11 @@ function LifterView({
   const summary = summarise(lifts, lifter.bodyweightKg);
   const byMovement = new Map(lifts.map((l) => [l.movement, l]));
   const cosign = cosignStatus(
-    TOTAL_MOVEMENTS.map((m) => byMovement.get(m)?.cosigners ?? []),
+    // A disputed lift counts as not co-signed.
+    TOTAL_MOVEMENTS.map((m) => {
+      const lift = byMovement.get(m);
+      return lift && !lift.disputed ? lift.cosigners : [];
+    }),
   );
   const weightClass = weightClassFor(lifter.bodyweightKg);
   const plate = plateFor(weightClass);
@@ -476,10 +480,14 @@ function LifterView({
         </section>
       )}
 
-      {notifications.length > 0 && (
-        <section className="rise pt-10" style={{ "--i": 1 } as React.CSSProperties}>
+      {/* Always here, even empty: the bell links to it. */}
+      <section
+        id="notifications"
+        className="rise scroll-mt-6 pt-10"
+        style={{ "--i": 1 } as React.CSSProperties}
+      >
           <h2 className="flex items-center justify-between border-b border-rule pb-2 caption">
-            Since you were last here
+            Notifications
             {unseen > 0 && (
               <span className="rounded-sm bg-chalk px-1.5 text-[10px] font-bold uppercase text-iron">
                 {unseen} new
@@ -507,8 +515,12 @@ function LifterView({
               </li>
             ))}
           </ol>
+          {notifications.length === 0 && (
+            <p className="py-3 text-[13px] text-chalk-dim">
+              Nothing yet. You&apos;ll see co-signs, doubts and anyone who passes your score here.
+            </p>
+          )}
         </section>
-      )}
 
       {/* Folded away once there's something in it, so the page reads at a glance. */}
       <Drawer
@@ -624,7 +636,7 @@ function NoticeText({ notice }: { notice: Notification }) {
       "a lift";
     return (
       <>
-        A gym-mate questioned your {label}. Get it co-signed to clear it.
+        A gym-mate questioned your {label}. Keep more co-signs than doubts on it.
       </>
     );
   }

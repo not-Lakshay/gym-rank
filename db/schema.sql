@@ -88,9 +88,10 @@ create table if not exists lift_cosigns (
 create index if not exists lift_cosigns_witness_idx on lift_cosigns (witness_id);
 
 -- The opposite of a co-sign: a same-college lifter who doubts the number.
--- Never shown publicly; only the admin queue reads it. A co-sign on the
--- lift or a re-save clears its rows. `doubts_dismissed_at` is set when an
--- admin reviews the lift and blocks new doubts until it is re-saved.
+-- The count is public, never who. Doubts from the last 30 days are weighed
+-- against co-signs (isDisputed in lib/cosign.ts); a re-save clears them.
+-- `doubts_dismissed_at` is the optional admin override: it clears them and
+-- blocks new doubts until the lift is re-saved.
 create table if not exists lift_doubts (
   lift_id    uuid not null references lifts(id) on delete cascade,
   doubter_id uuid not null references lifters(id) on delete cascade,

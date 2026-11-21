@@ -32,6 +32,17 @@ export function cosignStatus(perLift: Witness[][]): CosignStatus {
     : { kind: "partial", names: [...all.values()] };
 }
 
+/*
+  Gym-mates settle a doubted lift by count, no admin needed: at least two
+  doubts from the last 30 days, and more of them than co-signs. A disputed
+  lift stops counting as co-signed (so the lifter leaves the global board)
+  but keeps its college-board score. More co-signs or a re-save clear it.
+  Mirrored in SQL in lib/leaderboard.ts and lib/lifters.ts.
+*/
+export function isDisputed(cosigns: number, doubts: number): boolean {
+  return doubts >= 2 && doubts > cosigns;
+}
+
 export function cosignText(status: NonNullable<CosignStatus>): string {
   return `${status.kind === "full" ? "Fully" : "Partially"} co-signed by ${status.names.join(", ")}`;
 }

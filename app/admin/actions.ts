@@ -76,6 +76,7 @@ export async function dismissDoubtsAction(
   const done = await adminDismissDoubts(id);
   if (!done) return fail("No such lift.");
   await recordEvent("admin:doubts_dismissed", null);
+  updateTag(DATA_TAG);
   refresh();
   return ok();
 }
