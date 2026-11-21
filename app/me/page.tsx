@@ -90,7 +90,7 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
     const { error } = await searchParams;
     return (
       <div>
-        <Link href="/?all" className={navButton}>
+        <Link href="/colleges" className={navButton}>
           <ChevronLeft />
           All colleges
         </Link>
@@ -129,7 +129,7 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
     ]);
     return (
       <div>
-        <Link href="/?all" className={navButton}>
+        <Link href="/colleges" className={navButton}>
           <ChevronLeft />
           All colleges
         </Link>

@@ -38,7 +38,7 @@ export default function GlobalPage({ searchParams }: { searchParams: SearchParam
   return (
     <>
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
-      <Link href="/?all" className={navButton}>
+      <Link href="/colleges" className={navButton}>
         <ChevronLeft />
         All colleges
       </Link>

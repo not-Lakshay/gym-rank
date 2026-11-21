@@ -10,7 +10,7 @@ export default function PrivacyPage() {
   return (
     <>
     <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-6 px-5 pb-16 pt-10">
-      <Link href="/?all" className={navButton}>
+      <Link href="/colleges" className={navButton}>
         <ChevronLeft />
         Gym Rank
       </Link>

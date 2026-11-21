@@ -264,7 +264,7 @@ function Header({
     <header className="rise pb-5" style={{ "--i": 0 } as React.CSSProperties}>
       {/* A plain link, not a box: the tab bar already does the navigating. */}
       <Link
-        href="/?all"
+        href="/colleges"
         className="-ml-1 inline-flex min-h-11 items-center gap-1 text-[14px] text-chalk-dim hover:text-chalk"
       >
         <ChevronLeft />
