@@ -96,6 +96,19 @@ export function LiftsForm({
   const dirty = MOVEMENTS.some(
     (m) => rows[m.id].kg !== stored[m.id].kg || rows[m.id].reps !== stored[m.id].reps,
   );
+  // Co-signed lifts whose numbers changed: saving voids their co-signs.
+  // Compared as numbers, like the server does, so "100" → "100.0" isn't a change.
+  const losing = MOVEMENTS.filter((m) => {
+    const before = lifts[m.id];
+    const row = rows[m.id];
+    if (!before || before.cosigners.length === 0 || row.reps.trim() === "") return false;
+    return (
+      Number(row.reps) !== before.reps ||
+      (m.id !== "pullups" && Number(row.kg) !== before.weightKg)
+    );
+  });
+  // Saving over a co-signed lift takes a second tap, after the warning.
+  const [confirming, setConfirming] = useState(false);
 
   const [dismissedAt, setDismissedAt] = useState(0);
   const justSaved = !!state.savedAt && state.savedAt > dismissedAt;
@@ -110,7 +123,17 @@ export function LiftsForm({
   const prs = state.prs ?? [];
 
   return (
-    <form action={action}>
+    <form
+      action={action}
+      onSubmit={(e) => {
+        if (losing.length > 0 && !confirming) {
+          e.preventDefault();
+          setConfirming(true);
+        } else {
+          setConfirming(false);
+        }
+      }}
+    >
       {state.savedAt && (
         <Celebration key={state.savedAt} prs={prs} passed={state.passed ?? []} />
       )}
@@ -146,7 +169,10 @@ export function LiftsForm({
           bodyweightKg={bodyweightKg}
           known={known}
           row={rows[movement.id]}
-          onChange={(row) => setEdits((all) => ({ ...all, [movement.id]: row }))}
+          onChange={(row) => {
+            setEdits((all) => ({ ...all, [movement.id]: row }));
+            setConfirming(false);
+          }}
           pr={prs.includes(movement.id)}
         />
       ))}
@@ -162,6 +188,29 @@ export function LiftsForm({
         </p>
       )}
 
+      {confirming && losing.length > 0 && (
+        <div
+          role="group"
+          aria-label="Co-signs will be removed"
+          className="mt-4 rounded-sm border border-[color-mix(in_oklab,var(--gold)_50%,transparent)] bg-[color-mix(in_oklab,var(--gold)_12%,transparent)] p-3"
+        >
+          <p className="text-[13px] font-bold text-chalk">
+            Your co-signs on {listOf(losing.map((m) => m.label.toLowerCase()))} will be removed
+          </p>
+          <p className="mt-1 text-[12px] leading-relaxed text-chalk-dim">
+            A new number is a new claim, so it needs co-signing again. Ask
+            someone who saw the set to tap &ldquo;I saw this&rdquo; on your page.
+          </p>
+          <button
+            type="button"
+            onClick={() => setConfirming(false)}
+            className="press mt-2 min-h-9 text-[13px] text-chalk-dim underline underline-offset-4 hover:text-chalk"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
       <button
         type="submit"
         disabled={pending || (!dirty && !justSaved)}
@@ -169,7 +218,7 @@ export function LiftsForm({
           justSaved ? "bg-[var(--success)]" : ""
         }`}
       >
-        {pending ? "Saving…" : justSaved ? "Saved" : "Save lifts"}
+        {pending ? "Saving…" : justSaved ? "Saved" : confirming ? "Save anyway" : "Save lifts"}
       </button>
     </form>
   );
