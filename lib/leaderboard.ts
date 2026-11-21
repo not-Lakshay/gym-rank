@@ -1,6 +1,56 @@
-import { type CosignStatus, cosignStatus } from "./cosign";
+import {
+  type CosignStatus,
+  MOST_TRUSTED_MIN,
+  type TrustTier,
+  cosignStatus,
+  trustTier,
+} from "./cosign";
 import { sql } from "./db";
 import type { Movement } from "./movements";
+
+export type MostTrusted = { lifterId: string; collegeId: number; witnesses: number };
+
+/**
+ * "Most trusted" at each college: the lifter whose squat, bench and
+ * deadlift were co-signed by the most different people (disputed lifts
+ * left out, as in isDisputed), at least MOST_TRUSTED_MIN of them. A tie
+ * goes to whoever reached that count first, so the title can't flicker.
+ */
+export async function getMostTrusted(): Promise<MostTrusted[]> {
+  const rows = await sql`
+    with w as (
+      select lf.id as lifter_id, lf.college_id, x.witness_id,
+             min(x.created_at) as first_at
+      from lifters lf
+      join lifts l on l.lifter_id = lf.id
+      join lift_cosigns x on x.lift_id = l.id
+      cross join lateral (
+        select
+          (select count(*) from lift_cosigns c where c.lift_id = l.id) as cosigns,
+          (select count(*) from lift_doubts d
+           where d.lift_id = l.id and d.created_at > now() - interval '30 days') as doubts
+      ) n
+      where lf.college_id is not null
+        and l.movement in ('squat', 'bench', 'deadlift')
+        and not (n.doubts >= 2 and n.doubts > n.cosigns)
+      group by lf.id, lf.college_id, x.witness_id
+    ),
+    per as (
+      select lifter_id, college_id, count(*) as witnesses, max(first_at) as reached_at
+      from w
+      group by lifter_id, college_id
+    )
+    select distinct on (college_id) lifter_id, college_id, witnesses
+    from per
+    where witnesses >= ${MOST_TRUSTED_MIN}
+    order by college_id, witnesses desc, reached_at asc
+  `;
+  return rows.map((r) => ({
+    lifterId: r.lifter_id as string,
+    collegeId: Number(r.college_id),
+    witnesses: Number(r.witnesses),
+  }));
+}
 
 export type BoardRow = {
   id: string;
@@ -20,6 +70,10 @@ export type BoardRow = {
   cosign: CosignStatus;
   /** A cartoon avatar id (lib/avatars.ts); null shows their initials. */
   avatar: string | null;
+  /** The badge beside their name; see trustTier in lib/cosign.ts. */
+  trust: TrustTier;
+  /** Holds "Most trusted" at their college (getMostTrusted). */
+  mostTrusted: boolean;
 };
 
 /**
@@ -49,6 +103,8 @@ export type BoardScope =
 export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
   const collegeId = "collegeId" in scope ? scope.collegeId : null;
   const verifiedOnly = "global" in scope;
+  // In parallel with the board itself; a failure only costs the title.
+  const holders = getMostTrusted().catch(() => [] as MostTrusted[]);
   const friendsOf = "friendsOf" in scope ? scope.friendsOf : null;
 
   const rows = await sql`
@@ -152,22 +208,30 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
     order by dots desc
   `;
 
-  return rows.map((row) => ({
-    id: row.id as string,
-    username: row.username as string,
-    displayName: row.display_name as string,
-    weightClass: row.weight_class as string,
-    totalKg: Number(row.total_kg),
-    dots: Number(row.dots),
-    verifiedCount: Number(row.verified_count),
-    overallRank: Number(row.overall_rank),
-    classRank: Number(row.class_rank),
-    collegeSlug: row.college_slug as string,
-    collegeShort: row.college_short as string,
-    batchYear: row.batch_year === null ? null : Number(row.batch_year),
-    cosign: cosignStatus(row.witnesses as { id: string; name: string }[][]),
-    avatar: (row.avatar as string | null) ?? null,
-  }));
+  const holderIds = new Set((await holders).map((h) => h.lifterId));
+
+  return rows.map((row) => {
+    // One array per scored lift; disputed lifts already come back empty.
+    const witnesses = row.witnesses as { id: string; name: string }[][];
+    return {
+      id: row.id as string,
+      username: row.username as string,
+      displayName: row.display_name as string,
+      weightClass: row.weight_class as string,
+      totalKg: Number(row.total_kg),
+      dots: Number(row.dots),
+      verifiedCount: Number(row.verified_count),
+      overallRank: Number(row.overall_rank),
+      classRank: Number(row.class_rank),
+      collegeSlug: row.college_slug as string,
+      collegeShort: row.college_short as string,
+      batchYear: row.batch_year === null ? null : Number(row.batch_year),
+      cosign: cosignStatus(witnesses),
+      avatar: (row.avatar as string | null) ?? null,
+      trust: trustTier(witnesses),
+      mostTrusted: holderIds.has(row.id as string),
+    };
+  });
 }
 
 export type RankCard = {

@@ -1,4 +1,5 @@
 import { Footer } from "@/app/board";
+import { TrustLevels } from "@/app/help";
 import { TabBar } from "@/app/tab-bar";
 
 export const metadata = {
@@ -100,6 +101,12 @@ export default function ScoringPage() {
           Numbers are self-reported. &ldquo;Co-signed&rdquo; means another
           lifter on the board watched the set and vouched for it from your
           page.
+        </p>
+      </Section>
+
+      <Section title="Trust badges">
+        <p className={body}>
+          <TrustLevels />
         </p>
       </Section>
 

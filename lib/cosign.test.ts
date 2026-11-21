@@ -2,7 +2,7 @@
  * Run:  node lib/cosign.test.ts
  */
 import assert from "node:assert/strict";
-import { cosignStatus, cosignText, isDisputed } from "./cosign.ts";
+import { cosignStatus, cosignText, isDisputed, trustTier } from "./cosign.ts";
 
 const a = { id: "a", name: "Sarthak" };
 const b = { id: "b", name: "Ekagrah" };
@@ -31,5 +31,19 @@ assert.equal(isDisputed(0, 2), true);
 assert.equal(isDisputed(2, 2), false);
 assert.equal(isDisputed(2, 3), true);
 assert.equal(isDisputed(4, 3), false);
+
+// Trust tiers: counted by different people across squat, bench, deadlift.
+assert.equal(trustTier([[], [], []]), null);
+assert.equal(trustTier([]), null);
+// One lift co-signed: witnessed.
+assert.equal(trustTier([[a], [], []]), "witnessed");
+// All three by one person: verified, not trusted.
+assert.equal(trustTier([[a], [a], [a]]), "verified");
+// Same two people on every lift is still only two people.
+assert.equal(trustTier([[a, b], [a, b], [a, b]]), "verified");
+// Three different people across the three: trusted.
+assert.equal(trustTier([[a], [b], [c]]), "trusted");
+// Lots of witnesses on two lifts but none on the third: only witnessed.
+assert.equal(trustTier([[a, b, c], [a, b, c], []]), "witnessed");
 
 console.log("cosign: all passed");

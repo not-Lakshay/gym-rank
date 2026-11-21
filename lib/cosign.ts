@@ -43,6 +43,36 @@ export function isDisputed(cosigns: number, doubts: number): boolean {
   return doubts >= 2 && doubts > cosigns;
 }
 
+/*
+  Trust tiers: a badge beside a lifter's name that levels up with co-signs.
+  Counted on squat, bench and deadlift, disputed lifts left out (the caller
+  passes them in as empty), and by different people, not raw co-signs, so
+  two friends co-signing each other can't farm it.
+
+    witnessed  at least one of the three lifts co-signed
+    verified   all three co-signed (the global board's bar)
+    trusted    all three co-signed, by TRUSTED_WITNESSES+ different people
+*/
+export type TrustTier = "witnessed" | "verified" | "trusted" | null;
+
+export const TRUSTED_WITNESSES = 3;
+
+/** Fewest different witnesses to hold "Most trusted" at a college. */
+export const MOST_TRUSTED_MIN = 2;
+
+export function trustTier(perLift: Witness[][]): TrustTier {
+  if (perLift.every((w) => w.length === 0)) return null;
+  if (perLift.length < 3 || perLift.some((w) => w.length === 0)) return "witnessed";
+  const people = new Set(perLift.flat().map((w) => w.id)).size;
+  return people >= TRUSTED_WITNESSES ? "trusted" : "verified";
+}
+
+export const TRUST_LABEL: Record<NonNullable<TrustTier>, string> = {
+  witnessed: "Witnessed",
+  verified: "Verified",
+  trusted: "Trusted",
+};
+
 export function cosignText(status: NonNullable<CosignStatus>): string {
   return `${status.kind === "full" ? "Fully" : "Partially"} co-signed by ${status.names.join(", ")}`;
 }

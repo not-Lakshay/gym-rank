@@ -733,3 +733,13 @@ input[type="number"] {
     animation: none;
   }
 }
+
+/* Trust badge beside a name (app/board.tsx TrustBadge). The top tier
+   glows in Neon; in Iron (--glow: 0) it's just the filled shield. */
+.trust-badge {
+  display: inline-flex;
+  align-items: center;
+}
+.trust-glow {
+  filter: drop-shadow(0 0 calc(5px * var(--glow)) var(--success));
+}

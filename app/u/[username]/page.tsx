@@ -11,6 +11,8 @@ import {
   ChevronRight,
   LifterHeaderSkeleton,
   LiftsSkeleton,
+  MostTrustedTag,
+  TrustBadge,
   navButton,
   Footer,
 } from "@/app/board";
@@ -25,9 +27,9 @@ import {
   getLifterByEmail,
   summarise,
 } from "@/lib/lifters";
-import { lifterByUsername, liftsFor, rankFor } from "@/lib/cached";
+import { lifterByUsername, liftsFor, mostTrusted, rankFor } from "@/lib/cached";
 import { batchLabel } from "@/lib/batch";
-import { cosignStatus, cosignText } from "@/lib/cosign";
+import { TRUST_LABEL, cosignStatus, cosignText, trustTier } from "@/lib/cosign";
 import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
 import { Avatar } from "@/app/avatar";
@@ -35,7 +37,7 @@ import { Barbell } from "@/app/barbell";
 import { ArrivingProfile } from "@/app/morph";
 import { Roll } from "@/app/roll";
 import { TabBar } from "@/app/tab-bar";
-import { DotsHelp, HelpPop } from "@/app/help";
+import { DotsHelp, HelpPop, TrustHelp } from "@/app/help";
 
 type Params = Promise<{ username: string }>;
 
@@ -103,11 +105,12 @@ async function Profile({ params }: { params: Params }) {
   ]);
   if (!lifter) notFound();
 
-  const [lifts, card, viewer] = await Promise.all([
+  const [lifts, card, viewer, holders] = await Promise.all([
     liftsFor(lifter.id),
     // No college, no board, no rank — and passing the id saves a lookup.
     lifter.college ? rankFor(lifter.id, lifter.college.id).catch(() => null) : null,
     session?.user?.email ? getLifterByEmail(session.user.email) : null,
+    mostTrusted().catch(() => []),
   ]);
 
   const isOwner = viewer?.id === lifter.id;
@@ -126,13 +129,15 @@ async function Profile({ params }: { params: Params }) {
 
   const summary = summarise(lifts, lifter.bodyweightKg);
   const byMovement = new Map(lifts.map((l) => [l.movement, l]));
-  const cosign = cosignStatus(
-    // A disputed lift counts as not co-signed.
-    TOTAL_MOVEMENTS.map((m) => {
-      const lift = byMovement.get(m);
-      return lift && !lift.disputed ? lift.cosigners : [];
-    }),
-  );
+  // A disputed lift counts as not co-signed.
+  const perLift = TOTAL_MOVEMENTS.map((m) => {
+    const lift = byMovement.get(m);
+    return lift && !lift.disputed ? lift.cosigners : [];
+  });
+  const cosign = cosignStatus(perLift);
+  const tier = trustTier(perLift);
+  const vouchers = new Set(perLift.flat().map((w) => w.id)).size;
+  const isMostTrusted = holders.some((h) => h.lifterId === lifter.id);
   const weightClass = weightClassFor(lifter.bodyweightKg);
   const boardHref = lifter.college ? `/c/${lifter.college.slug}` : "/colleges";
 
@@ -191,6 +196,28 @@ async function Profile({ params }: { params: Params }) {
               </p>
             </div>
           </div>
+
+          {/* The trust tier, spelled out; tap for what the levels mean. */}
+          {tier && (
+            <button
+              type="button"
+              popoverTarget="trust-help"
+              className="press mt-4 inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-full border border-rule py-1 pl-2 pr-3 text-[13px] text-chalk hover:border-chalk-faint"
+            >
+              <TrustBadge tier={tier} size={16} named />
+              <span className="font-bold">{TRUST_LABEL[tier]}</span>
+              <span className="text-chalk-dim">
+                · {vouchers} {vouchers === 1 ? "person vouches" : "people vouch"}
+              </span>
+              {isMostTrusted && lifter.college && (
+                <>
+                  <MostTrustedTag />
+                  <span className="text-chalk-dim">at {lifter.college.shortName}</span>
+                </>
+              )}
+              <span aria-hidden className="text-chalk-faint">?</span>
+            </button>
+          )}
 
           {summary.dots !== null && (
             <div className="mt-5 flex items-end gap-4">
@@ -324,6 +351,7 @@ async function Profile({ params }: { params: Params }) {
               joins the global board.
             </span>
           </HelpPop>
+          <TrustHelp />
           <HelpPop id="disputed-help">
             <span className="block font-bold text-chalk">Doubts</span>
             <span className="mt-1.5 block">

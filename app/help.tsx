@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { MostTrustedTag, TrustBadge } from "./board";
+import { MOST_TRUSTED_MIN, TRUSTED_WITNESSES } from "@/lib/cosign";
 
 /*
   Explanations at the moment they're needed, instead of a tutorial up
@@ -60,5 +62,56 @@ export function DotsHelp() {
         </Link>
       </HelpPop>
     </>
+  );
+}
+
+/**
+ * What the trust badges mean (trustTier in lib/cosign.ts). Spans, so it
+ * works inside a HelpPop and on the scoring page alike.
+ */
+export function TrustLevels() {
+  const row = "mt-2 flex items-start gap-2";
+  return (
+    <>
+      <span className="block">
+        A shield beside a name shows how many different people have vouched
+        for their squat, bench and deadlift. Co-signs from the same person
+        count once, and disputed lifts don&rsquo;t count.
+      </span>
+      <span className={row}>
+        <TrustBadge tier="witnessed" size={16} named />
+        <span><span className="font-bold text-chalk">Witnessed</span>: at least one of the three co-signed.</span>
+      </span>
+      <span className={row}>
+        <TrustBadge tier="verified" size={16} named />
+        <span><span className="font-bold text-chalk">Verified</span>: all three co-signed. That opens the global board.</span>
+      </span>
+      <span className={row}>
+        <TrustBadge tier="trusted" size={16} named />
+        <span>
+          <span className="font-bold text-chalk">Trusted</span>: all three co-signed, by{" "}
+          {TRUSTED_WITNESSES} or more different people.
+        </span>
+      </span>
+      <span className={row}>
+        <MostTrustedTag />
+        <span>
+          The lifter at each college with the most different people vouching
+          (at least {MOST_TRUSTED_MIN}). A tie goes to whoever got there first.
+        </span>
+      </span>
+    </>
+  );
+}
+
+/** The trust tiers as a popover, for the badge on a profile. Once per page. */
+export function TrustHelp() {
+  return (
+    <HelpPop id="trust-help">
+      <span className="block font-bold text-chalk">Trust badges</span>
+      <span className="mt-1.5 block">
+        <TrustLevels />
+      </span>
+    </HelpPop>
   );
 }

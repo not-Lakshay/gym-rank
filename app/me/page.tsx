@@ -10,7 +10,9 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  MostTrustedTag,
   ProfileSkeleton,
+  TrustBadge,
   navButton,
   Footer,
 } from "@/app/board";
@@ -41,7 +43,8 @@ import type { Movement } from "@/lib/movements";
 import { ordinal } from "@/lib/format";
 import { unseenCountFor } from "@/lib/notifications";
 import { batchLabel } from "@/lib/batch";
-import { cosignStatus, cosignText } from "@/lib/cosign";
+import { TRUST_LABEL, cosignStatus, cosignText, trustTier } from "@/lib/cosign";
+import { mostTrusted } from "@/lib/cached";
 import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
 import { siteUrl } from "@/lib/site";
@@ -49,7 +52,7 @@ import { ShareButton } from "@/app/share";
 import { Avatar } from "@/app/avatar";
 import { Roll } from "@/app/roll";
 import { TabBar } from "@/app/tab-bar";
-import { DotsHelp } from "@/app/help";
+import { DotsHelp, TrustHelp } from "@/app/help";
 import { ThemeSwitch } from "@/app/prefs";
 
 // `error` is set by Auth.js when a sign-in fails (pages.error in auth.ts).
@@ -153,12 +156,13 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
   // whole page is two stages: who you are, then everything about you.
   // The notifications themselves live on /notifications; here just the
   // unread count for the bell.
-  const [lifts, card, globalCard, liftBoards, unseen] = await Promise.all([
+  const [lifts, card, globalCard, liftBoards, unseen, holders] = await Promise.all([
     getLiftsFor(lifter.id),
     getRankFor(lifter.id, lifter.college.id).catch(() => null),
     getGlobalRankFor(lifter.id).catch(() => null),
     getLiftBoards({ collegeId: lifter.college.id }).catch(() => null),
     unseenCountFor(email).catch(() => 0),
+    mostTrusted().catch(() => []),
   ]);
   const standings = liftBoards ? standingsFor(liftBoards, lifter.id) : {};
 
@@ -171,6 +175,7 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
       globalCard={globalCard}
       standings={standings}
       unseen={unseen ?? 0}
+      isMostTrusted={holders.some((h) => h.lifterId === lifter.id)}
       editForm={
         // Collapsed by default and needs the 159-college list, so it
         // streams in behind the dashboard instead of holding it up.
@@ -255,6 +260,7 @@ function LifterView({
   globalCard,
   standings,
   unseen,
+  isMostTrusted,
   editForm,
 }: {
   lifter: Lifter;
@@ -264,17 +270,19 @@ function LifterView({
   globalCard: RankCard | null;
   standings: Partial<Record<Movement, { rank: number; of: number }>>;
   unseen: number;
+  isMostTrusted: boolean;
   editForm: React.ReactNode;
 }) {
   const summary = summarise(lifts, lifter.bodyweightKg);
   const byMovement = new Map(lifts.map((l) => [l.movement, l]));
-  const cosign = cosignStatus(
-    // A disputed lift counts as not co-signed.
-    TOTAL_MOVEMENTS.map((m) => {
-      const lift = byMovement.get(m);
-      return lift && !lift.disputed ? lift.cosigners : [];
-    }),
-  );
+  // A disputed lift counts as not co-signed.
+  const perLift = TOTAL_MOVEMENTS.map((m) => {
+    const lift = byMovement.get(m);
+    return lift && !lift.disputed ? lift.cosigners : [];
+  });
+  const cosign = cosignStatus(perLift);
+  const tier = trustTier(perLift);
+  const vouchers = new Set(perLift.flat().map((w) => w.id)).size;
   const weightClass = weightClassFor(lifter.bodyweightKg);
   const plate = plateFor(weightClass);
 
@@ -353,6 +361,23 @@ function LifterView({
                 · {summary.totalKg?.toFixed(0)} kg total
               </span>
             </p>
+
+            {tier && (
+              <button
+                type="button"
+                popoverTarget="trust-help"
+                className="press mt-3 inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-full border border-rule py-1 pl-2 pr-3 text-[13px] text-chalk hover:border-chalk-faint"
+              >
+                <TrustBadge tier={tier} size={16} named />
+                <span className="font-bold">{TRUST_LABEL[tier]}</span>
+                <span className="text-chalk-dim">
+                  · {vouchers} {vouchers === 1 ? "person vouches" : "people vouch"}
+                </span>
+                {isMostTrusted && <MostTrustedTag />}
+                <span aria-hidden className="text-chalk-faint">?</span>
+              </button>
+            )}
+            <TrustHelp />
 
             {card && (
               <p className="mt-3 flex items-center gap-2 text-[15px] font-bold">

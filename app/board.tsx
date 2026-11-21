@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { BoardRow, LiftRow } from "@/lib/leaderboard";
+import { TRUST_LABEL, type TrustTier } from "@/lib/cosign";
 import { MOVEMENTS, TOTAL_MOVEMENTS, type Movement } from "@/lib/movements";
 import { batchLabel, batchesFor } from "@/lib/batch";
 import { plateFor } from "@/lib/plates";
@@ -109,6 +110,8 @@ export function Board({
               </span>
             ) : null,
           sub: <BoardSub row={row} showCollege={showCollege} />,
+          trust: row.trust,
+          mostTrusted: row.mostTrusted,
         }))}
       />
     </section>
@@ -210,6 +213,9 @@ type Entry = {
   tag: React.ReactNode;
   /** The line under the name. */
   sub: React.ReactNode;
+  /** Overall boards only: the trust badge, and "Most trusted" in the list. */
+  trust?: TrustTier;
+  mostTrusted?: boolean;
 };
 
 /*
@@ -279,6 +285,7 @@ function Ranked({
                       >
                         {e.displayName}
                       </Link>
+                      <TrustBadge tier={e.trust ?? null} mostTrusted={e.mostTrusted} />
                       {e.tag}
                       {isViewer && <YouTag />}
                     </span>
@@ -351,13 +358,17 @@ function Podium({ entries, viewerId }: { entries: Entry[]; viewerId: string | nu
                   />
                 </Morph>
               </Link>
-              <Link
-                href={`/u/${e.username}`}
-                aria-label={e.displayName}
-                className="mt-2 max-w-full truncate text-[14px] font-bold underline-offset-4 hover:underline"
-              >
-                {e.displayName.split(/\s+/)[0]}
-              </Link>
+              <span className="mt-2 flex max-w-full items-center justify-center gap-1">
+                <Link
+                  href={`/u/${e.username}`}
+                  aria-label={e.displayName}
+                  className="truncate text-[14px] font-bold underline-offset-4 hover:underline"
+                >
+                  {e.displayName.split(/\s+/)[0]}
+                </Link>
+                {/* Just the shield: the podium is too narrow for "Most trusted". */}
+                <TrustBadge tier={e.trust ?? null} />
+              </span>
               {(e.where || e.id === viewerId) && (
                 <span className="flex max-w-full items-center gap-1 truncate text-[12px] text-chalk-faint">
                   {e.where}
@@ -433,6 +444,74 @@ function Crown() {
     >
       <path d="M2 4l5 4 5-7 5 7 5-4-2 11H4L2 4z" />
     </svg>
+  );
+}
+
+/*
+  The trust badge beside a name (trustTier in lib/cosign.ts): a shield
+  that fills in as co-signs come from more people. Its own shape rather
+  than a colour, since colour already means weight class and medals.
+*/
+export function TrustBadge({
+  tier,
+  mostTrusted = false,
+  size = 14,
+  named = false,
+}: {
+  tier: TrustTier;
+  mostTrusted?: boolean;
+  size?: number;
+  /** The tier name is already written next to it; skip the screen-reader copy. */
+  named?: boolean;
+}) {
+  if (!tier) return null;
+  const filled = tier !== "witnessed";
+  return (
+    <>
+      <span
+        title={TRUST_LABEL[tier]}
+        className={`trust-badge shrink-0 ${tier === "trusted" ? "trust-glow" : ""}`}
+        style={{ color: filled ? "var(--success)" : "var(--chalk-dim)" }}
+      >
+        <svg
+          aria-hidden
+          viewBox="0 0 24 24"
+          width={size}
+          height={size}
+          fill={filled ? "currentColor" : "none"}
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        >
+          <path d="M12 2.5 4.5 5.5v6c0 4.6 3.2 8.4 7.5 10 4.3-1.6 7.5-5.4 7.5-10v-6z" />
+          {tier === "trusted" ? (
+            <path
+              d="m12 7.6 1.3 2.7 2.9.4-2.1 2 .5 2.9-2.6-1.4-2.6 1.4.5-2.9-2.1-2 2.9-.4z"
+              fill="var(--iron)"
+              stroke="none"
+            />
+          ) : (
+            <path
+              d="m8.6 12 2.4 2.4 4.4-4.6"
+              fill="none"
+              stroke={filled ? "var(--iron)" : "currentColor"}
+              strokeWidth="2.2"
+              strokeLinecap="round"
+            />
+          )}
+        </svg>
+        {!named && <span className="sr-only">{TRUST_LABEL[tier]}</span>}
+      </span>
+      {mostTrusted && <MostTrustedTag />}
+    </>
+  );
+}
+
+export function MostTrustedTag() {
+  return (
+    <span className="shrink-0 whitespace-nowrap rounded-sm border border-[color-mix(in_oklab,var(--success)_55%,transparent)] bg-[color-mix(in_oklab,var(--success)_14%,transparent)] px-1.5 text-[11px] font-bold leading-[1.45] text-chalk">
+      Most trusted
+    </span>
   );
 }
 
