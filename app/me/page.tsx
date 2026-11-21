@@ -446,6 +446,18 @@ function LifterView({
         )}
       </section>
 
+      <Link
+        href="/friends"
+        className="rise mt-6 flex items-center justify-between rounded-sm border border-rule bg-iron-raised px-4 py-3 text-[14px] text-chalk-dim transition-colors hover:border-chalk-faint hover:text-chalk"
+        style={{ "--i": 1 } as React.CSSProperties}
+      >
+        <span>
+          <span className="font-bold text-chalk">Friends board</span>
+          <span> · you and the lifters you added</span>
+        </span>
+        <ChevronRight />
+      </Link>
+
       {/* Up here, by the name and avatar it changes, not under everything. */}
       <Drawer summary="Edit profile" className="rise pt-6" style={{ "--i": 1 } as React.CSSProperties}>
         <div className="pt-5">{editForm}</div>

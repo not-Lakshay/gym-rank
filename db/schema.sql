@@ -166,3 +166,15 @@ create unique index if not exists notifications_daily_dedupe_idx
     lifter_id, actor_id, kind, coalesce(movement, ''),
     ((created_at at time zone 'utc')::date)
   );
+
+-- Friends: people you added, for your own Friends board. One-way, like a
+-- follow: adding someone puts them on your board, not you on theirs, so
+-- there are no requests to accept. Co-signs ignore it on purpose: a
+-- witness is anyone at your college, not someone you picked.
+create table if not exists friends (
+  lifter_id  uuid not null references lifters(id) on delete cascade,
+  friend_id  uuid not null references lifters(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (lifter_id, friend_id),
+  check (lifter_id <> friend_id)
+);

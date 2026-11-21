@@ -13,7 +13,8 @@ import {
   LiftsSkeleton,
   navButton,
 } from "@/app/board";
-import { CosignButton, DoubtButton } from "@/app/forms";
+import { CosignButton, DoubtButton, FriendButton } from "@/app/forms";
+import { isFriend } from "@/lib/friends";
 import { lifterMetadata } from "@/app/lifter-metadata";
 import { SignInForm } from "@/app/sign-in";
 import {
@@ -113,7 +114,11 @@ async function Profile({ params }: { params: Params }) {
     viewer?.college != null && viewer.college.id === lifter.college?.id;
   const canCosign = viewer !== null && !isOwner && sameCollege;
   // Private to the viewer: the page never learns who else doubted.
-  const myDoubts = canCosign ? await doubtedBy(viewer.id, lifter.id) : new Set<string>();
+  const [myDoubts, friended] = await Promise.all([
+    canCosign ? doubtedBy(viewer.id, lifter.id) : new Set<string>(),
+    // Friends work across colleges; only needs a viewer who isn't this lifter.
+    viewer && !isOwner ? isFriend(viewer.id, lifter.id).catch(() => false) : false,
+  ]);
 
   const summary = summarise(lifts, lifter.bodyweightKg);
   const byMovement = new Map(lifts.map((l) => [l.movement, l]));
@@ -129,10 +134,13 @@ async function Profile({ params }: { params: Params }) {
 
   return (
     <div>
-      <Link href={boardHref} className={navButton}>
-        <ChevronLeft />
-        {lifter.college ? `${lifter.college.shortName} board` : "All colleges"}
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link href={boardHref} className={navButton}>
+          <ChevronLeft />
+          {lifter.college ? `${lifter.college.shortName} board` : "All colleges"}
+        </Link>
+        {viewer && !isOwner && <FriendButton friendId={lifter.id} isFriend={friended} />}
+      </div>
       <div className="pt-8">
         {isOwner && (
           <Link

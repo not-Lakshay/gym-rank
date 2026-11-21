@@ -29,7 +29,11 @@ export type BoardRow = {
  * everyone knows who actually squats 200, and a board of strangers'
  * self-reported numbers does not. Co-signing is the price of entry.
  */
-export type BoardScope = { collegeId: number } | { global: true };
+export type BoardScope =
+  | { collegeId: number }
+  | { global: true }
+  // A lifter and everyone they added (lib/friends.ts), from any college.
+  | { friendsOf: string };
 
 /**
  * The DOTS polynomial, as a SQL fragment.
@@ -45,6 +49,7 @@ export type BoardScope = { collegeId: number } | { global: true };
 export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
   const collegeId = "collegeId" in scope ? scope.collegeId : null;
   const verifiedOnly = "global" in scope;
+  const friendsOf = "friendsOf" in scope ? scope.friendsOf : null;
 
   const rows = await sql`
     with sbd as (
@@ -86,6 +91,8 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
       ) cs
       where l.movement in ('squat', 'bench', 'deadlift')
         and (${collegeId}::int is null or lf.college_id = ${collegeId}::int)
+        and (${friendsOf}::uuid is null or lf.id = ${friendsOf}::uuid
+             or lf.id in (select friend_id from friends where lifter_id = ${friendsOf}::uuid))
       group by lf.id, lf.username, lf.display_name, lf.bodyweight_kg, lf.batch_year, lf.avatar, c.slug, c.short_name
       having count(*) = 3
         and (
@@ -305,6 +312,7 @@ export type LiftBoards = Record<Movement, LiftRow[]>;
 export async function getLiftBoards(scope: BoardScope): Promise<LiftBoards> {
   const collegeId = "collegeId" in scope ? scope.collegeId : null;
   const verifiedOnly = "global" in scope;
+  const friendsOf = "friendsOf" in scope ? scope.friendsOf : null;
 
   const rows = await sql`
     with base as (
@@ -335,6 +343,8 @@ export async function getLiftBoards(scope: BoardScope): Promise<LiftBoards> {
         select n.cosigns > 0 and not (n.doubts >= 2 and n.doubts > n.cosigns) as verified
       ) v
       where (${collegeId}::int is null or lf.college_id = ${collegeId}::int)
+        and (${friendsOf}::uuid is null or lf.id = ${friendsOf}::uuid
+             or lf.id in (select friend_id from friends where lifter_id = ${friendsOf}::uuid))
         and (not ${verifiedOnly}::boolean or v.verified)
     ),
     scored as (

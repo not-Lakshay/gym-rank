@@ -28,8 +28,9 @@ import {
 import { sendWelcome } from "@/lib/mail";
 import type { Movement } from "@/lib/movements";
 import { notifyCosigned, notifyDoubted, notifyPassed } from "@/lib/notifications";
+import { addFriend, removeFriend } from "@/lib/friends";
 import { normalizeUsername, validateUsername } from "@/lib/username";
-import { liftChanges, recordsBroken, validateBodyweight, validateLift } from "@/lib/validate";
+import { isUuid, liftChanges, recordsBroken, validateBodyweight, validateLift } from "@/lib/validate";
 
 /**
  * Every action returns this instead of throwing. A thrown error inside a
@@ -401,5 +402,30 @@ export async function deleteMyAccountAction(
 
   updateTag(DATA_TAG);
   await signOut({ redirectTo: "/" });
+  return ok();
+}
+
+/** Add someone to your Friends board, or take them off it. */
+export async function toggleFriendAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const email = await requireEmail();
+  if (!email) return fail("Sign in first.");
+  const me = await getLifterByEmail(email);
+  if (!me) return fail("Set up your own profile first.");
+
+  const friendId = String(formData.get("friendId") ?? "");
+  if (!isUuid(friendId)) return fail("No such lifter.");
+  if (friendId === me.id) return fail("That's you.");
+
+  if (formData.get("remove")) {
+    await removeFriend(me.id, friendId);
+  } else {
+    await addFriend(me.id, friendId);
+    await recordEvent("friend_added", me.id);
+  }
+  updateTag(DATA_TAG);
+  refresh();
   return ok();
 }

@@ -14,6 +14,7 @@ import {
   deleteMyAccountAction,
   doubtLiftAction,
   removeLiftAction,
+  toggleFriendAction,
   saveLiftsAction,
   saveProfileAction,
 } from "@/app/actions";
@@ -1055,6 +1056,31 @@ export function CosignButton({ liftId }: { liftId: string }) {
       <input type="hidden" name="liftId" value={liftId} />
       <button type="submit" disabled={pending} className={secondary}>
         {pending ? "…" : "I saw this"}
+      </button>
+      {state.error && (
+        <p role="alert" className="mt-1 text-[11px] text-[var(--danger)]">
+          {state.error}
+        </p>
+      )}
+    </form>
+  );
+}
+
+/** Add to or remove from your Friends board. */
+export function FriendButton({ friendId, isFriend }: { friendId: string; isFriend: boolean }) {
+  const [state, action, pending] = useActionState(toggleFriendAction, initial);
+
+  return (
+    <form action={action}>
+      <input type="hidden" name="friendId" value={friendId} />
+      {isFriend && <input type="hidden" name="remove" value="1" />}
+      <button
+        type="submit"
+        disabled={pending}
+        aria-pressed={isFriend}
+        className={isFriend ? `${secondary} text-chalk-dim` : primary}
+      >
+        {pending ? "…" : isFriend ? "✓ Friends" : "+ Add friend"}
       </button>
       {state.error && (
         <p role="alert" className="mt-1 text-[11px] text-[var(--danger)]">
