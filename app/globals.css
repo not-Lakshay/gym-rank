@@ -622,11 +622,9 @@ h1,
   pointer-events: none;
 }
 
-/* Room for the tab bar along the bottom of a phone (app/tab-bar.tsx). */
-@media (width < 48rem) {
-  body {
-    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
-  }
+/* Room for the tab bar along the bottom (app/tab-bar.tsx). */
+body {
+  padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
 }
 
 /* Medal rank discs for the top three. */

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 /*
-  The bottom tab bar on phones, so the app moves like an app. Each page
+  The bottom tab bar, on every screen size, so the app moves like an app. Each page
   says which tab it is rather than the bar reading the URL: that keeps the
   bar static (no client JavaScript, and nothing to suspend on routes with
   dynamic params). "Board" goes to /, which sends a signed-in lifter
@@ -44,7 +44,7 @@ export function TabBar({ active }: { active?: Tab }) {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-rule bg-iron pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-rule bg-iron pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="mx-auto flex max-w-md">
         {TABS.map((tab) => {
