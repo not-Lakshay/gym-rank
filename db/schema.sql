@@ -154,7 +154,7 @@ create table if not exists notifications (
 -- 'doubt' was added later; the inline check above only applies to a fresh table.
 alter table notifications drop constraint if exists notifications_kind_check;
 alter table notifications add constraint notifications_kind_check
-  check (kind in ('cosign', 'passed', 'doubt'));
+  check (kind in ('cosign', 'passed', 'doubt', 'friend_request', 'friend_accepted'));
 
 create index if not exists notifications_lifter_created_idx
   on notifications (lifter_id, created_at desc);
@@ -167,14 +167,40 @@ create unique index if not exists notifications_daily_dedupe_idx
     ((created_at at time zone 'utc')::date)
   );
 
--- Friends: people you added, for your own Friends board. One-way, like a
--- follow: adding someone puts them on your board, not you on theirs, so
--- there are no requests to accept. Co-signs ignore it on purpose: a
--- witness is anyone at your college, not someone you picked.
+-- Friends, for the Friends board. Two-way: a friendship is stored as both
+-- rows (a→b and b→a), written together when a request is accepted and
+-- deleted together on removal, so "my friends" is one lookup by lifter_id.
+-- Co-signs ignore it on purpose: a witness is anyone at your college, not
+-- someone you picked.
 create table if not exists friends (
   lifter_id  uuid not null references lifters(id) on delete cascade,
   friend_id  uuid not null references lifters(id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (lifter_id, friend_id),
   check (lifter_id <> friend_id)
+);
+
+-- A pending "add friend". Accepting deletes it and writes both friends rows.
+create table if not exists friend_requests (
+  from_id    uuid not null references lifters(id) on delete cascade,
+  to_id      uuid not null references lifters(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (from_id, to_id),
+  check (from_id <> to_id)
+);
+
+create index if not exists friend_requests_to_idx on friend_requests (to_id);
+
+-- Friends started one-way. A one-way row becomes a pending request, so the
+-- other person can accept it. Both are no-ops once every row is mutual.
+insert into friend_requests (from_id, to_id, created_at)
+select f.lifter_id, f.friend_id, f.created_at from friends f
+where not exists (
+  select 1 from friends r where r.lifter_id = f.friend_id and r.friend_id = f.lifter_id
+)
+on conflict do nothing;
+
+delete from friends f
+where not exists (
+  select 1 from friends r where r.lifter_id = f.friend_id and r.friend_id = f.lifter_id
 );

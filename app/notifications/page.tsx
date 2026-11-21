@@ -13,6 +13,9 @@ import {
 import { Bone, ChevronLeft, Footer, button, navButton } from "@/app/board";
 import { SignInForm } from "@/app/sign-in";
 import { TabBar } from "@/app/tab-bar";
+import { Avatar } from "@/app/avatar";
+import { FriendButton } from "@/app/forms";
+import { incomingRequests, type FriendRequest } from "@/lib/friends";
 
 export const metadata = { title: "Notifications — Gym Rank", robots: { index: false } };
 
@@ -34,7 +37,7 @@ export default function NotificationsPage() {
             Notifications
           </h1>
           <p className="mt-2.5 text-[14px] leading-snug text-chalk-dim">
-            Co-signs, doubts, and anyone who passes your score.
+            Friend requests, co-signs, doubts, and anyone who passes you.
           </p>
         </header>
         <Suspense
@@ -70,7 +73,7 @@ async function Alerts() {
   const lifter = await getLifterByEmail(email);
   if (!lifter) {
     return (
-      <Empty text="Set up your profile and add a lift. Notifications start once you&apos;re on a board.">
+      <Empty text="Set up your profile and add a lift. Notifications start once you're on a board.">
         <Link href="/me" className={button}>
           Set up profile
         </Link>
@@ -78,14 +81,15 @@ async function Alerts() {
     );
   }
 
-  const notifications = await getNotificationsFor(lifter.id, 30).catch(
-    () => [] as Notification[],
-  );
+  const [notifications, requests] = await Promise.all([
+    getNotificationsFor(lifter.id, 30).catch(() => [] as Notification[]),
+    incomingRequests(lifter.id).catch(() => [] as FriendRequest[]),
+  ]);
   if (notifications.some((n) => !n.seen)) {
     after(() => markNotificationsSeen(lifter.id).catch(() => {}));
   }
 
-  if (notifications.length === 0) {
+  if (notifications.length === 0 && requests.length === 0) {
     return (
       <Empty text="Nothing yet. Get a gym-mate to co-sign a lift and it'll show up here." />
     );
@@ -96,6 +100,7 @@ async function Alerts() {
 
   return (
     <div className="rise" style={{ "--i": 1 } as React.CSSProperties}>
+      {requests.length > 0 && <Requests items={requests} />}
       {fresh.length > 0 && <Group title="New" items={fresh} />}
       {earlier.length > 0 && <Group title="Earlier" items={earlier} />}
       <p className="pt-4 text-[12px] text-chalk-faint">Notifications from the last 30 days.</p>
@@ -109,6 +114,33 @@ function Empty({ text, children }: { text: string; children?: React.ReactNode })
       <p className="text-[14px] leading-relaxed text-chalk-dim">{text}</p>
       {children}
     </div>
+  );
+}
+
+/** Waiting on you: accept puts you on each other's Friends board. */
+function Requests({ items }: { items: FriendRequest[] }) {
+  return (
+    <section className="pb-6">
+      <h2 className="caption pb-2">Friend requests</h2>
+      <ol className="flex flex-col gap-2">
+        {items.map((r) => (
+          <li
+            key={r.fromId}
+            className="flex items-center gap-3 rounded-sm border border-chalk-faint bg-iron-raised p-3"
+          >
+            <Avatar name={r.displayName} ring="var(--rule)" size={36} avatar={r.avatar} />
+            <Link href={`/u/${r.username}`} className="min-w-0 flex-1 text-[14px] leading-snug">
+              <span className="block truncate font-bold text-chalk">{r.displayName}</span>
+              <span className="block truncate text-[12px] text-chalk-dim">
+                @{r.username}
+                {r.collegeShort && ` · ${r.collegeShort}`}
+              </span>
+            </Link>
+            <FriendButton friendId={r.fromId} relation="received" compact />
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
@@ -148,6 +180,14 @@ const KIND_STYLE: Record<Notification["kind"], { color: string; path: React.Reac
     color: "var(--accent)",
     path: <path d="M12 19V5m0 0-6 6m6-6 6 6" />,
   },
+  friend_request: {
+    color: "var(--accent)",
+    path: <path d="M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM3 21c0-3.9 3.1-6.5 7-6.5M19 14v6m-3-3h6" />,
+  },
+  friend_accepted: {
+    color: "var(--success)",
+    path: <path d="M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM3 21c0-3.9 3.1-6.5 7-6.5m4.5 3.5 2.5 2.5 4.5-5" />,
+  },
 };
 
 function KindIcon({ kind }: { kind: Notification["kind"] }) {
@@ -185,6 +225,10 @@ function NoticeText({ notice }: { notice: Notification }) {
   if (notice.kind === "cosign") return <>{who} co-signed your {label}.</>;
   if (notice.kind === "doubt") {
     return <>A gym-mate doubted your {label}. Keep more co-signs than doubts on it.</>;
+  }
+  if (notice.kind === "friend_request") return <>{who} sent you a friend request.</>;
+  if (notice.kind === "friend_accepted") {
+    return <>{who} accepted your friend request. You&apos;re on each other&apos;s Friends board.</>;
   }
   return <>{who} passed your score on the board.</>;
 }

@@ -1,15 +1,22 @@
-import Link from "next/link";
+import { TabLink } from "./tab-link";
 
 /*
   The bottom tab bar, on every screen size, so the app moves like an app. Each page
   says which tab it is rather than the bar reading the URL: that keeps the
-  bar static (no client JavaScript, and nothing to suspend on routes with
-  dynamic params). "Board" goes to /, which sends a signed-in lifter
-  straight on to their own college's board.
+  bar static (nothing to suspend on routes with dynamic params). "Board"
+  goes to /, which sends a signed-in lifter straight on to their own
+  college's board. Tapping the current tab scrolls to the top (tab-link.tsx).
 */
 type Tab = "board" | "global" | "you";
 
-const TABS: { id: Tab; href: string; label: string; icon: React.ReactNode }[] = [
+const TABS: {
+  id: Tab;
+  href: string;
+  /** Scroll-to-top only on this path; unset means any page marked with the tab. */
+  home?: string;
+  label: string;
+  icon: React.ReactNode;
+}[] = [
   {
     id: "board",
     href: "/",
@@ -19,6 +26,7 @@ const TABS: { id: Tab; href: string; label: string; icon: React.ReactNode }[] = 
   {
     id: "global",
     href: "/global",
+    home: "/global",
     label: "Global",
     icon: (
       <>
@@ -30,6 +38,7 @@ const TABS: { id: Tab; href: string; label: string; icon: React.ReactNode }[] = 
   {
     id: "you",
     href: "/me",
+    home: "/me",
     label: "You",
     icon: (
       <>
@@ -51,9 +60,10 @@ export function TabBar({ active }: { active?: Tab }) {
           const current = tab.id === active;
           return (
             <li key={tab.id} className="flex-1">
-              <Link
+              <TabLink
                 href={tab.href}
-                aria-current={current ? "page" : undefined}
+                current={current}
+                home={tab.home}
                 className={`press flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-bold ${
                   current
                     ? "text-accent [filter:drop-shadow(0_0_calc(6px*var(--glow))_var(--accent))]"
@@ -73,7 +83,7 @@ export function TabBar({ active }: { active?: Tab }) {
                   {tab.icon}
                 </svg>
                 {tab.label}
-              </Link>
+              </TabLink>
             </li>
           );
         })}

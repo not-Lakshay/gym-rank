@@ -446,6 +446,30 @@ function LifterView({
         )}
       </section>
 
+      {/* Folded away once there's something in it, so the page reads at a glance. */}
+      <Drawer
+        summary="Your lifts"
+        defaultOpen={lifts.length === 0}
+        className="rise pt-8"
+        style={{ "--i": 2 } as React.CSSProperties}
+      >
+        {cosign && (
+          <p className="flex items-center gap-1.5 pt-3 text-[13px] text-chalk-dim">
+            <span className={cosign.kind === "full" ? "" : "opacity-50"}>
+              <Check />
+            </span>
+            {cosignText(cosign)}
+          </p>
+        )}
+
+        <LiftsForm
+          lifts={Object.fromEntries(byMovement)}
+          standings={standings}
+          boardHref={`/c/${college.slug}`}
+          bodyweightKg={lifter.bodyweightKg}
+        />
+      </Drawer>
+
       <Link
         href="/friends"
         className="rise mt-6 flex items-center justify-between rounded-sm border border-rule bg-iron-raised px-4 py-3 text-[14px] text-chalk-dim transition-colors hover:border-chalk-faint hover:text-chalk"
@@ -453,7 +477,7 @@ function LifterView({
       >
         <span>
           <span className="font-bold text-chalk">Friends board</span>
-          <span> · you and the lifters you added</span>
+          <span> · you and your friends</span>
         </span>
         <ChevronRight />
       </Link>
@@ -509,30 +533,6 @@ function LifterView({
           </ol>
         </section>
       )}
-
-      {/* Folded away once there's something in it, so the page reads at a glance. */}
-      <Drawer
-        summary="Your lifts"
-        defaultOpen={lifts.length === 0}
-        className="rise pt-10"
-        style={{ "--i": 2 } as React.CSSProperties}
-      >
-        {cosign && (
-          <p className="flex items-center gap-1.5 pt-3 text-[13px] text-chalk-dim">
-            <span className={cosign.kind === "full" ? "" : "opacity-50"}>
-              <Check />
-            </span>
-            {cosignText(cosign)}
-          </p>
-        )}
-
-        <LiftsForm
-          lifts={Object.fromEntries(byMovement)}
-          standings={standings}
-          boardHref={`/c/${college.slug}`}
-          bodyweightKg={lifter.bodyweightKg}
-        />
-      </Drawer>
 
       <section className="rise pt-10" style={{ "--i": 3 } as React.CSSProperties}>
         <h2 className="border-b border-rule pb-2 caption">

@@ -14,7 +14,7 @@ import {
   navButton,
 } from "@/app/board";
 import { CosignButton, DoubtButton, FriendButton } from "@/app/forms";
-import { isFriend } from "@/lib/friends";
+import { relationshipWith } from "@/lib/friends";
 import { lifterMetadata } from "@/app/lifter-metadata";
 import { SignInForm } from "@/app/sign-in";
 import {
@@ -114,10 +114,12 @@ async function Profile({ params }: { params: Params }) {
     viewer?.college != null && viewer.college.id === lifter.college?.id;
   const canCosign = viewer !== null && !isOwner && sameCollege;
   // Private to the viewer: the page never learns who else doubted.
-  const [myDoubts, friended] = await Promise.all([
+  const [myDoubts, relation] = await Promise.all([
     canCosign ? doubtedBy(viewer.id, lifter.id) : new Set<string>(),
     // Friends work across colleges; only needs a viewer who isn't this lifter.
-    viewer && !isOwner ? isFriend(viewer.id, lifter.id).catch(() => false) : false,
+    viewer && !isOwner
+      ? relationshipWith(viewer.id, lifter.id).catch(() => null)
+      : null,
   ]);
 
   const summary = summarise(lifts, lifter.bodyweightKg);
@@ -139,7 +141,7 @@ async function Profile({ params }: { params: Params }) {
           <ChevronLeft />
           {lifter.college ? `${lifter.college.shortName} board` : "All colleges"}
         </Link>
-        {viewer && !isOwner && <FriendButton friendId={lifter.id} isFriend={friended} />}
+        {relation && <FriendButton friendId={lifter.id} relation={relation} />}
       </div>
       <div className="pt-8">
         {isOwner && (

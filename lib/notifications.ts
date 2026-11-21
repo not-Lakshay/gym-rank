@@ -4,7 +4,7 @@ import type { Movement } from "./movements";
 
 export type Notification = {
   id: number;
-  kind: "cosign" | "passed" | "doubt";
+  kind: "cosign" | "passed" | "doubt" | "friend_request" | "friend_accepted";
   actorName: string | null;
   actorUsername: string | null;
   actorId: string | null;
@@ -66,6 +66,20 @@ export async function markNotificationsSeen(lifterId: string): Promise<void> {
   await sql`
     update notifications set seen_at = now()
     where lifter_id = ${lifterId} and seen_at is null
+  `;
+}
+
+/** A friend request arrived, or one this lifter sent was accepted. */
+export async function notifyFriend(params: {
+  lifterId: string;
+  actorId: string;
+  kind: "friend_request" | "friend_accepted";
+}): Promise<void> {
+  const { lifterId, actorId, kind } = params;
+  await sql`
+    insert into notifications (lifter_id, actor_id, kind)
+    values (${lifterId}, ${actorId}, ${kind})
+    on conflict do nothing
   `;
 }
 

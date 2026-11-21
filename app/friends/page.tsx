@@ -3,7 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { auth } from "@/auth";
 import { leaderboard, liftBoardsFor } from "@/lib/cached";
-import { friendCount } from "@/lib/friends";
+import { friendCount, incomingRequests } from "@/lib/friends";
 import { getLifterByEmail } from "@/lib/lifters";
 import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
@@ -12,6 +12,7 @@ import {
   BoardSkeleton,
   BoardTabs,
   ChevronLeft,
+  ChevronRight,
   ClassBoards,
   Footer,
   LiftTab,
@@ -25,7 +26,7 @@ import { TabBar } from "@/app/tab-bar";
 export const metadata = { title: "Friends board — Gym Rank", robots: { index: false } };
 
 /*
-  You and everyone you added (lib/friends.ts), from any college. Like a
+  You and your friends (lib/friends.ts), from any college. Like a
   college board, it ranks everyone with a full squat/bench/deadlift total;
   co-signs aren't required, since you know these people.
 */
@@ -44,7 +45,7 @@ export default function FriendsPage({ searchParams }: { searchParams: SearchPara
             Friends board
           </h1>
           <p className="mt-2 text-[14px] leading-relaxed text-chalk-dim">
-            You and the lifters you added, from any college.
+            You and your friends, from any college.
           </p>
         </header>
 
@@ -72,7 +73,7 @@ function Note({ text, children }: { text: string; children?: React.ReactNode }) 
 }
 
 const HOW_TO_ADD =
-  "To add a friend, open their profile from any board and tap “+ Add friend”.";
+  "To add a friend, open their profile from any board and tap “+ Add friend”. They join once they accept.";
 
 async function FriendsBoard({ searchParams }: { searchParams: SearchParams }) {
   await connection();
@@ -99,25 +100,51 @@ async function FriendsBoard({ searchParams }: { searchParams: SearchParams }) {
   const scope = { friendsOf: viewer.id };
   const { tab: rawTab } = await searchParams;
   const tab = tabFrom(rawTab);
-  const [rows, liftBoards, friends] = await Promise.all([
+  const [rows, liftBoards, friends, requests] = await Promise.all([
     leaderboard(scope),
     liftBoardsFor(scope),
     friendCount(viewer.id).catch(() => 0),
+    incomingRequests(viewer.id).catch(() => []),
   ]);
 
+  // Requests waiting on you are answered on the notifications page.
+  const waiting = requests.length > 0 && (
+    <Link
+      href="/notifications"
+      className="rise mt-6 flex items-center justify-between rounded-sm border border-chalk-faint bg-iron-raised px-4 py-3 text-[14px] text-chalk"
+      style={{ "--i": 1 } as React.CSSProperties}
+    >
+      <span>
+        <span className="font-bold">
+          {requests.length} friend {requests.length === 1 ? "request" : "requests"}
+        </span>
+        <span className="text-chalk-dim"> waiting for you</span>
+      </span>
+      <ChevronRight />
+    </Link>
+  );
+
   if (friends === 0) {
-    return <Note text={`You haven't added anyone yet. ${HOW_TO_ADD}`} />;
+    return (
+      <>
+        {waiting}
+        <Note text={`No friends yet. ${HOW_TO_ADD}`} />
+      </>
+    );
   }
 
   const viewerClass = weightClassFor(viewer.bodyweightKg);
   const tabs = (
-    <div className="rise pt-6" style={{ "--i": 1 } as React.CSSProperties}>
-      <BoardTabs base="/friends" active={tab} />
-    </div>
+    <>
+      {waiting}
+      <div className="rise pt-6" style={{ "--i": 1 } as React.CSSProperties}>
+        <BoardTabs base="/friends" active={tab} />
+      </div>
+    </>
   );
   const hint = (
     <p className="pt-6 text-[12px] leading-relaxed text-chalk-faint">
-      {friends} {friends === 1 ? "friend" : "friends"} added. {HOW_TO_ADD}
+      {friends} {friends === 1 ? "friend" : "friends"}. {HOW_TO_ADD}
     </p>
   );
 

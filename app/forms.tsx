@@ -14,12 +14,14 @@ import {
   deleteMyAccountAction,
   doubtLiftAction,
   removeLiftAction,
-  toggleFriendAction,
+  friendAction,
   saveLiftsAction,
   saveProfileAction,
 } from "@/app/actions";
 import { MOVEMENTS, TOTAL_MOVEMENTS, type Movement } from "@/lib/movements";
 import type { Lift } from "@/lib/lifters";
+// Type only: lib/friends pulls in the database client, which must stay server-side.
+import type { Relationship } from "@/lib/friends";
 import { STANDARD_BODYWEIGHTS, estimatedLift, noviceOneRepMax } from "@/lib/standards";
 import { estimatedOneRepMax } from "@/lib/scoring";
 import { siteLabel } from "@/lib/site";
@@ -1066,22 +1068,71 @@ export function CosignButton({ liftId }: { liftId: string }) {
   );
 }
 
-/** Add to or remove from your Friends board. */
-export function FriendButton({ friendId, isFriend }: { friendId: string; isFriend: boolean }) {
-  const [state, action, pending] = useActionState(toggleFriendAction, initial);
+/**
+ * The friend button, by where you stand with this lifter (lib/friends.ts):
+ * add, request sent (tap to cancel), accept or decline theirs, or friends
+ * (two taps to remove, so a stray tap can't unfriend). Each button carries
+ * its own `intent`; the server action reads whichever was pressed.
+ */
+export function FriendButton({
+  friendId,
+  relation,
+  compact = false,
+}: {
+  friendId: string;
+  relation: Relationship;
+  /** Smaller buttons, for a list of requests. */
+  compact?: boolean;
+}) {
+  const [state, action, pending] = useActionState(friendAction, initial);
+  const [armed, setArmed] = useState(false);
+  const size = compact ? "min-h-9 px-3 text-[13px]" : "";
+  const main = `${primary} ${size}`;
+  const quiet = `${secondary} ${size} text-chalk-dim`;
 
   return (
-    <form action={action}>
+    <form action={action} onSubmit={() => setArmed(false)} className="flex flex-col items-end">
       <input type="hidden" name="friendId" value={friendId} />
-      {isFriend && <input type="hidden" name="remove" value="1" />}
-      <button
-        type="submit"
-        disabled={pending}
-        aria-pressed={isFriend}
-        className={isFriend ? `${secondary} text-chalk-dim` : primary}
-      >
-        {pending ? "…" : isFriend ? "✓ Friends" : "+ Add friend"}
-      </button>
+      <div className="flex gap-2">
+        {pending ? (
+          <span className={quiet} aria-live="polite">…</span>
+        ) : relation === "none" ? (
+          <button type="submit" name="intent" value="request" className={main}>
+            + Add friend
+          </button>
+        ) : relation === "sent" ? (
+          <button type="submit" name="intent" value="cancel" className={quiet}>
+            Requested · Cancel
+          </button>
+        ) : relation === "received" ? (
+          <>
+            <button type="submit" name="intent" value="accept" className={main}>
+              Accept
+            </button>
+            <button type="submit" name="intent" value="decline" className={quiet}>
+              Decline
+            </button>
+          </>
+        ) : armed ? (
+          <>
+            <button
+              type="submit"
+              name="intent"
+              value="remove"
+              className={`press inline-flex min-h-11 items-center rounded-sm bg-[var(--danger)] px-4 text-[14px] font-bold text-white hover:opacity-85 ${size}`}
+            >
+              Remove friend
+            </button>
+            <button type="button" onClick={() => setArmed(false)} className={quiet}>
+              Keep
+            </button>
+          </>
+        ) : (
+          <button type="button" onClick={() => setArmed(true)} className={quiet}>
+            ✓ Friends
+          </button>
+        )}
+      </div>
       {state.error && (
         <p role="alert" className="mt-1 text-[11px] text-[var(--danger)]">
           {state.error}

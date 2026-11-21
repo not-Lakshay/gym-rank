@@ -27,8 +27,14 @@ import {
 } from "@/lib/lifters";
 import { sendWelcome } from "@/lib/mail";
 import type { Movement } from "@/lib/movements";
-import { notifyCosigned, notifyDoubted, notifyPassed } from "@/lib/notifications";
-import { addFriend, removeFriend } from "@/lib/friends";
+import { notifyCosigned, notifyDoubted, notifyFriend, notifyPassed } from "@/lib/notifications";
+import {
+  acceptRequest,
+  cancelRequest,
+  declineRequest,
+  removeFriend,
+  requestFriend,
+} from "@/lib/friends";
 import { normalizeUsername, validateUsername } from "@/lib/username";
 import { isUuid, liftChanges, recordsBroken, validateBodyweight, validateLift } from "@/lib/validate";
 
@@ -405,8 +411,13 @@ export async function deleteMyAccountAction(
   return ok();
 }
 
-/** Add someone to your Friends board, or take them off it. */
-export async function toggleFriendAction(
+const FRIEND_INTENTS = ["request", "cancel", "accept", "decline", "remove"] as const;
+
+/**
+ * Every friend step, by `intent`: send a request, take it back, accept or
+ * decline one sent to you, or unfriend. `friendId` is the other lifter.
+ */
+export async function friendAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
@@ -416,16 +427,33 @@ export async function toggleFriendAction(
   if (!me) return fail("Set up your own profile first.");
 
   const friendId = String(formData.get("friendId") ?? "");
+  const intent = String(formData.get("intent") ?? "");
   if (!isUuid(friendId)) return fail("No such lifter.");
   if (friendId === me.id) return fail("That's you.");
+  if (!(FRIEND_INTENTS as readonly string[]).includes(intent)) return fail("Unknown action.");
 
-  if (formData.get("remove")) {
-    await removeFriend(me.id, friendId);
+  if (intent === "request") {
+    const result = await requestFriend(me.id, friendId);
+    if (result === "sent") {
+      await recordEvent("friend_requested", me.id);
+      await quietly(() => notifyFriend({ lifterId: friendId, actorId: me.id, kind: "friend_request" }));
+    } else if (result === "accepted") {
+      await recordEvent("friend_accepted", me.id);
+      await quietly(() => notifyFriend({ lifterId: friendId, actorId: me.id, kind: "friend_accepted" }));
+    }
+  } else if (intent === "accept") {
+    if (!(await acceptRequest(me.id, friendId))) return fail("That request is gone.");
+    await recordEvent("friend_accepted", me.id);
+    await quietly(() => notifyFriend({ lifterId: friendId, actorId: me.id, kind: "friend_accepted" }));
+  } else if (intent === "decline") {
+    await declineRequest(me.id, friendId);
+  } else if (intent === "cancel") {
+    await cancelRequest(me.id, friendId);
   } else {
-    await addFriend(me.id, friendId);
-    await recordEvent("friend_added", me.id);
+    await removeFriend(me.id, friendId);
   }
-  updateTag(DATA_TAG);
+
+  updateTag(DATA_TAG); // Friends boards are cached
   refresh();
   return ok();
 }
