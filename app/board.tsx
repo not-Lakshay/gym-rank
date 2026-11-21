@@ -115,7 +115,8 @@ export function Board({
                 {batchLabel(row.batchYear)}
               </span>
             ) : null,
-          sub: <BoardSub row={row} showCollege={showCollege} />,
+          // Null, not an empty element, on a college board: the row checks it.
+          sub: showCollege ? <BoardSub row={row} /> : null,
           trust: row.trust,
           mostTrusted: row.mostTrusted,
         }))}
@@ -127,8 +128,7 @@ export function Board({
 /* The line under a name on the overall board: just the college, on
    cross-college boards. The handle is one tap away on the profile, and
    the trust badge beside the name says how the lifts are vouched for. */
-function BoardSub({ row, showCollege }: { row: BoardRow; showCollege: boolean }) {
-  if (!showCollege) return null;
+function BoardSub({ row }: { row: BoardRow }) {
   return (
     <Link
       href={`/c/${row.collegeSlug}`}
@@ -263,11 +263,15 @@ function Ranked({
                       >
                         {e.displayName}
                       </Link>
-                      <TrustBadge tier={e.trust ?? null} mostTrusted={e.mostTrusted} />
+                      <TrustBadge tier={e.trust ?? null} />
                       {e.tag}
                       {isViewer && <YouTag />}
                     </span>
+                    {/* "Most trusted" goes on this line, not beside the name:
+                        on a phone it squeezed the name down to nothing. */}
                     <span className="flex min-w-0 items-center gap-1 text-[12px] text-chalk-dim">
+                      {e.mostTrusted && <MostTrustedTag />}
+                      {e.mostTrusted && e.sub && <span aria-hidden className="text-chalk-faint">·</span>}
                       {e.sub}
                     </span>
                     <span aria-hidden className="mt-1.5 block h-[3px] rounded-full bg-rule">
