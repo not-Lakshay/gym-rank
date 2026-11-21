@@ -29,7 +29,7 @@ import { sendWelcome } from "@/lib/mail";
 import type { Movement } from "@/lib/movements";
 import { notifyCosigned, notifyDoubted, notifyPassed } from "@/lib/notifications";
 import { normalizeUsername, validateUsername } from "@/lib/username";
-import { liftChanges, recordsBroken, validateBodyweight } from "@/lib/validate";
+import { liftChanges, recordsBroken, validateBodyweight, validateLift } from "@/lib/validate";
 
 /**
  * Every action returns this instead of throwing. A thrown error inside a
@@ -144,11 +144,27 @@ export async function saveProfileAction(
   const rawAvatar = formData.get("avatar");
   const avatar = rawAvatar === null ? existing?.avatar ?? null : avatarFrom(rawAvatar);
 
+  // The board scores with the profile bodyweight, so changing it changes
+  // every score: re-check the lifts against it, and void co-signs, or a
+  // co-signed lifter could drop 20 kg on paper and keep their global spot.
+  // Compared to 2 decimals, as numeric(5,2) stores it.
+  const bodyweightChanged =
+    !!existing && Math.round(existing.bodyweightKg * 100) !== Math.round(bodyweightKg * 100);
+  if (existing && bodyweightChanged) {
+    for (const lift of await getLiftsFor(existing.id)) {
+      const error = validateLift({ ...lift, bodyweightKg });
+      const label = MOVEMENTS.find((m) => m.id === lift.movement)?.label ?? lift.movement;
+      if (error) return fail(`${label}: ${error} Update it before changing your bodyweight.`);
+    }
+  }
+
   // Moving college voids co-signs from the old one. Cleared before the
   // move is written, as saveLift does: a crash in between loses co-signs,
   // never carries them to a board where nobody watched.
   if (existing && existing.college?.id !== college.id) {
     await clearCosignsFor(existing.id);
+  } else if (existing && bodyweightChanged) {
+    await clearCosignsFor(existing.id, true);
   }
 
   let saved: { id: string; isNew: boolean };

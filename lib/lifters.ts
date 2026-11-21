@@ -168,12 +168,16 @@ export async function upsertProfile(params: {
 /**
  * Voids every co-sign on this lifter's lifts. A co-sign means "someone at
  * your college watched", so it can't follow a lifter to another college.
+ * Also called on a bodyweight change (`keepDoubts`): witnesses saw the
+ * lift, not the scale, so a new bodyweight is a new score claim.
  */
-export async function clearCosignsFor(lifterId: string): Promise<void> {
+export async function clearCosignsFor(lifterId: string, keepDoubts = false): Promise<void> {
   await sql`
     delete from lift_cosigns
     where lift_id in (select id from lifts where lifter_id = ${lifterId})
   `;
+  // A bodyweight edit must not wipe doubts about the lifts themselves.
+  if (keepDoubts) return;
   // Doubts are "I'm at your gym and don't buy it": void elsewhere too.
   await sql`
     delete from lift_doubts

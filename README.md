@@ -86,9 +86,12 @@ pull-ups.
 
 ### Bodyweight is snapshotted per lift
 
-Stored on each `lifts` row rather than read from the lifter's current
-profile, so someone cutting from 90kg to 80kg doesn't retroactively rewrite
-their old scores.
+Stored on each `lifts` row and in `lift_history`, so the record of a set
+says what the lifter weighed when they did it. The board itself scores with
+the current profile bodyweight, so changing it re-checks every lift against
+the 5× bodyweight cap and voids the co-signs: witnesses saw the bar, not
+the scale, and without this a co-signed lifter could drop 20 kg on paper
+and keep their place on the global board.
 
 ### Current state and history are separate tables
 

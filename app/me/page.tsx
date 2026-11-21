@@ -189,7 +189,11 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
         // Collapsed by default and needs the 159-college list, so it
         // streams in behind the dashboard instead of holding it up.
         <Suspense fallback={<Bone className="h-11 w-full" />}>
-          <EditProfile lifter={lifter} email={email} />
+          <EditProfile
+            lifter={lifter}
+            email={email}
+            cosigned={lifts.some((l) => l.cosigners.length > 0)}
+          />
         </Suspense>
       }
     />
@@ -225,7 +229,15 @@ async function buildCollegeField(
   );
 }
 
-async function EditProfile({ lifter, email }: { lifter: Lifter; email: string }) {
+async function EditProfile({
+  lifter,
+  email,
+  cosigned,
+}: {
+  lifter: Lifter;
+  email: string;
+  cosigned: boolean;
+}) {
   const collegeField = await buildCollegeField(email, lifter);
   return (
     <ProfileForm
@@ -236,6 +248,7 @@ async function EditProfile({ lifter, email }: { lifter: Lifter; email: string })
       defaultAvatar={lifter.avatar}
       submitLabel="Save profile"
       college={collegeField}
+      cosigned={cosigned}
     />
   );
 }

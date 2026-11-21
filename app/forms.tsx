@@ -767,6 +767,7 @@ export function ProfileForm({
   defaultAvatar = null,
   submitLabel,
   college,
+  cosigned = false,
 }: {
   defaultName: string;
   defaultUsername: string;
@@ -777,8 +778,18 @@ export function ProfileForm({
   submitLabel: string;
   /** Rendered by the server (a CollegeField); the form just hosts it. */
   college: React.ReactNode;
+  /** Any of their lifts co-signed: a new bodyweight removes those co-signs. */
+  cosigned?: boolean;
 }) {
   const [state, action, pending] = useActionState(saveProfileAction, initial);
+  // Saving a new bodyweight over co-signed lifts takes a second tap, as the lifts form does.
+  const [typedBodyweight, setTypedBodyweight] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const losingCosigns =
+    cosigned &&
+    defaultBodyweight !== undefined &&
+    typedBodyweight !== null &&
+    Number(typedBodyweight) !== defaultBodyweight;
   // A first-timer who tried the board's calculator: their bodyweight from it.
   const tried = useTryout();
   const bodyweight = defaultBodyweight ?? tried?.bodyweight ?? "";
@@ -795,7 +806,18 @@ export function ProfileForm({
   }, [justSaved, state.savedAt]);
 
   return (
-    <form action={action} className="flex flex-col gap-4">
+    <form
+      action={action}
+      className="flex flex-col gap-4"
+      onSubmit={(e) => {
+        if (losingCosigns && !confirming) {
+          e.preventDefault();
+          setConfirming(true);
+        } else {
+          setConfirming(false);
+        }
+      }}
+    >
       {justSaved && (
         <p
           role="status"
@@ -838,6 +860,10 @@ export function ProfileForm({
           max="250"
           required
           defaultValue={bodyweight}
+          onChange={(e) => {
+            setTypedBodyweight(e.target.value);
+            setConfirming(false);
+          }}
           className={`${field} w-full text-left`}
         />
       </label>
@@ -850,8 +876,31 @@ export function ProfileForm({
         </p>
       )}
 
+      {confirming && losingCosigns && (
+        <div
+          role="group"
+          aria-label="Co-signs will be removed"
+          className="rounded-sm border border-[color-mix(in_oklab,var(--gold)_50%,transparent)] bg-[color-mix(in_oklab,var(--gold)_12%,transparent)] p-3"
+        >
+          <p className="text-[13px] font-bold text-chalk">
+            Your co-signs will be removed
+          </p>
+          <p className="mt-1 text-[12px] leading-relaxed text-chalk-dim">
+            Your bodyweight sets your score, so a new one is a new claim. Your
+            lifts need co-signing again to stay on the global board.
+          </p>
+          <button
+            type="button"
+            onClick={() => setConfirming(false)}
+            className="press mt-2 min-h-9 text-[13px] text-chalk-dim underline underline-offset-4 hover:text-chalk"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
       <button type="submit" disabled={pending} className={`${primary} w-fit`}>
-        {pending ? "Saving…" : submitLabel}
+        {pending ? "Saving…" : confirming ? "Save anyway" : submitLabel}
       </button>
     </form>
   );
