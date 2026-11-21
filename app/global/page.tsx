@@ -47,7 +47,7 @@ export default function GlobalPage({ searchParams }: { searchParams: SearchParam
         <h1 className="text-[2.25rem] font-extrabold leading-[0.9] tracking-[-0.04em]">
           Global board
         </h1>
-        <p className="mt-2 text-[13px] leading-relaxed text-chalk-dim">
+        <p className="mt-2 text-[14px] leading-relaxed text-chalk-dim">
           Every college together. Only lifters with all three lifts co-signed
           by someone who watched them — the one board where every number has
           a witness.
@@ -108,7 +108,7 @@ async function GlobalBoard({ searchParams }: { searchParams: SearchParams }) {
     return (
       <>
         {tabs}
-        <p className="pt-8 text-[13px] leading-relaxed text-chalk-dim">
+        <p className="pt-8 text-[14px] leading-relaxed text-chalk-dim">
           Nobody is fully co-signed yet. The first lifter to get all three sets
           vouched for opens this board.
         </p>

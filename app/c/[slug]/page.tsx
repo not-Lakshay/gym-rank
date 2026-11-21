@@ -142,7 +142,8 @@ async function CollegeBoard({
         <summary
           className={`${navButton} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}
         >
-          Where would I rank? <span aria-hidden>›</span>
+          Where would I rank?{" "}
+          <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
         </summary>
         <Calculator
           boardDots={rows.map((r) => r.dots)}
@@ -177,10 +178,10 @@ async function CollegeBoard({
         />
       ) : rows.length === 0 ? (
         <section className="rise pt-8" style={{ "--i": 1 } as React.CSSProperties}>
-          <p className="text-[15px] font-medium">
+          <p className="text-[16px] font-medium">
             Nobody at {college.shortName} is on the board yet.
           </p>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-chalk-dim">
+          <p className="mt-1.5 text-[14px] leading-relaxed text-chalk-dim">
             A score needs a squat, a bench and a deadlift. Enter all three and
             you are first by default — then send the link to the gym group.
           </p>
@@ -274,7 +275,7 @@ function Header({
           <h1 className="text-[2.25rem] font-extrabold leading-[0.9] tracking-[-0.04em]">
             {college.shortName}
           </h1>
-          <p className="mt-2.5 text-[13px] leading-snug text-chalk-dim">
+          <p className="mt-2.5 text-[14px] leading-snug text-chalk-dim">
             {college.city} · every score adjusted for bodyweight
             <DotsHelp />
           </p>
@@ -288,7 +289,7 @@ function Header({
         whole board rather than a rule.
       */}
       {legend && (
-        <ul className="mt-5 flex gap-1.5 text-[11px] font-medium text-chalk-dim">
+        <ul className="mt-5 flex gap-1.5 text-[12px] font-medium text-chalk-dim">
           {WEIGHT_CLASSES.map((weightClass) => (
             <li key={weightClass.label} className="flex flex-1 flex-col gap-1.5">
               <span

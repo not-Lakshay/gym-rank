@@ -39,7 +39,7 @@ export function Stats({ rows }: { rows: BoardRow[] }) {
       }`}
     >
       <Stat label="lifters" value={rows.length} />
-      <Stat label="kg on the board" value={totalKg} />
+      <Stat label="kg combined total" value={totalKg} />
       {cosigned > 0 && <Stat label="fully co-signed" value={cosigned} />}
     </dl>
   );
@@ -103,7 +103,7 @@ export function Board({
           where: showCollege ? row.collegeShort : null,
           tag:
             showBatch && row.batchYear !== null ? (
-              <span className="tnum shrink-0 rounded-sm border border-rule px-1 text-[10px] font-bold leading-[1.4] text-chalk-dim">
+              <span className="tnum shrink-0 rounded-sm border border-rule px-1 text-[11px] font-bold leading-[1.4] text-chalk-dim">
                 {batchLabel(row.batchYear)}
               </span>
             ) : null,
@@ -176,7 +176,7 @@ function Heading({ text, plate, note }: { text: string; plate?: string; note?: s
       ) : (
         text
       )}
-      <span className="text-[11px] font-normal normal-case tracking-normal text-chalk-faint">
+      <span className="text-[12px] font-normal normal-case tracking-normal text-chalk-faint">
         {note}
       </span>
     </h2>
@@ -259,7 +259,7 @@ function Ranked({
                       {e.rank}
                     </span>
                   ) : (
-                    <span className="tnum w-6 shrink-0 text-center text-[13px] text-chalk-faint">
+                    <span className="tnum w-6 shrink-0 text-center text-[14px] text-chalk-faint">
                       {e.rank}
                     </span>
                   )}
@@ -281,7 +281,7 @@ function Ranked({
                       {e.tag}
                       {isViewer && <YouTag />}
                     </span>
-                    <span className="flex min-w-0 items-center gap-1 text-[11px] text-chalk-dim">
+                    <span className="flex min-w-0 items-center gap-1 text-[12px] text-chalk-dim">
                       {e.sub}
                     </span>
                     <span aria-hidden className="mt-1.5 block h-[3px] rounded-full bg-rule">
@@ -299,7 +299,7 @@ function Ranked({
                     <span className="tnum block text-[17px] font-bold leading-none">
                       <Score entry={e} delayMs={delay} />
                     </span>
-                    <span className="tnum mt-1 block text-[11px] text-chalk-faint">{e.detail}</span>
+                    <span className="tnum mt-1 block text-[12px] text-chalk-faint">{e.detail}</span>
                   </span>
                 </Departure>
               </li>
@@ -353,12 +353,12 @@ function Podium({ entries, viewerId }: { entries: Entry[]; viewerId: string | nu
               <Link
                 href={`/u/${e.username}`}
                 aria-label={e.displayName}
-                className="mt-2 max-w-full truncate text-[13px] font-bold underline-offset-4 hover:underline"
+                className="mt-2 max-w-full truncate text-[14px] font-bold underline-offset-4 hover:underline"
               >
                 {e.displayName.split(/\s+/)[0]}
               </Link>
               {(e.where || e.id === viewerId) && (
-                <span className="flex max-w-full items-center gap-1 truncate text-[11px] text-chalk-faint">
+                <span className="flex max-w-full items-center gap-1 truncate text-[12px] text-chalk-faint">
                   {e.where}
                   {e.id === viewerId && <YouTag />}
                 </span>
@@ -414,8 +414,8 @@ function arrivalFor(e: Entry) {
 
 function YouTag() {
   return (
-    <span className="shrink-0 rounded-sm bg-accent px-1.5 text-[10px] font-bold uppercase text-iron">
-      you
+    <span className="shrink-0 rounded-sm bg-accent px-1.5 text-[11px] font-bold text-iron">
+      You
     </span>
   );
 }
@@ -485,16 +485,16 @@ export function ChevronRight() {
 }
 
 export const button =
-  "press inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-sm bg-accent px-5 text-[15px] font-bold text-iron shadow-[0_0_calc(22px*var(--glow))_-6px_var(--accent)] hover:opacity-85";
+  "press inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-sm bg-accent px-5 text-[16px] font-bold text-iron shadow-[0_0_calc(22px*var(--glow))_-6px_var(--accent)] hover:opacity-85";
 
 // Outlined: navigation and account controls. Visibly tappable, but clearly
 // not the main action on the screen.
 export const navButton =
-  "press inline-flex min-h-11 w-fit items-center gap-1.5 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk";
+  "press inline-flex min-h-11 w-fit items-center gap-1.5 rounded-sm border border-rule px-3.5 text-[16px] text-chalk-dim hover:border-chalk-faint hover:text-chalk";
 
 // Quiet text links; min-h-11 keeps them a full-size tap target.
 export const footerLink =
-  "footer-link inline-flex min-h-11 items-center px-1 text-[13px] text-chalk-dim hover:text-chalk";
+  "footer-link inline-flex min-h-11 items-center px-1 text-[12px] text-chalk-dim hover:text-chalk";
 
 /*
   What a page looks like while its data is on the way. The same wait reads
@@ -671,7 +671,7 @@ export function BoardTabs({ base, active }: { base: string; active: BoardTab }) 
             key={tab.id}
             href={tab.id === "all" ? base : `${base}?tab=${tab.id}`}
             aria-current={current ? "page" : undefined}
-            className={`press inline-flex min-h-9 shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 text-[13px] font-medium transition-colors ${
+            className={`press inline-flex min-h-9 shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 text-[14px] font-medium transition-colors ${
               current
                 ? "border-accent bg-accent text-iron shadow-[0_0_calc(16px*var(--glow))_-5px_var(--accent)]"
                 : "border-rule text-chalk-dim hover:border-chalk-faint hover:text-chalk"
@@ -789,8 +789,8 @@ export function LiftTab({
   if (rows.length === 0) {
     return (
       <section className="rise pt-8" style={{ "--i": 1 } as React.CSSProperties}>
-        <p className="text-[15px] font-medium">No {label.toLowerCase()} on this board yet.</p>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-chalk-dim">{emptyNote}</p>
+        <p className="text-[16px] font-medium">No {label.toLowerCase()} on this board yet.</p>
+        <p className="mt-1.5 text-[14px] leading-relaxed text-chalk-dim">{emptyNote}</p>
       </section>
     );
   }
@@ -888,7 +888,7 @@ export function ClassBoards<T extends { weightClass: string }>({
     >
       <summary className={drawerSummary}>
         Weight classes
-        <span className="flex items-center gap-2 text-[11px] text-chalk-faint">
+        <span className="flex items-center gap-2 text-[12px] text-chalk-faint">
           {/* A plate chip per open board, so the colours are visible before opening. */}
           <span aria-hidden className="flex gap-1">
             {shown.map((c) => (
@@ -904,7 +904,7 @@ export function ClassBoards<T extends { weightClass: string }>({
         </span>
       </summary>
       {mineTooSmall && (
-        <p className="mt-3 text-[13px] leading-relaxed text-chalk-dim">
+        <p className="mt-3 text-[14px] leading-relaxed text-chalk-dim">
           Your class, {viewerClass}, has {mine.inClass.length} lifter
           {mine.inClass.length === 1 ? "" : "s"} — {MIN_CLASS_SIZE - mine.inClass.length} more and it gets its own board.
         </p>
@@ -925,7 +925,7 @@ export function ClassBoards<T extends { weightClass: string }>({
 }
 
 const drawerSummary =
-  "press flex min-h-11 w-full cursor-pointer list-none items-center justify-between gap-2 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk group-open:border-chalk-faint group-open:text-chalk [&::-webkit-details-marker]:hidden";
+  "press flex min-h-11 w-full cursor-pointer list-none items-center justify-between gap-2 rounded-sm border border-rule px-3.5 text-[16px] text-chalk-dim hover:border-chalk-faint hover:text-chalk group-open:border-chalk-faint group-open:text-chalk [&::-webkit-details-marker]:hidden";
 
 /*
   LNMIIT only: a board per batch, in the same kind of drawer as the weight
@@ -956,7 +956,7 @@ export function BatchBoards<T extends { batchYear: number | null }>({
     >
       <summary className={drawerSummary}>
         Batches
-        <span className="flex items-center gap-2 text-[11px] text-chalk-faint">
+        <span className="flex items-center gap-2 text-[12px] text-chalk-faint">
           {groups.map((g) => batchLabel(g.year)).join(" · ")}
           <Chevron />
         </span>

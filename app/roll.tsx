@@ -18,7 +18,11 @@ export function Roll({
   /** Stagger down a list. */
   delayMs?: number;
 }) {
-  const text = value.toFixed(decimals);
+  // en-IN groups thousands (2,636), lakhs past that; commas pass through as plain text.
+  const text = value.toLocaleString("en-IN", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
   return (
     <span key={text}>
       {Array.from(text).map((ch, i) =>
