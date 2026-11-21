@@ -369,6 +369,8 @@ function Podium({ entries, viewerId }: { entries: Entry[]; viewerId: string | nu
               >
                 <Score entry={e} delayMs={AVATAR_DELAY[place]} />
               </span>
+              {/* The other half of the number: adjusted under a raw lift, raw total under a score. */}
+              <span className="tnum mt-1 text-[12px] text-chalk-faint">{e.detail}</span>
               <span
                 className="podium-block mt-2"
                 style={{ height: BLOCK_HEIGHT[place], animationDelay: `${BLOCK_DELAY[place]}ms` }}
