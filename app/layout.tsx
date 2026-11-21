@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Archivo } from "next/font/google";
 import { siteUrl } from "@/lib/site";
 import { BeforePaint } from "./prefs";
+import { PopoverGuard } from "./popover-guard";
 import "./globals.css";
 
 /*
@@ -46,7 +47,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <BeforePaint />
       </head>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {children}
+        <PopoverGuard />
+      </body>
     </html>
   );
 }
