@@ -28,7 +28,7 @@ export function shortClass(label: string) {
   return label.replace("kg", " kg");
 }
 
-/* The board in three numbers. Gives a page a pulse before the list. */
+/* The board in numbers, under the Overall ranking. */
 export function Stats({ rows }: { rows: BoardRow[] }) {
   const totalKg = rows.reduce((sum, r) => sum + r.totalKg, 0);
   // One witness for the whole total; partial co-signs don't count here.

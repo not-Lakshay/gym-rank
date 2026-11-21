@@ -113,10 +113,6 @@ async function GlobalBoard({ searchParams }: { searchParams: SearchParams }) {
   return (
     <div className="pt-6">
       {tabs}
-      <div className="rise mb-6" style={{ "--i": 1 } as React.CSSProperties}>
-        <Stats rows={rows} />
-      </div>
-
       <div className="rise" style={{ "--i": 2 } as React.CSSProperties}>
         <Board
           heading="Overall"
@@ -128,6 +124,11 @@ async function GlobalBoard({ searchParams }: { searchParams: SearchParams }) {
           badgeHelp
         />
         <TrustHelp />
+      </div>
+
+      {/* The ranking first; the board in numbers sits under it. */}
+      <div className="rise mt-8" style={{ "--i": 3 } as React.CSSProperties}>
+        <Stats rows={rows} />
       </div>
 
       <ClassBoards
