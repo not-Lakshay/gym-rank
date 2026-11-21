@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ThemeSwitch } from "./prefs";
 import { connection } from "next/server";
 import { auth } from "@/auth";
 import { collegeOptions } from "@/lib/cached";
@@ -36,6 +37,9 @@ export default function Home({ searchParams }: { searchParams: SearchParams }) {
               <p className="mt-2 text-[14px] leading-snug text-chalk-dim">
                 College gym leaderboards, every score adjusted for bodyweight.
               </p>
+              <div className="mt-3">
+                <ThemeSwitch />
+              </div>
             </div>
             <Suspense fallback={null}>
               <AccountLink />

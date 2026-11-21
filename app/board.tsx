@@ -604,7 +604,8 @@ export function ProfileSkeleton() {
 }
 
 // Boards and colleges are in the tab bar and the back link; the footer keeps
-// only what has nowhere else to live. The theme switch moved to /me.
+// only what has nowhere else to live. The theme switch lives on /me, the
+// home page and the first-visit welcome strip.
 export function Footer({ i = 6 }: { i?: number }) {
   return (
     <footer

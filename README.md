@@ -197,25 +197,48 @@ app/
   page.tsx                  landing: college search + global preview
   c/[slug]/page.tsx         one college's board + try-it calculator
   global/page.tsx           every college, co-signed lifters only
+  u/[username]/page.tsx     a lifter's public page; co-signing happens here
+  lifter/[id]/page.tsx      old lifter URL, redirects to /u/<username>
+  me/page.tsx               profile, lift entry, notifications
+  admin/page.tsx            delete lifters/lifts, clear co-signs (ADMIN_EMAILS only)
   board.tsx                 the board component, stats strip, shared chrome
   college-picker.tsx        college search (landing links / profile field)
   calculator.tsx            client-side DOTS + projected rank, nothing saved
-  me/page.tsx               profile, lift entry, notifications
-  lifter/[id]/page.tsx      a lifter's public page; co-signing happens here
   forms.tsx                 client forms (useActionState for inline errors)
   actions.ts                server actions, validation, notifications
+  avatar.tsx, barbell.tsx   lifter disc; a set drawn as a loaded bar
+  share.tsx                 native share sheet, clipboard fallback
+  lifter-metadata.ts        link previews for shared lifter pages
+  in-app-notice.tsx         sends WhatsApp/Instagram browsers to a real one
+  help.tsx, welcome.tsx     popover explanations; first-visit hello
+  tab-bar.tsx, prefs.tsx    phone tab bar; theme saved on the device
+  morph.tsx, roll.tsx       board-to-profile transition; rolling numbers
   api/og/route.tsx          the share card, as a PNG
+  api/health/route.ts       keep-awake target (select 1)
   api/auth/[...nextauth]/   Auth.js route handler
   privacy, terms, scoring
 lib/
   scoring.ts                Epley 1RM, DOTS, weight classes
-  scoring.test.ts           tested against published DOTS results
+  standards.ts              novice 1RM for a lift not yet entered
+  validate.ts               plausibility rules, shared by server and calculator
   leaderboard.ts            ranking query (window functions), college/global scope
+  cached.ts                 cached reads behind every board and profile
+  cosign.ts                 fully / partially co-signed status
   colleges.ts               college lookup, email-domain detection
   notifications.ts          co-sign and passed-you rows
   lifters.ts                data access
+  username.ts               handle rules (client-safe)
+  avatars.ts                avatar sets (files and credits in public/avatars)
   movements.ts              the five movements (no db import; shared with client)
+  plates.ts                 weight-class and plate colours
+  batch.ts                  LNMIIT batch years (Y24)
+  mail.ts                   welcome email via Brevo
+  admin.ts                  who may open /admin
+  inapp.ts                  in-app browser detection
+  tryout.ts                 calculator numbers kept until sign-up
+  site.ts, format.ts        canonical URL; "3h ago"
   db.ts                     Neon client
+  *.test.ts                 plain node:assert tests, one per module
 db/
   schema.sql                colleges, lifters, lifts, lift_history, events, notifications
   colleges.json             the seed list: slug, names, city, email domains
@@ -266,7 +289,7 @@ signups, profile completion, lift entries, return visits._
 npm install
 cp .env.example .env.local     # DATABASE_URL, AUTH_SECRET, AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET
 node --env-file=.env.local scripts/migrate.mjs
-node lib/scoring.test.ts
+for f in lib/*.test.ts; do node "$f" || break; done
 npm run dev
 ```
 

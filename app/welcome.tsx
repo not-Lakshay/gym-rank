@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { ThemeSwitch } from "./prefs";
 
 /*
   A one-line hello for a signed-out first visit: what the board is and the
@@ -54,12 +55,17 @@ export function Welcome() {
       aria-label="Welcome"
       className="welcome mb-5 flex items-start gap-2 rounded-sm border border-rule bg-iron-raised py-3 pl-4 pr-1 text-[14px] leading-relaxed text-chalk-dim"
     >
-      <p className="pt-0.5">
-        <span className="font-bold text-chalk">Your college&rsquo;s gym leaderboard.</span>{" "}
-        Scores are adjusted for bodyweight, so everyone competes fairly. Tap{" "}
-        <span className="font-bold text-chalk">Add yours</span> to sign in with
-        Google and enter your squat, bench and deadlift.
-      </p>
+      <div className="pt-0.5">
+        <p>
+          <span className="font-bold text-chalk">Your college&rsquo;s gym leaderboard.</span>{" "}
+          Scores are adjusted for bodyweight, so everyone competes fairly. Tap{" "}
+          <span className="font-bold text-chalk">Add yours</span> to sign in with
+          Google and enter your squat, bench and deadlift.
+        </p>
+        <div className="mt-2.5">
+          <ThemeSwitch />
+        </div>
+      </div>
       <button
         type="button"
         onClick={close}
