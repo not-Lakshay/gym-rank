@@ -102,12 +102,14 @@ export function Board({
           avatar: row.avatar,
           weightClass: row.weightClass,
           rank: rankOf(row),
+          // The bar and the rank follow DOTS; the headline is the weight
+          // actually lifted, with the adjusted score under it.
           share: topDots > 0 ? row.dots / topDots : 0,
-          value: row.dots,
-          decimals: 1,
-          unit: null,
+          value: row.totalKg,
+          decimals: 0,
+          unit: "kg",
           dots: row.dots,
-          detail: `${row.totalKg.toFixed(0)} kg`,
+          detail: `${row.dots.toFixed(1)} DOTS`,
           where: showCollege ? row.collegeShort : null,
           tag:
             showBatch && row.batchYear !== null ? (
@@ -228,8 +230,8 @@ function Ranked({
               <li
                 key={e.id}
                 className={`row flex items-center gap-3 border-b border-rule py-3 last:border-b-0 ${
-                  isViewer || medal ? "-mx-2 rounded-sm px-2" : ""
-                } ${
+                  isViewer || medal || e.mostTrusted ? "-mx-2 rounded-sm px-2" : ""
+                } ${e.mostTrusted ? "aurora" : ""} ${
                   medal
                     ? "medal-row"
                     : isViewer
@@ -256,7 +258,7 @@ function Ranked({
                     </Morph>
                   </Link>
                   <span className="row-name min-w-0 flex-1">
-                    <span className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1">
                       <Link
                         href={`/u/${e.username}`}
                         className="truncate text-[14px] font-medium underline-offset-4 hover:underline"
@@ -385,7 +387,8 @@ function Score({ entry: e, delayMs }: { entry: Entry; delayMs: number }) {
   const number = <Roll value={e.value} decimals={e.decimals} delayMs={delayMs} />;
   return (
     <>
-      {e.dots !== null ? (
+      {/* Flies into the profile's score only when it is that score. */}
+      {e.dots !== null && e.value === e.dots ? (
         <Morph id={e.id} part="score">
           {number}
         </Morph>
