@@ -1,4 +1,5 @@
-import { Footer } from "@/app/board";
+import { ChevronLeft, Footer, navButton } from "@/app/board";
+import { BackButton } from "@/app/back-button";
 import { TrustLevels } from "@/app/help";
 import { TabBar } from "@/app/tab-bar";
 
@@ -18,6 +19,11 @@ export default function ScoringPage() {
   return (
     <>
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
+
+      <BackButton className={`${navButton} w-fit`}>
+        <ChevronLeft />
+        Back
+      </BackButton>
 
       <h1 className="pt-8 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
         How scoring works

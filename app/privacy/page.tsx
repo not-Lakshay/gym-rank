@@ -1,4 +1,5 @@
-import { Footer } from "@/app/board";
+import { ChevronLeft, Footer, navButton } from "@/app/board";
+import { BackButton } from "@/app/back-button";
 import { TabBar } from "@/app/tab-bar";
 
 export const metadata = {
@@ -10,6 +11,11 @@ export default function PrivacyPage() {
   return (
     <>
     <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-6 px-5 pb-16 pt-10">
+
+      <BackButton className={`${navButton} w-fit`}>
+        <ChevronLeft />
+        Back
+      </BackButton>
 
       <h1 className="pt-2 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
         Privacy
@@ -23,7 +29,10 @@ export default function PrivacyPage() {
       <Section title="What is stored">
         <ul className={list}>
           <li>Your email address and name, from Google sign-in</li>
-          <li>The display name you choose</li>
+          <li>
+            The display name, username and avatar you choose, and your batch
+            year where your college uses batches
+          </li>
           <li>
             Your college — read from your email domain if it is an institute
             address, otherwise the one you pick
@@ -31,23 +40,34 @@ export default function PrivacyPage() {
           <li>Your bodyweight in kilograms</li>
           <li>
             The lifts you enter — the weight, the reps, and your bodyweight at
-            the time you entered them
+            the time — plus your earlier entries, so your page can show progress
           </li>
           <li>
-            Things that happened to you on the board — who co-signed a lift,
-            who passed your score — so your own page can show them
+            Co-signs and doubts: whose lifts you co-signed or doubted, and who
+            co-signed or doubted yours
+          </li>
+          <li>Your friends, and the friend requests you send and receive</li>
+          <li>
+            Your notifications — co-signs, doubts, friend requests and people
+            passing your score
           </li>
           <li>
             Basic usage events, such as when an account is created or a lift is
             saved, so the project can report how many people used it
           </li>
         </ul>
+        <p className={muted}>
+          Your theme, and any numbers you try in the calculator before signing
+          up, stay in your own browser and are never sent to the server. The
+          only cookies are the ones Google sign-in needs to keep you signed in.
+          There are no ads and no third-party trackers.
+        </p>
       </Section>
 
       <Section title="What other people can see">
         <p className={muted}>
-          Your display name, the avatar you pick, your college, your weight class, your lifts and
-          your score.
+          Your display name, username, avatar, college, batch, weight class,
+          your lifts and score, and your trust badge.
         </p>
         <p className={muted}>
           <strong className="font-medium text-chalk">
@@ -55,6 +75,22 @@ export default function PrivacyPage() {
           </strong>{" "}
           Bodyweight is used only to calculate your score, and only the weight
           class band it falls into is displayed.
+        </p>
+        <p className={muted}>
+          <strong className="font-medium text-chalk">Co-signs are public.</strong>{" "}
+          Each lift shows who co-signed it, by name — so if you co-sign
+          someone&rsquo;s lift, your name appears on their page.
+        </p>
+        <p className={muted}>
+          <strong className="font-medium text-chalk">Doubts are counted, not named.</strong>{" "}
+          A lift shows how many doubts it has, never who doubted it — not to
+          visitors and not to the lifter. Only the site admin can see who
+          doubted a lift, to deal with abuse.
+        </p>
+        <p className={muted}>
+          <strong className="font-medium text-chalk">Friends are private.</strong>{" "}
+          Nobody else can see your friends list or your Friends board. A
+          friend request shows your name to the person you send it to.
         </p>
         <p className={muted}>
           Every board is public — anyone with the link can read it without
@@ -67,8 +103,9 @@ export default function PrivacyPage() {
       <Section title="Who it is shared with">
         <p className={muted}>
           Nobody. The data is not sold, shared or used for advertising. It is
-          stored in a Neon Postgres database and the site is hosted on Vercel;
-          those providers hold the data on the project&rsquo;s behalf.
+          stored in a Neon Postgres database in Singapore and the site is
+          hosted on Vercel; sign-in goes through Google. Those providers handle
+          the data on the project&rsquo;s behalf.
         </p>
       </Section>
 
@@ -79,15 +116,25 @@ export default function PrivacyPage() {
           email address and name for that purpose. Nothing else is sent — no
           newsletters, no reminders.
         </p>
+        <p className={muted}>
+          &ldquo;Report a problem&rdquo; opens your own mail app with an email
+          that includes the page you were on, your browser and device, and the
+          time. You see all of it before sending, and nothing is sent unless
+          you press send.
+        </p>
       </Section>
 
       <Section title="Deleting your data">
         <p className={muted}>
-          Email{" "}
+          Delete your account yourself from the bottom of the You page, or
+          email{" "}
           <a href="mailto:getgymrank@gmail.com" className={inlineLink}>
             getgymrank@gmail.com
-          </a>{" "}
-          and your account and all your lifts will be deleted.
+          </a>
+          . Deleting removes your profile, lifts and their history, the
+          co-signs and doubts you gave, your friends and friend requests, and
+          your notifications, straight away. Usage events stay, with your
+          account removed from them, so the totals stay accurate.
         </p>
         <p className={muted}>
           If the project is ever shut down, the personal data is deleted and
@@ -104,7 +151,7 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
-      <p className="text-xs text-chalk-faint">Last updated 18 November 2026.</p>
+      <p className="text-xs text-chalk-faint">Last updated 22 November 2026.</p>
       <Footer />
     </main>
     <TabBar />

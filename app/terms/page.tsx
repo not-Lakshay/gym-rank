@@ -1,4 +1,5 @@
-import { Footer } from "@/app/board";
+import { ChevronLeft, Footer, navButton } from "@/app/board";
+import { BackButton } from "@/app/back-button";
 import Link from "next/link";
 import { TabBar } from "@/app/tab-bar";
 
@@ -12,6 +13,11 @@ export default function TermsPage() {
     <>
     <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-6 px-5 pb-16 pt-10">
 
+      <BackButton className={`${navButton} w-fit`}>
+        <ChevronLeft />
+        Back
+      </BackButton>
+
       <h1 className="pt-2 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
         Terms of use
       </h1>
@@ -24,9 +30,20 @@ export default function TermsPage() {
       <Section title="Use it honestly">
         <p className={muted}>
           Every number on a board is self-reported. Enter lifts you have
-          actually done, pick the college you actually attend, and co-sign
-          only sets you watched. Entries that are obviously false may be
-          removed, along with the account that submitted them.
+          actually done, pick the college you actually attend, co-sign only
+          sets you watched, and doubt only sets you genuinely believe
+          aren&rsquo;t real. Entries that are obviously false may be removed,
+          along with the account that submitted them.
+        </p>
+      </Section>
+
+      <Section title="Be decent">
+        <p className={muted}>
+          Don&rsquo;t pretend to be someone else, pick an offensive name or
+          avatar, or use doubts and friend requests to harass anyone. Doubting
+          a lift just because you dislike the lifter, or getting friends to
+          pile doubts onto someone, counts as harassment. Accounts that do
+          these things may be removed.
         </p>
       </Section>
 
@@ -48,7 +65,8 @@ export default function TermsPage() {
 
       <Section title="Your account">
         <p className={muted}>
-          You can delete your account and data at any time by emailing{" "}
+          You can delete your account and data at any time, yourself from the
+          bottom of the You page, or by emailing{" "}
           <a href="mailto:getgymrank@gmail.com" className={inlineLink}>
             getgymrank@gmail.com
           </a>
@@ -60,7 +78,7 @@ export default function TermsPage() {
         </p>
       </Section>
 
-      <p className="text-xs text-chalk-faint">Last updated 15 November 2026.</p>
+      <p className="text-xs text-chalk-faint">Last updated 22 November 2026.</p>
       <Footer />
     </main>
     <TabBar />
