@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { TabBar } from "@/app/tab-bar";
 
 export const metadata = {
@@ -10,10 +9,6 @@ export default function PrivacyPage() {
   return (
     <>
     <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-6 px-5 pb-16 pt-10">
-      <Link href="/colleges" className={navButton}>
-        <ChevronLeft />
-        Gym Rank
-      </Link>
 
       <h1 className="pt-2 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
         Privacy
@@ -130,22 +125,4 @@ const muted = "text-[14px] leading-relaxed text-chalk-dim";
 const inlineLink = "text-chalk underline underline-offset-4 decoration-chalk-faint hover:decoration-chalk";
 const list = "flex list-disc flex-col gap-1 pl-5 text-[14px] leading-relaxed text-chalk-dim";
 
-const navButton =
-  "press inline-flex min-h-11 w-fit items-center gap-1.5 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim hover:border-chalk-faint hover:text-chalk";
 
-function ChevronLeft() {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 16 16"
-      className="h-3.5 w-3.5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M10 3 5 8l5 5" />
-    </svg>
-  );
-}

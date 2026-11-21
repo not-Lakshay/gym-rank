@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { TabBar } from "@/app/tab-bar";
 
 export const metadata = {
@@ -17,10 +16,6 @@ export default function ScoringPage() {
   return (
     <>
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
-      <Link href="/colleges" className={navButton}>
-        <ChevronLeft />
-        Leaderboard
-      </Link>
 
       <h1 className="pt-8 text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
         How scoring works
@@ -167,22 +162,4 @@ function Example({
 
 const body = "mt-3 text-[13px] leading-relaxed text-chalk-dim first:mt-0";
 
-const navButton =
-  "inline-flex min-h-11 items-center gap-1.5 rounded-sm border border-rule px-3.5 text-[15px] text-chalk-dim transition-colors hover:border-chalk-faint hover:text-chalk";
 
-function ChevronLeft() {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 16 16"
-      className="h-3.5 w-3.5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M10 3 5 8l5 5" />
-    </svg>
-  );
-}

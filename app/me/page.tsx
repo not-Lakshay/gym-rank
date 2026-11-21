@@ -90,10 +90,6 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
     const { error } = await searchParams;
     return (
       <div>
-        <Link href="/colleges" className={navButton}>
-          <ChevronLeft />
-          All colleges
-        </Link>
         <div className="pt-8">
           <h1 className="text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
             Sign in to add your lifts
@@ -129,10 +125,6 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
     ]);
     return (
       <div>
-        <Link href="/colleges" className={navButton}>
-          <ChevronLeft />
-          All colleges
-        </Link>
         <div className="pt-8">
           <h1 className="text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
             {lifter ? "Pick your college" : "Set up your profile"}

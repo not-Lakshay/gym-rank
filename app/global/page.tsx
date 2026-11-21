@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { connection } from "next/server";
 import { auth } from "@/auth";
 import { leaderboard, liftBoardsFor } from "@/lib/cached";
@@ -10,12 +9,10 @@ import {
   Board,
   BoardSkeleton,
   BoardTabs,
-  ChevronLeft,
   ClassBoards,
   Footer,
   LiftTab,
   Stats,
-  navButton,
   tabFrom,
 } from "@/app/board";
 import { TabBar } from "@/app/tab-bar";
@@ -38,10 +35,6 @@ export default function GlobalPage({ searchParams }: { searchParams: SearchParam
   return (
     <>
     <main className="mx-auto w-full max-w-md px-5 pb-16 pt-10">
-      <Link href="/colleges" className={navButton}>
-        <ChevronLeft />
-        All colleges
-      </Link>
 
       <header className="rise pt-8" style={{ "--i": 0 } as React.CSSProperties}>
         <h1 className="text-[2.25rem] font-extrabold leading-[0.9] tracking-[-0.04em]">

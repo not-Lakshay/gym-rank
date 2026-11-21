@@ -268,7 +268,7 @@ function Header({
         className="-ml-1 inline-flex min-h-11 items-center gap-1 text-[14px] text-chalk-dim hover:text-chalk"
       >
         <ChevronLeft />
-        All colleges
+        Switch college
       </Link>
       <div className="mt-3 flex items-start justify-between gap-4">
         <div>

@@ -121,7 +121,7 @@ async function Profile({ params }: { params: Params }) {
     TOTAL_MOVEMENTS.map((m) => byMovement.get(m)?.cosigners ?? []),
   );
   const weightClass = weightClassFor(lifter.bodyweightKg);
-  const boardHref = lifter.college ? `/c/${lifter.college.slug}` : "/";
+  const boardHref = lifter.college ? `/c/${lifter.college.slug}` : "/colleges";
 
   return (
     <div>
