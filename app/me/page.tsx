@@ -3,6 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { auth } from "@/auth";
 import { DeleteAccountButton, Drawer, LiftsForm, ProfileForm, primary } from "@/app/forms";
+import { LiftTiles } from "@/app/lift-tiles";
 import { SignInForm, SignOutForm } from "@/app/sign-in";
 import { CollegeField } from "@/app/college-picker";
 import {
@@ -486,6 +487,10 @@ function LifterView({
           </div>
         )}
       </section>
+
+      <div className="rise pt-8" style={{ "--i": 2 } as React.CSSProperties}>
+        <LiftTiles lifts={byMovement} titles={myTitles} />
+      </div>
 
       {/* Folded away once there's something in it, so the page reads at a glance. */}
       <Drawer

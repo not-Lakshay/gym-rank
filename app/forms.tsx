@@ -343,35 +343,40 @@ function LiftRow({
               </>
             )}
           </span>
-          <span className={`tnum block text-[11px] text-chalk-faint ${vanishing ? "vanish" : ""}`}>
-            {existing
-              ? isPullups
-                ? `${existing.reps} reps`
-                : `est. 1RM ${existing.est1rmKg?.toFixed(1)} kg`
-              : isPullups
-                ? "max reps"
-                : "weight x reps"}
-            {delta && (
-              <span className={delta.up ? "text-chalk-dim" : ""}>
-                {" "}
-                · {delta.text}
+          {/* The estimate is what the boards rank on, so it's the big number, as on a profile. */}
+          {existing && (
+            <span className={`tnum mt-0.5 flex items-baseline gap-1 ${vanishing ? "vanish" : ""}`}>
+              <span className="text-[1.25rem] font-extrabold leading-none tracking-[-0.03em] text-chalk">
+                {isPullups ? existing.reps : Number((existing.est1rmKg ?? 0).toFixed(1))}
               </span>
-            )}
-            {existing && existing.cosigners.length > 0 && (
-              <span> · co-signed by {existing.cosigners.map((c) => c.name).join(", ")}</span>
-            )}
-            {standing && (
-              <span>
-                {" "}
-                ·{" "}
+              <span className="text-[12px] font-bold text-chalk-dim">{isPullups ? "reps" : "kg"}</span>
+              {!isPullups && <span className="text-[11px] text-chalk-faint">est. 1RM</span>}
+            </span>
+          )}
+          {/* The small print, joined by dots: change, witnesses, board rank. */}
+          <span className={`tnum mt-0.5 block text-[11px] text-chalk-faint ${vanishing ? "vanish" : ""}`}>
+            {!existing && (isPullups ? "max reps" : "weight x reps")}
+            {[
+              delta && (
+                <span key="d" className={delta.up ? "text-chalk-dim" : ""}>
+                  {delta.text}
+                </span>
+              ),
+              existing && existing.cosigners.length > 0 && (
+                <span key="c">co-signed by {existing.cosigners.map((c) => c.name).join(", ")}</span>
+              ),
+              standing && (
                 <a
+                  key="r"
                   href={boardHref}
                   className="text-chalk-dim underline-offset-4 hover:text-chalk hover:underline"
                 >
                   #{standing.rank} of {standing.of}
                 </a>
-              </span>
-            )}
+              ),
+            ]
+              .filter(Boolean)
+              .flatMap((part, j) => (j === 0 ? [part] : [<span key={j}> · </span>, part]))}
           </span>
         </div>
 
