@@ -103,9 +103,9 @@ export function TrustLevels() {
       <span className={row}>
         <LiftTitleTag movement="bench" />
         <span>
-          The best co-signed squat, bench and deadlift at each college, ranked
-          like the lift tabs. Holders get a turning plate ring and a glint on
-          their name, wherever they sit on the board.
+          The top squat, bench and deadlift at each college, ranked like the
+          lift tabs, once that lift is co-signed. Holders get a turning plate
+          ring and a glint on their name, wherever they sit on the board.
         </span>
       </span>
     </>

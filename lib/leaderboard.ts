@@ -90,7 +90,9 @@ export type BoardScope =
   | { collegeId: number }
   | { global: true }
   // A lifter and everyone they added (lib/friends.ts), from any college.
-  | { friendsOf: string };
+  | { friendsOf: string }
+  // Every lift at every college, co-signed or not (for lift titles).
+  | { everyone: true };
 
 /**
  * The DOTS polynomial, as a SQL fragment.
@@ -105,11 +107,11 @@ export type BoardScope =
  */
 /**
  * Who holds "#1 squat", "#1 bench" and "#1 deadlift" at each college:
- * the best co-signed, non-disputed lift, ranked like the lift tabs
- * (lib/titles.ts). Lifter id to their titles.
+ * whoever tops that college's lift tab, once that lift is co-signed and
+ * not disputed (lib/titles.ts). Lifter id to their titles.
  */
 export async function getLiftTitles(): Promise<Record<string, Movement[]>> {
-  return pickLiftTitles(await getLiftBoards({ global: true }));
+  return pickLiftTitles(await getLiftBoards({ everyone: true }));
 }
 
 /**

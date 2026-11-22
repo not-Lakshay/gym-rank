@@ -4,13 +4,14 @@ import { TOTAL_MOVEMENTS, type Movement } from "./movements.ts";
   Lift titles: "#1 squat", "#1 bench", "#1 deadlift", one holder per lift
   per college. Pure (no database), so it's tested on its own.
 
-  The input is the global lift boards: only co-signed, non-disputed lifts,
-  each list already sorted best first, ranked exactly like the lift tabs.
-  So the holder at a college is simply that college's first row. Self-
-  reported numbers nobody vouched for can't win a glowing title.
+  The input is every lift at every college, co-signed or not, each list
+  sorted best first, ranked exactly like the lift tabs. The title belongs
+  to a college's first row, and only once that lift is co-signed: a weak
+  lift that happens to be co-signed must never outrank a stronger one that
+  isn't yet. Until the real #1 is co-signed, nobody holds it.
 */
 
-type Row = { id: string; collegeSlug: string };
+type Row = { id: string; collegeSlug: string; verified: boolean };
 
 /** Lifter id → the lifts they hold the title for (in squat, bench, deadlift order). */
 export function pickLiftTitles(
@@ -18,11 +19,11 @@ export function pickLiftTitles(
 ): Record<string, Movement[]> {
   const titles: Record<string, Movement[]> = {};
   for (const movement of TOTAL_MOVEMENTS) {
-    const taken = new Set<string>();
+    const seen = new Set<string>();
     for (const row of boards[movement] ?? []) {
-      if (taken.has(row.collegeSlug)) continue;
-      taken.add(row.collegeSlug);
-      (titles[row.id] ??= []).push(movement);
+      if (seen.has(row.collegeSlug)) continue;
+      seen.add(row.collegeSlug);
+      if (row.verified) (titles[row.id] ??= []).push(movement);
     }
   }
   return titles;
