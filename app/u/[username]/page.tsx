@@ -37,6 +37,7 @@ import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
 import { Avatar } from "@/app/avatar";
 import { Barbell } from "@/app/barbell";
+import { LiftTiles } from "@/app/lift-tiles";
 import { ArrivingProfile } from "@/app/morph";
 import { Roll } from "@/app/roll";
 import { TabBar } from "@/app/tab-bar";
@@ -280,6 +281,9 @@ async function Profile({ params }: { params: Params }) {
           )}
         </section>
 
+        <div className="rise pt-8" style={{ "--i": 1 } as React.CSSProperties}>
+          <LiftTiles lifts={byMovement} titles={myTitles} />
+        </div>
         <section className="rise pt-10" style={{ "--i": 1 } as React.CSSProperties}>
           <h2 className="border-b border-rule pb-2 caption">
             Lifts
@@ -298,15 +302,22 @@ async function Profile({ params }: { params: Params }) {
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="text-[14px] font-medium">{movement.label}</p>
-                    <p className="tnum text-[11px] text-chalk-faint">
-                      {isPullups
-                        ? `${lift.reps} reps`
-                        : `${lift.weightKg} kg × ${lift.reps} · est. 1RM ${lift.est1rmKg?.toFixed(1)} kg`}
+                    <p className="tnum mt-0.5 text-[13px] text-chalk-dim">
+                      {isPullups ? `${lift.reps} reps` : `${lift.weightKg} kg × ${lift.reps}`}
                     </p>
                   </div>
                   {lift.weightKg !== null && (
                     <Barbell kg={lift.weightKg} delayMs={200 + i * 120} />
                   )}
+                  {/* The estimate is what the boards rank on: the row's number, right-aligned like a board's. */}
+                  <div className="min-w-16 shrink-0 text-right">
+                    <p className="tnum text-[1.375rem] font-extrabold leading-none tracking-[-0.03em] text-chalk">
+                      {isPullups ? lift.reps : Number((lift.est1rmKg ?? 0).toFixed(1))}{!isPullups && <span className="ml-0.5 text-[12px] font-bold text-chalk-dim">kg</span>}
+                    </p>
+                    <p className="mt-1 text-[10px] leading-none text-chalk-faint">
+                      {isPullups ? "reps" : "est. 1RM"}
+                    </p>
+                  </div>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   {/* A count, not names: the lifter sees who on their own page. */}
