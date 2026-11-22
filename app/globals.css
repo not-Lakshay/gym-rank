@@ -34,6 +34,13 @@
   --plate-20: #5c93d6;
   --plate-25: #da4e58;
 
+  /* One colour per lift for the lift tiles (app/lift-tiles.tsx): copper,
+     jade, orchid. Warm and green on purpose, clear of the cool weight-
+     class ramp and of gold, which marks a #1 title. */
+  --lift-squat: #e07a4f;
+  --lift-bench: #4fb39a;
+  --lift-deadlift: #c2639e;
+
   /* Weight classes, lightest first: ice, cyan, blue, indigo. Darker for
      each heavier class, because dark reads as heavy, so the order needs no
      legend and survives colour blindness; the hue walks too, so neighbours
@@ -81,6 +88,10 @@
   --plate-15: #ffe03a;
   --plate-20: #3d9cff;
   --plate-25: #ff3d5e;
+
+  --lift-squat: #ff8a3d;
+  --lift-bench: #2ef2b0;
+  --lift-deadlift: #e05cff;
 
   /* The same ramp, its darkest step pulled toward blue so it stays clear
      of the violet buttons. Cool colours only, one family with the cyan. */
@@ -917,6 +928,75 @@ input[type="number"] {
 @media (prefers-reduced-motion: reduce) {
   .lift-tile::before,
   .lift-tile::after {
+    animation: none;
+  }
+}
+
+/* A #1 title: a gold edge over the lift's own colour. */
+.lift-tile.is-title,
+.goal-tile.is-title {
+  border-color: var(--gold);
+}
+
+/*
+  Your own tiles (GoalTiles): a tank filling toward a bodyweight goal.
+  The fill rises to --fill on load, then a wave rolls along its surface.
+*/
+.goal-tile {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid color-mix(in oklab, var(--tile) 40%, var(--rule));
+}
+.goal-fill {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: -1;
+  height: calc(var(--fill) * 100%);
+  background: linear-gradient(
+    to top,
+    color-mix(in oklab, var(--tile) calc(42% + 14% * var(--glow)), transparent),
+    color-mix(in oklab, var(--tile) 18%, transparent)
+  );
+  transform-origin: bottom;
+  animation: goal-rise 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: var(--d);
+}
+.goal-wave {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  width: 200%;
+  height: 8px;
+  fill: color-mix(in oklab, var(--tile) 18%, transparent);
+  animation: goal-wave 3.2s linear infinite;
+}
+.goal-num {
+  animation: goal-num 700ms ease-out both;
+  animation-delay: calc(var(--d) + 500ms);
+}
+@keyframes goal-rise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes goal-wave {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes goal-num {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+    filter: blur(3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .goal-wave {
     animation: none;
   }
 }
