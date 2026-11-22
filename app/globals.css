@@ -1005,6 +1005,9 @@ input[type="number"] {
   The printable A4 poster (app/poster/[slug]). Sized in millimetres so the
   screen preview is the print. Colours print as shown only with "Background
   graphics" ticked, hence print-color-adjust.
+
+  Flat black, chalk text, plate colours in the one picture per poster, and
+  gold only where it means #1: the headline word and the podium's top step.
 */
 .poster-wrap {
   display: flex;
@@ -1014,36 +1017,26 @@ input[type="number"] {
   min-height: 100vh;
 }
 .poster {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   width: 210mm;
   height: 297mm;
   padding: 14mm 16mm 10mm;
+  overflow: hidden;
   background: var(--iron);
   color: var(--chalk);
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
-.poster-glow {
-  position: absolute;
-  inset: -20% -30% auto;
-  height: 75%;
-  z-index: -1;
-  background:
-    radial-gradient(closest-side at 22% 45%, color-mix(in oklab, var(--lift-squat) 45%, transparent), transparent),
-    radial-gradient(closest-side at 55% 30%, color-mix(in oklab, var(--lift-deadlift) 40%, transparent), transparent),
-    radial-gradient(closest-side at 85% 55%, color-mix(in oklab, var(--lift-bench) 38%, transparent), transparent);
-  filter: blur(18px);
-  opacity: 0.7;
+/* Nothing on a poster gets squeezed to fit; if it doesn't fit, it should show. */
+.poster > * {
+  flex-shrink: 0;
 }
 .poster-brand {
-  font-size: 13pt;
+  font-size: 14pt;
   font-weight: 800;
-  letter-spacing: 0.32em;
+  letter-spacing: 0.02em;
   color: var(--chalk-dim);
 }
 .poster-title {
@@ -1067,12 +1060,20 @@ input[type="number"] {
   line-height: 1.35;
   color: var(--chalk-dim);
 }
+
+/* The tease and the QR side by side; the typed address sits under the code.
+   Auto margins here and on the steps split any spare height evenly. */
 .poster-qr-row {
-  margin-top: 6mm;
+  margin-top: auto;
+  padding-top: 6mm;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8mm;
+}
+.poster-qr-row > div:first-child {
+  flex: 1;
+  padding-left: 6mm;
 }
 .poster-tease-big {
   font-size: 30pt;
@@ -1085,7 +1086,7 @@ input[type="number"] {
   margin-top: 3mm;
   font-size: 16pt;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--chalk-dim);
 }
 .poster-arrow {
   display: block;
@@ -1093,15 +1094,18 @@ input[type="number"] {
   font-size: 40pt;
   font-weight: 900;
   line-height: 1;
-  color: var(--gold);
+}
+.poster-qr-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
 }
 .poster-qr {
-  flex-shrink: 0;
-  width: 84mm;
+  width: 96mm;
   padding: 4mm 4mm 3mm;
   border-radius: 4mm;
   background: #fff;
-  box-shadow: 0 0 0 1.2mm var(--gold);
   text-align: center;
 }
 .poster-qr svg {
@@ -1111,104 +1115,56 @@ input[type="number"] {
 }
 .poster-scan {
   margin-top: 1mm;
-  font-size: 15pt;
+  font-size: 16pt;
   font-weight: 900;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.08em;
   color: #0a0908;
 }
-.poster-url {
-  margin-top: 4mm;
-  text-align: right;
-  font-size: 11pt;
-  font-weight: 700;
+.poster-alt {
+  margin-top: 3mm;
+  font-size: 13pt;
   color: var(--chalk-dim);
 }
-.poster-steps {
-  margin-top: 7mm;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4mm;
-}
-.poster-steps li {
-  display: flex;
-  align-items: center;
-  gap: 3mm;
-  padding: 4mm;
-  border: 0.4mm solid var(--rule);
-  border-radius: 2.5mm;
-  background: var(--iron-raised);
-  font-size: 12pt;
-  font-weight: 700;
-  line-height: 1.2;
-}
-.poster-steps b {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 9mm;
-  height: 9mm;
-  border-radius: 50%;
-  background: var(--gold);
-  color: #0a0908;
-  font-size: 14pt;
-  font-weight: 900;
-}
-.poster-chips {
-  margin-top: 6mm;
-  display: flex;
-  flex-direction: column;
-  gap: 3mm;
-}
-.poster-chips span {
-  align-self: flex-start;
-  padding: 2.5mm 4mm;
-  border: 0.4mm solid color-mix(in oklab, var(--c) 55%, transparent);
-  border-radius: 99px;
-  background: color-mix(in oklab, var(--c) 14%, transparent);
-  font-size: 12.5pt;
-  font-weight: 700;
-}
-.poster-foot {
-  margin-top: auto;
-  padding-top: 4mm;
-  border-top: 0.4mm solid var(--rule);
-  font-size: 10.5pt;
-  color: var(--chalk-faint);
-  text-align: center;
-}
-@media print {
-  /* Exactly one sheet: nothing after the poster may spill onto a second. */
-  html,
-  body {
-    height: 297mm !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-  }
-  .poster-wrap {
-    padding: 0;
-    background: none;
-    min-height: 0;
-  }
+.poster-alt b {
+  font-weight: 800;
+  color: var(--chalk);
 }
 
-/* Poster variants (app/poster/[slug], ?v=2..4): each moves the glow and adds one picture. */
-.poster-v2 .poster-glow {
-  background:
-    radial-gradient(closest-side at 50% 55%, color-mix(in oklab, var(--gold) 45%, transparent), transparent),
-    radial-gradient(closest-side at 15% 30%, color-mix(in oklab, var(--lift-deadlift) 30%, transparent), transparent);
+/* Scan → sign in → add lifts, as one line of words, not a row of cards.
+   The bottom block takes margin-top: auto, so spare room lands above it. */
+.poster-steps {
+  margin-top: auto;
+  padding-top: 8mm;
+  font-size: 16pt;
+  font-weight: 700;
+  line-height: 1.4;
 }
-.poster-v3 .poster-glow {
-  background:
-    radial-gradient(closest-side at 25% 40%, color-mix(in oklab, var(--plate-25) 40%, transparent), transparent),
-    radial-gradient(closest-side at 80% 50%, color-mix(in oklab, var(--plate-20) 40%, transparent), transparent);
+.poster-steps li {
+  display: inline;
 }
-.poster-v4 .poster-glow {
-  background:
-    radial-gradient(closest-side at 20% 40%, color-mix(in oklab, var(--lift-squat) 50%, transparent), transparent),
-    radial-gradient(closest-side at 85% 45%, color-mix(in oklab, var(--lift-bench) 35%, transparent), transparent);
+.poster-steps li + li::before {
+  content: "→";
+  margin: 0 2.5mm;
+  color: var(--chalk-dim);
 }
+.poster-note {
+  margin-top: 4mm;
+  max-width: 170mm;
+  font-size: 14pt;
+  line-height: 1.4;
+  color: var(--chalk-dim);
+}
+.poster-foot {
+  margin-top: 6mm;
+  padding-top: 4mm;
+  border-top: 0.4mm solid var(--rule);
+  font-size: 12pt;
+  color: var(--chalk-dim);
+}
+
+/* Poster 2: three empty steps, medal colours, a dashed seat waiting on each. */
 .poster-podium {
-  margin-top: 8mm;
+  margin-top: 5mm;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   align-items: end;
@@ -1224,11 +1180,11 @@ input[type="number"] {
 .poster-podium-who {
   display: grid;
   place-items: center;
-  width: 18mm;
-  height: 18mm;
+  width: 14mm;
+  height: 14mm;
   border: 0.8mm dashed var(--c);
   border-radius: 50%;
-  font-size: 26pt;
+  font-size: 20pt;
   font-weight: 900;
   color: var(--c);
 }
@@ -1238,260 +1194,68 @@ input[type="number"] {
   width: 100%;
   padding-top: 2mm;
   border-radius: 2mm 2mm 0 0;
-  background: linear-gradient(to bottom, var(--c), color-mix(in oklab, var(--c) 35%, var(--iron)));
-  font-size: 28pt;
+  background: var(--c);
+  font-size: 20pt;
   font-weight: 900;
   color: #0a0908;
 }
+.poster-v2 .poster-tease-big {
+  font-size: 26pt;
+}
+
+/* Poster 3: the bar is drawn at its app size and scaled, which takes no
+   layout room, so the box reserves it. */
 .poster-bar {
-  margin-top: 6mm;
-  height: 30mm;
+  margin-top: 4mm;
+  height: 26mm;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .poster-bar .barbell {
-  transform: scale(4.6);
-}
-.poster-vs {
-  margin-top: 8mm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10mm;
-  text-align: center;
-}
-.poster-vs-kg {
-  font-size: 96pt;
-  font-weight: 900;
-  font-stretch: 75%;
-  line-height: 0.9;
-  color: var(--chalk-dim);
-}
-.poster-vs-cap {
-  font-size: 13pt;
-  font-weight: 700;
-  color: var(--chalk-dim);
-}
-.poster-vs-mid {
-  font-size: 22pt;
-  font-weight: 900;
-  color: var(--gold);
-}
-/* v2 and v4 carry a picture as well as the QR: a smaller code and the chips in rows keep them on one sheet. */
-.poster-v2 .poster-qr,
-.poster-v4 .poster-qr {
-  width: 70mm;
-}
-.poster-v2 .poster-chips,
-.poster-v4 .poster-chips {
-  flex-direction: row;
-  flex-wrap: wrap;
-}
-.poster-v4 .poster-vs-kg {
-  font-size: 84pt;
-}
-.poster-v2 .poster-podium {
-  margin-top: 5mm;
-}
-.poster-v2 .poster-podium-who {
-  width: 14mm;
-  height: 14mm;
-  font-size: 20pt;
-}
-.poster-v2 .poster-qr-row,
-.poster-v4 .poster-qr-row {
-  margin-top: 4mm;
-}
-.poster-v4 .poster-vs {
-  margin-top: 4mm;
-}
-.poster-v4 .poster-vs-kg {
-  font-size: 72pt;
-}
-.poster-podium-step {
-  font-size: 20pt;
-}
-/* The bar is drawn at its app size and scaled, which takes no layout room: the box reserves it. */
-.poster-v3 .poster-bar {
-  height: 34mm;
-  margin-top: 4mm;
-}
-.poster-v3 .poster-bar .barbell {
-  transform: scale(3.4);
-}
-.poster-v3 .poster-qr-row {
-  margin-top: 2mm;
-}
-.poster-vs-kg.poster-hot {
-  color: var(--gold);
-}
-.poster-v3 .poster-bar {
-  height: 38mm;
-  margin-top: 6mm;
-}
-.poster-v3 .poster-bar .barbell {
-  transform: scale(3.2);
-}
-.poster-v3 .poster-qr {
-  width: 76mm;
-}
-.poster-v3 .poster-qr-row {
-  margin-top: 4mm;
-}
-/* Poster 4's balance (Scale in app/poster/[slug]/page.tsx). */
-.poster-scale {
-  display: block;
-  width: 110mm;
-  margin: 6mm auto 0;
-}
-/* A flex item in the full-height column: it must not be the thing that shrinks. */
-.poster-scale {
-  flex-shrink: 0;
-  width: 74mm;
-  height: 32mm;
-  margin-top: 3mm;
-}
-.poster-v4 .poster-title {
-  font-size: 47pt;
-}
-/* The fallback address: big enough to read and type from a step back. */
-.poster-url {
-  align-self: center;
-  margin-top: 4mm;
-  padding: 2mm 5mm;
-  border: 0.4mm solid var(--rule);
-  border-radius: 99px;
-  background: var(--iron-raised);
-  text-align: center;
-  font-size: 12pt;
-  font-weight: 600;
-  color: var(--chalk-dim);
-}
-.poster-url b {
-  margin-left: 1.5mm;
-  font-size: 15pt;
-  font-weight: 800;
-  color: var(--chalk);
-}
-.poster-steps {
-  margin-top: 5mm;
-}
-.poster-chips {
-  margin-top: 4mm;
-}
-/* Nothing on a poster gets squeezed to fit; if it doesn't fit, it should show. */
-.poster > * {
-  flex-shrink: 0;
-}
-.poster-v3 .poster-bar {
-  height: 32mm;
-  margin-top: 4mm;
-}
-.poster-v3 .poster-bar .barbell {
-  transform: scale(2.9);
-}
-.poster-v3 .poster-qr {
-  width: 72mm;
-}
-.poster-v3 .poster-bar {
-  height: 26mm;
-}
-.poster-v3 .poster-bar .barbell {
   transform: scale(2.6);
-}
-.poster-v3 .poster-qr {
-  width: 68mm;
-}
-.poster-v3 .poster-qr-row {
-  margin-top: 2mm;
-}
-.poster-scale {
-  width: 65mm;
-  height: 28mm;
-}
-
-/*
-  Poster, second pass: plain words instead of pills. The QR card and the
-  typed address below it form one column; the tease text sits closer in.
-*/
-.poster-qr-row > div:first-child {
-  flex: 1;
-  padding-left: 10mm;
-}
-.poster-qr-col {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.poster .poster-qr {
-  width: 92mm;
-}
-.poster-v3 .poster-qr {
-  width: 86mm;
-}
-.poster-alt {
-  margin-top: 3mm;
-  font-size: 12pt;
-  color: var(--chalk-dim);
-}
-.poster-alt b {
-  font-weight: 800;
-  color: var(--chalk);
-}
-.poster-note {
-  margin-top: 6mm;
-  max-width: 165mm;
-  font-size: 12.5pt;
-  line-height: 1.45;
-  color: var(--chalk-dim);
-}
-.poster .poster-qr {
-  width: 96mm;
-}
-.poster-v1 .poster-qr {
-  width: 100mm;
 }
 .poster-v3 .poster-qr {
   width: 90mm;
 }
-/* Keep "Right now?" on one line next to the big code. */
-.poster-qr-row > div:first-child {
-  padding-left: 6mm;
+
+/* Poster 4: the balance (Scale in app/poster/[slug]/page.tsx). */
+.poster-scale {
+  display: block;
+  width: 84mm;
+  height: 37mm;
+  margin: 4mm auto 0;
 }
-.poster-v1 .poster-qr {
-  width: 96mm;
+.poster-v4 .poster-title {
+  font-size: 47pt;
 }
-.poster-v2 .poster-tease-big {
-  font-size: 26pt;
-}
-/* Poster 1 has no picture, so its blocks take the room instead of leaving it at the bottom. */
+
+/* Poster 1 has no picture, so its blocks take the room instead. */
 .poster-v1 .poster-title {
   margin-top: 8mm;
-  font-size: 60pt;
 }
 .poster-v1 .poster-sub {
   margin-top: 7mm;
   font-size: 16pt;
 }
-.poster-v1 .poster-qr-row {
-  margin-top: 14mm;
-}
 .poster-v1 .poster-steps {
-  margin-top: 12mm;
-}
-.poster-v1 .poster-steps li {
-  padding: 5.5mm 4mm;
-  font-size: 13pt;
+  font-size: 18pt;
 }
 .poster-v1 .poster-note {
-  margin-top: 9mm;
-  font-size: 13.5pt;
+  font-size: 15pt;
 }
-.poster-v1 .poster-title {
-  font-size: 54pt;
-}
-.poster-v1 .poster-title {
-  font-size: 52pt;
+
+@media print {
+  /* Exactly one sheet: nothing after the poster may spill onto a second. */
+  html,
+  body {
+    height: 297mm !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  .poster-wrap {
+    padding: 0;
+    background: none;
+    min-height: 0;
+  }
 }

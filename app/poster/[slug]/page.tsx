@@ -16,7 +16,7 @@ import { siteLabel, siteUrl } from "@/lib/site";
     1  "Who's the strongest?"  question and QR side by side
     2  "Prove it."             an empty podium
     3  "Your PR deserves…"     a loaded barbell
-    4  "60 kg can beat 90 kg"  the bodyweight-fair scoring
+    4  "Pound for pound"       a level balance: scored for bodyweight
 
   Not linked from anywhere and kept out of search.
 */
@@ -71,9 +71,7 @@ async function Poster({
       {/* Only this page prints edge to edge on A4; a style tag that leaves with the route. */}
       <style>{"@page { size: A4; margin: 0; }"}</style>
       <div className={`poster poster-v${v}`}>
-        <span aria-hidden className="poster-glow" />
-
-        <p className="poster-brand">GYM RANK · {name}</p>
+        <p className="poster-brand">Gym Rank · {name}</p>
 
         {v === "1" && (
           <>
@@ -91,7 +89,7 @@ async function Poster({
                   <br />
                   right now?
                 </p>
-                <p className="poster-tease-small">Scan to find out.</p>
+                <p className="poster-tease-small">Scan to find out</p>
                 <span aria-hidden className="poster-arrow">→</span>
               </div>
               {qrCard}
@@ -112,10 +110,10 @@ async function Poster({
                 <p className="poster-tease-big">
                   The podium&rsquo;s
                   <br />
-                  waiting.
+                  waiting
                 </p>
                 <p className="poster-tease-small">
-                  Squat, bench, deadlift. Scored for bodyweight.
+                  Squat, bench and deadlift, scored for bodyweight
                 </p>
                 <span aria-hidden className="poster-arrow">→</span>
               </div>
@@ -142,9 +140,9 @@ async function Poster({
                 <p className="poster-tease-big">
                   See where
                   <br />
-                  you rank.
+                  you rank
                 </p>
-                <p className="poster-tease-small">One minute. Free.</p>
+                <p className="poster-tease-small">Takes a minute</p>
                 <span aria-hidden className="poster-arrow">→</span>
               </div>
               {qrCard}
@@ -171,7 +169,7 @@ async function Poster({
                   <br />
                   you rank?
                 </p>
-                <p className="poster-tease-small">Scan to find out.</p>
+                <p className="poster-tease-small">Scan to find out</p>
                 <span aria-hidden className="poster-arrow">→</span>
               </div>
               {qrCard}
@@ -180,18 +178,9 @@ async function Poster({
         )}
 
         <ol className="poster-steps">
-          <li>
-            <b>1</b>
-            <span>Scan</span>
-          </li>
-          <li>
-            <b>2</b>
-            <span>Sign in with your college email</span>
-          </li>
-          <li>
-            <b>3</b>
-            <span>Add your lifts. About a minute.</span>
-          </li>
+          <li>Scan</li>
+          <li>sign in with your college email</li>
+          <li>add your lifts</li>
         </ol>
 
         <p className="poster-note">
@@ -229,26 +218,25 @@ function Podium() {
 }
 
 /**
- * A balance held level: two red plates on one pan, one blue on the other.
- * Different loads, even beam: what scoring against bodyweight does.
+ * A balance held level: two red 25s stood on one pan, one blue 20 on the
+ * other, drawn edge-on like the plates on poster 3's bar. Different loads,
+ * even beam: what scoring against bodyweight does.
  */
 function Scale() {
-  const plate = (x: number, y: number, r: number, fill: string) => (
-    <g>
-      <circle cx={x} cy={y} r={r} fill={fill} />
-      <circle cx={x} cy={y} r={r * 0.22} fill="var(--iron)" />
-    </g>
+  // Edge-on plate standing on a pan whose top is y=84.
+  const plate = (x: number, h: number, fill: string) => (
+    <rect x={x} y={84 - h} width="12" height={h} rx="2" fill={fill} />
   );
   return (
     <svg aria-hidden className="poster-scale" viewBox="0 0 300 130">
       <path d="M150 34 L150 118 M118 122 H182" stroke="var(--chalk-dim)" strokeWidth="6" strokeLinecap="round" />
-      <path d="M40 34 H260" stroke="var(--chalk)" strokeWidth="6" strokeLinecap="round" />
-      <circle cx="150" cy="34" r="8" fill="var(--gold)" />
       <path d="M40 34 L18 84 M40 34 L62 84 M260 34 L238 84 M260 34 L282 84" stroke="var(--chalk-dim)" strokeWidth="2" />
-      <path d="M12 84 H68 M232 84 H288" stroke="var(--gold)" strokeWidth="6" strokeLinecap="round" />
-      {plate(30, 66, 15, "var(--plate-25)")}
-      {plate(52, 66, 15, "var(--plate-25)")}
-      {plate(260, 64, 17, "var(--plate-20)")}
+      <path d="M40 34 H260" stroke="var(--chalk)" strokeWidth="6" strokeLinecap="round" />
+      <circle cx="150" cy="34" r="7" fill="var(--chalk)" />
+      {plate(26, 44, "var(--plate-25)")}
+      {plate(40, 44, "var(--plate-25)")}
+      {plate(254, 40, "var(--plate-20)")}
+      <path d="M12 87 H68 M232 87 H288" stroke="var(--chalk)" strokeWidth="6" strokeLinecap="round" />
     </svg>
   );
 }
