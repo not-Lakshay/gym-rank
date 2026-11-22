@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MostTrustedTag, TrustBadge } from "./board";
+import { LiftTitleTag, MostTrustedTag, TrustBadge } from "./board";
 import { MOST_TRUSTED_MIN, TRUSTED_WITNESSES } from "@/lib/cosign";
 
 /*
@@ -98,6 +98,14 @@ export function TrustLevels() {
         <span>
           The lifter at each college with the most different people vouching
           (at least {MOST_TRUSTED_MIN}). A tie goes to whoever got there first.
+        </span>
+      </span>
+      <span className={row}>
+        <LiftTitleTag movement="bench" />
+        <span>
+          The best co-signed squat, bench and deadlift at each college, ranked
+          like the lift tabs. Holders get a turning plate ring and a glint on
+          their name, wherever they sit on the board.
         </span>
       </span>
     </>

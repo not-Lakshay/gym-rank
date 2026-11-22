@@ -7,6 +7,7 @@ import {
 } from "./cosign";
 import { sql } from "./db";
 import type { Movement } from "./movements";
+import { pickLiftTitles } from "./titles";
 
 export type MostTrusted = { lifterId: string; collegeId: number; witnesses: number };
 
@@ -74,6 +75,8 @@ export type BoardRow = {
   trust: TrustTier;
   /** Holds "Most trusted" at their college (getMostTrusted). */
   mostTrusted: boolean;
+  /** Lifts they're #1 at their college for (getLiftTitles). */
+  liftTitles: Movement[];
 };
 
 /**
@@ -100,11 +103,32 @@ export type BoardScope =
  * bw is cast to double precision so the arithmetic matches JavaScript's
  * floats exactly rather than Postgres's arbitrary-precision numerics.
  */
-export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
+/**
+ * Who holds "#1 squat", "#1 bench" and "#1 deadlift" at each college:
+ * the best co-signed, non-disputed lift, ranked like the lift tabs
+ * (lib/titles.ts). Lifter id to their titles.
+ */
+export async function getLiftTitles(): Promise<Record<string, Movement[]>> {
+  return pickLiftTitles(await getLiftBoards({ global: true }));
+}
+
+/**
+ * decorate: also look up Most trusted and lift titles, for drawing a
+ * board. Rank lookups and the "passed you" check only need the numbers.
+ */
+export async function getLeaderboard(
+  scope: BoardScope,
+  decorate = true,
+): Promise<BoardRow[]> {
   const collegeId = "collegeId" in scope ? scope.collegeId : null;
   const verifiedOnly = "global" in scope;
   // In parallel with the board itself; a failure only costs the title.
-  const holders = getMostTrusted().catch(() => [] as MostTrusted[]);
+  const holders = decorate
+    ? getMostTrusted().catch(() => [] as MostTrusted[])
+    : Promise.resolve([] as MostTrusted[]);
+  const titles = decorate
+    ? getLiftTitles().catch(() => ({}) as Record<string, Movement[]>)
+    : Promise.resolve({} as Record<string, Movement[]>);
   const friendsOf = "friendsOf" in scope ? scope.friendsOf : null;
 
   const rows = await sql`
@@ -209,6 +233,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
   `;
 
   const holderIds = new Set((await holders).map((h) => h.lifterId));
+  const titleOf = await titles;
 
   return rows.map((row) => {
     // One array per scored lift; disputed lifts already come back empty.
@@ -230,6 +255,7 @@ export async function getLeaderboard(scope: BoardScope): Promise<BoardRow[]> {
       avatar: (row.avatar as string | null) ?? null,
       trust: trustTier(witnesses),
       mostTrusted: holderIds.has(row.id as string),
+      liftTitles: titleOf[row.id as string] ?? [],
     };
   });
 }
@@ -280,7 +306,7 @@ export async function getRankFor(
     collegeId = Number(found);
   }
 
-  const board = await getLeaderboard({ collegeId });
+  const board = await getLeaderboard({ collegeId }, false);
   return cardFrom(board, lifterId);
 }
 
@@ -288,7 +314,7 @@ export async function getRankFor(
 export async function getGlobalRankFor(
   lifterId: string,
 ): Promise<RankCard | null> {
-  const board = await getLeaderboard({ global: true });
+  const board = await getLeaderboard({ global: true }, false);
   return cardFrom(board, lifterId);
 }
 

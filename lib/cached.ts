@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { cacheLife, cacheTag } from "next/cache";
 import { getCollegeBySlug, getCollegeOptions } from "./colleges";
-import { getGlobalRankFor, getLeaderboard, getLiftBoards, getMostTrusted, getRankFor, type BoardScope } from "./leaderboard";
+import { getGlobalRankFor, getLeaderboard, getLiftBoards, getLiftTitles, getMostTrusted, getRankFor, type BoardScope } from "./leaderboard";
 import { getLifterById, getLifterByUsername, getLiftsFor } from "./lifters";
 
 /*
@@ -89,4 +89,11 @@ export async function mostTrusted() {
   "use cache: remote";
   shared();
   return getMostTrusted();
+}
+
+/** Who holds #1 squat, bench and deadlift at each college. */
+export async function liftTitles() {
+  "use cache: remote";
+  shared();
+  return getLiftTitles();
 }

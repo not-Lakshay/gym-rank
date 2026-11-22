@@ -785,3 +785,60 @@ input[type="number"] {
     animation: none;
   }
 }
+
+/* Lift titles (#1 squat / bench / deadlift at a college): the avatar gets
+   a slowly turning ring of plate segments in its weight-class colour (set
+   --plate), and the name catches a glint of light now and then, like a
+   plate under the gym lights. Different from the aurora on purpose, so
+   Most trusted stays its own thing. */
+.plate-ring {
+  position: relative;
+  display: inline-flex;
+  border-radius: 9999px;
+}
+.plate-ring::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: repeating-conic-gradient(var(--plate) 0 24deg, transparent 24deg 30deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+  filter: drop-shadow(0 0 calc(4px * var(--glow)) var(--plate));
+  animation: plate-spin 9s linear infinite;
+  pointer-events: none;
+}
+@keyframes plate-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.name-shine {
+  background: linear-gradient(
+    100deg,
+    currentColor 0 42%,
+    color-mix(in oklab, var(--gold) 60%, white) 50%,
+    currentColor 58% 100%
+  );
+  background-size: 260% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: name-shine 5s ease-in-out infinite;
+}
+@keyframes name-shine {
+  0%,
+  55% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -60% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plate-ring::before,
+  .name-shine {
+    animation: none;
+  }
+}

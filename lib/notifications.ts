@@ -139,7 +139,7 @@ export async function notifyPassed(params: {
 }): Promise<string[]> {
   const { lifterId, collegeId, dotsBefore } = params;
 
-  const board = await getLeaderboard({ collegeId });
+  const board = await getLeaderboard({ collegeId }, false);
   const me = board.find((r) => r.id === lifterId);
   if (!me) return [];
 

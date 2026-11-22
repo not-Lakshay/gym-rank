@@ -10,8 +10,10 @@ import {
   ChevronLeft,
   ChevronRight,
   LifterHeaderSkeleton,
+  LiftTitleTag,
   LiftsSkeleton,
   MostTrustedTag,
+  TitleRing,
   TrustBadge,
   navButton,
   Footer,
@@ -27,7 +29,8 @@ import {
   getLifterByEmail,
   summarise,
 } from "@/lib/lifters";
-import { lifterByUsername, liftsFor, mostTrusted, rankFor } from "@/lib/cached";
+import { lifterByUsername, liftTitles, liftsFor, mostTrusted, rankFor } from "@/lib/cached";
+import type { Movement } from "@/lib/movements";
 import { batchLabel } from "@/lib/batch";
 import { TRUST_LABEL, trustTier } from "@/lib/cosign";
 import { plateFor } from "@/lib/plates";
@@ -105,12 +108,13 @@ async function Profile({ params }: { params: Params }) {
   ]);
   if (!lifter) notFound();
 
-  const [lifts, card, viewer, holders] = await Promise.all([
+  const [lifts, card, viewer, holders, titles] = await Promise.all([
     liftsFor(lifter.id),
     // No college, no board, no rank — and passing the id saves a lookup.
     lifter.college ? rankFor(lifter.id, lifter.college.id).catch(() => null) : null,
     session?.user?.email ? getLifterByEmail(session.user.email) : null,
     mostTrusted().catch(() => []),
+    liftTitles().catch(() => ({}) as Record<string, Movement[]>),
   ]);
 
   const isOwner = viewer?.id === lifter.id;
@@ -137,6 +141,7 @@ async function Profile({ params }: { params: Params }) {
   const tier = trustTier(perLift);
   const vouchers = new Set(perLift.flat().map((w) => w.id)).size;
   const isMostTrusted = holders.some((h) => h.lifterId === lifter.id);
+  const myTitles = titles[lifter.id] ?? [];
   const weightClass = weightClassFor(lifter.bodyweightKg);
   const boardHref = lifter.college ? `/c/${lifter.college.slug}` : "/colleges";
 
@@ -175,16 +180,22 @@ async function Profile({ params }: { params: Params }) {
               isMostTrusted ? "aurora -mx-3 rounded-sm px-3 py-3" : ""
             }`}
           >
-            <ViewTransition name={`avatar-${lifter.id}`} share="morph" default="none">
-              <Avatar
-                name={lifter.displayName}
-                ring={plateFor(weightClass)}
-                size={64}
-                avatar={lifter.avatar}
-              />
-            </ViewTransition>
+            <TitleRing titles={myTitles} color={plateFor(weightClass)}>
+              <ViewTransition name={`avatar-${lifter.id}`} share="morph" default="none">
+                <Avatar
+                  name={lifter.displayName}
+                  ring={plateFor(weightClass)}
+                  size={64}
+                  avatar={lifter.avatar}
+                />
+              </ViewTransition>
+            </TitleRing>
             <div className="min-w-0">
-              <h1 className="text-[1.75rem] font-extrabold leading-none tracking-[-0.03em]">
+              <h1
+                className={`text-[1.75rem] font-extrabold leading-none tracking-[-0.03em] ${
+                  myTitles.length ? "name-shine" : ""
+                }`}
+              >
                 {lifter.displayName}
               </h1>
               <p className="mt-1.5 text-[13px] text-chalk-dim">
@@ -221,6 +232,12 @@ async function Profile({ params }: { params: Params }) {
               )}
               <span aria-hidden className="text-chalk-faint">?</span>
             </button>
+          )}
+          {myTitles.length > 0 && (
+            <p className="mt-2 flex flex-wrap items-center gap-1.5">
+              {myTitles.map((m) => <LiftTitleTag key={m} movement={m} />)}
+              <span className="text-[12px] text-chalk-dim">at {lifter.college?.shortName}</span>
+            </p>
           )}
 
           {summary.dots !== null && (

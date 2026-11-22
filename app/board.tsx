@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { BoardRow, LiftRow } from "@/lib/leaderboard";
 import { TRUST_LABEL, type TrustTier } from "@/lib/cosign";
+import { LIFT_TITLE_LABEL } from "@/lib/titles";
 import { MOVEMENTS, TOTAL_MOVEMENTS, type Movement } from "@/lib/movements";
 import { batchLabel, batchesFor } from "@/lib/batch";
 import { plateFor } from "@/lib/plates";
@@ -121,6 +122,7 @@ export function Board({
           sub: showCollege ? <BoardSub row={row} /> : null,
           trust: row.trust,
           mostTrusted: row.mostTrusted,
+          liftTitles: row.liftTitles,
         }))}
       />
     </section>
@@ -196,6 +198,8 @@ type Entry = {
   /** Overall boards only: the trust badge, and "Most trusted" in the list. */
   trust?: TrustTier;
   mostTrusted?: boolean;
+  /** #1 at their college for these lifts (lib/titles.ts). */
+  liftTitles?: Movement[];
 };
 
 /*
@@ -253,15 +257,19 @@ function Ranked({
                   {/* A second way into the profile; the name link is the one
                       a screen reader gets. */}
                   <Link href={`/u/${e.username}`} tabIndex={-1} aria-hidden className="shrink-0">
-                    <Morph id={e.id} part="avatar">
-                      <Avatar name={e.displayName} ring={ring} avatar={e.avatar} />
-                    </Morph>
+                    <TitleRing titles={e.liftTitles} color={ring}>
+                      <Morph id={e.id} part="avatar">
+                        <Avatar name={e.displayName} ring={ring} avatar={e.avatar} />
+                      </Morph>
+                    </TitleRing>
                   </Link>
                   <span className="row-name min-w-0 flex-1">
                     <span className="flex items-center gap-1">
                       <Link
                         href={`/u/${e.username}`}
-                        className="truncate text-[14px] font-medium underline-offset-4 hover:underline"
+                        className={`truncate text-[14px] font-medium underline-offset-4 hover:underline ${
+                          e.liftTitles?.length ? "name-shine" : ""
+                        }`}
                       >
                         {e.displayName}
                       </Link>
@@ -271,8 +279,9 @@ function Ranked({
                     </span>
                     {/* "Most trusted" goes on this line, not beside the name:
                         on a phone it squeezed the name down to nothing. */}
-                    <span className="flex min-w-0 items-center gap-1 text-[12px] text-chalk-dim">
+                    <span className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-1 text-[12px] text-chalk-dim">
                       {e.mostTrusted && <MostTrustedTag />}
+                      {e.liftTitles?.map((m) => <LiftTitleTag key={m} movement={m} />)}
                       {e.mostTrusted && e.sub && <span aria-hidden className="text-chalk-faint">·</span>}
                       {e.sub}
                     </span>
@@ -333,20 +342,24 @@ function Podium({ entries, viewerId }: { entries: Entry[]; viewerId: string | nu
                 className="podium-pop"
                 style={{ animationDelay: `${AVATAR_DELAY[place]}ms` }}
               >
-                <Morph id={e.id} part="avatar">
-                  <Avatar
-                    name={e.displayName}
-                    ring={medal}
-                    size={first ? 64 : 48}
-                    avatar={e.avatar}
-                  />
-                </Morph>
+                <TitleRing titles={e.liftTitles} color={medal}>
+                  <Morph id={e.id} part="avatar">
+                    <Avatar
+                      name={e.displayName}
+                      ring={medal}
+                      size={first ? 64 : 48}
+                      avatar={e.avatar}
+                    />
+                  </Morph>
+                </TitleRing>
               </Link>
               <span className="mt-2 flex max-w-full items-center justify-center gap-1">
                 <Link
                   href={`/u/${e.username}`}
                   aria-label={e.displayName}
-                  className="truncate text-[14px] font-bold underline-offset-4 hover:underline"
+                  className={`truncate text-[14px] font-bold underline-offset-4 hover:underline ${
+                    e.liftTitles?.length ? "name-shine" : ""
+                  }`}
                 >
                   {e.displayName.split(/\s+/)[0]}
                 </Link>
@@ -503,6 +516,36 @@ function BadgeHelpButton() {
       <TrustBadge tier="verified" size={13} named />
       What the badges mean
     </button>
+  );
+}
+
+/** "#1 bench" and friends: a small barbell and the lift. */
+export function LiftTitleTag({ movement }: { movement: Movement }) {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-sm border border-chalk-faint bg-iron-raised px-1.5 text-[11px] font-bold leading-[1.45] text-chalk">
+      <svg aria-hidden viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+        <path d="M3 12h18M6 8v8M9 6v12M15 6v12M18 8v8" />
+      </svg>
+      {LIFT_TITLE_LABEL[movement]}
+    </span>
+  );
+}
+
+/** The turning plate ring around a lift-title holder's avatar; just the avatar otherwise. */
+export function TitleRing({
+  titles,
+  color,
+  children,
+}: {
+  titles?: Movement[];
+  color: string;
+  children: React.ReactNode;
+}) {
+  if (!titles?.length) return <>{children}</>;
+  return (
+    <span className="plate-ring" style={{ "--plate": color } as React.CSSProperties}>
+      {children}
+    </span>
   );
 }
 

@@ -10,6 +10,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  LiftTitleTag,
   MostTrustedTag,
   ProfileSkeleton,
   TrustBadge,
@@ -44,7 +45,7 @@ import { ordinal } from "@/lib/format";
 import { unseenCountFor } from "@/lib/notifications";
 import { batchLabel } from "@/lib/batch";
 import { TRUST_LABEL, cosignStatus, cosignText, trustTier } from "@/lib/cosign";
-import { mostTrusted } from "@/lib/cached";
+import { liftTitles, mostTrusted } from "@/lib/cached";
 import { plateFor } from "@/lib/plates";
 import { weightClassFor } from "@/lib/scoring";
 import { siteUrl } from "@/lib/site";
@@ -156,13 +157,14 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
   // whole page is two stages: who you are, then everything about you.
   // The notifications themselves live on /notifications; here just the
   // unread count for the bell.
-  const [lifts, card, globalCard, liftBoards, unseen, holders] = await Promise.all([
+  const [lifts, card, globalCard, liftBoards, unseen, holders, titles] = await Promise.all([
     getLiftsFor(lifter.id),
     getRankFor(lifter.id, lifter.college.id).catch(() => null),
     getGlobalRankFor(lifter.id).catch(() => null),
     getLiftBoards({ collegeId: lifter.college.id }).catch(() => null),
     unseenCountFor(email).catch(() => 0),
     mostTrusted().catch(() => []),
+    liftTitles().catch(() => ({}) as Record<string, Movement[]>),
   ]);
   const standings = liftBoards ? standingsFor(liftBoards, lifter.id) : {};
 
@@ -176,6 +178,7 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
       standings={standings}
       unseen={unseen ?? 0}
       isMostTrusted={holders.some((h) => h.lifterId === lifter.id)}
+      myTitles={titles[lifter.id] ?? []}
       editForm={
         // Collapsed by default and needs the 159-college list, so it
         // streams in behind the dashboard instead of holding it up.
@@ -261,6 +264,7 @@ function LifterView({
   standings,
   unseen,
   isMostTrusted,
+  myTitles,
   editForm,
 }: {
   lifter: Lifter;
@@ -271,6 +275,7 @@ function LifterView({
   standings: Partial<Record<Movement, { rank: number; of: number }>>;
   unseen: number;
   isMostTrusted: boolean;
+  myTitles: Movement[];
   editForm: React.ReactNode;
 }) {
   const summary = summarise(lifts, lifter.bodyweightKg);
@@ -379,6 +384,12 @@ function LifterView({
                 {isMostTrusted && <MostTrustedTag />}
                 <span aria-hidden className="text-chalk-faint">?</span>
               </button>
+            )}
+            {myTitles.length > 0 && (
+              <p className="mt-2 flex flex-wrap items-center gap-1.5">
+                {myTitles.map((m) => <LiftTitleTag key={m} movement={m} />)}
+                <span className="text-[12px] text-chalk-dim">at {college.shortName}</span>
+              </p>
             )}
             <TrustHelp />
 
