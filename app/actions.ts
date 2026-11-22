@@ -27,7 +27,13 @@ import {
 } from "@/lib/lifters";
 import { sendWelcome } from "@/lib/mail";
 import type { Movement } from "@/lib/movements";
-import { notifyCosigned, notifyDoubted, notifyFriend, notifyPassed } from "@/lib/notifications";
+import {
+  notifyCosigned,
+  notifyDoubted,
+  notifyFriend,
+  notifyPassed,
+  notifyTitleChances,
+} from "@/lib/notifications";
 import {
   acceptRequest,
   cancelRequest,
@@ -211,6 +217,12 @@ export async function saveProfileAction(
       notifyPassed({ lifterId: id, collegeId: college.id, dotsBefore: before }),
     );
   }
+  // A new bodyweight or a move reorders lift tabs: here, and where they left.
+  if (!isNew) {
+    await quietly(() => notifyTitleChances(college.id));
+    const left = existing?.college?.id;
+    if (left && left !== college.id) await quietly(() => notifyTitleChances(left));
+  }
 
   updateTag(DATA_TAG);
   refresh();
@@ -263,6 +275,7 @@ export async function saveLiftsAction(
   await quietly(async () => {
     passed = await notifyPassed({ lifterId: lifter.id, collegeId, dotsBefore: before });
   });
+  await quietly(() => notifyTitleChances(collegeId));
 
   updateTag(DATA_TAG);
   refresh();

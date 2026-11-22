@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { timeAgo } from "@/lib/format";
 import { getLifterByEmail } from "@/lib/lifters";
 import { MOVEMENTS } from "@/lib/movements";
+import { LIFT_TITLE_LABEL } from "@/lib/titles";
 import {
   getNotificationsFor,
   markNotificationsSeen,
@@ -188,6 +189,11 @@ const KIND_STYLE: Record<Notification["kind"], { color: string; path: React.Reac
     color: "var(--success)",
     path: <path d="M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM3 21c0-3.9 3.1-6.5 7-6.5m4.5 3.5 2.5 2.5 4.5-5" />,
   },
+  // The barbell from LiftTitleTag.
+  title_chance: {
+    color: "var(--accent)",
+    path: <path d="M3 12h18M6 8v8M9 6v12M15 6v12M18 8v8" />,
+  },
 };
 
 function KindIcon({ kind }: { kind: Notification["kind"] }) {
@@ -227,6 +233,17 @@ function NoticeText({ notice }: { notice: Notification }) {
     return <>A gym-mate doubted your {label}. Keep more co-signs than doubts on it.</>;
   }
   if (notice.kind === "friend_request") return <>{who} sent you a friend request.</>;
+  if (notice.kind === "title_chance") {
+    return (
+      <>
+        Your {label} is #1 at your college. Get it co-signed to earn the{" "}
+        <span className="font-bold text-chalk">
+          {notice.movement ? LIFT_TITLE_LABEL[notice.movement] : "#1"}
+        </span>{" "}
+        title.
+      </>
+    );
+  }
   if (notice.kind === "friend_accepted") {
     return <>{who} accepted your friend request. You&apos;re on each other&apos;s Friends board.</>;
   }

@@ -29,6 +29,25 @@ export function pickLiftTitles(
   return titles;
 }
 
+/**
+ * The other side of pickLiftTitles: lifts at the top of their college's
+ * tab that hold no title yet because nobody co-signed them. Same input.
+ */
+export function unclaimedTitles(
+  boards: Partial<Record<Movement, Row[]>>,
+): { id: string; movement: Movement }[] {
+  const out: { id: string; movement: Movement }[] = [];
+  for (const movement of TOTAL_MOVEMENTS) {
+    const seen = new Set<string>();
+    for (const row of boards[movement] ?? []) {
+      if (seen.has(row.collegeSlug)) continue;
+      seen.add(row.collegeSlug);
+      if (!row.verified) out.push({ id: row.id, movement });
+    }
+  }
+  return out;
+}
+
 export const LIFT_TITLE_LABEL: Record<Movement, string> = {
   squat: "#1 squat",
   bench: "#1 bench",

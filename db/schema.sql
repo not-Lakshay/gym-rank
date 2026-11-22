@@ -154,7 +154,7 @@ create table if not exists notifications (
 -- 'doubt' was added later; the inline check above only applies to a fresh table.
 alter table notifications drop constraint if exists notifications_kind_check;
 alter table notifications add constraint notifications_kind_check
-  check (kind in ('cosign', 'passed', 'doubt', 'friend_request', 'friend_accepted'));
+  check (kind in ('cosign', 'passed', 'doubt', 'friend_request', 'friend_accepted', 'title_chance'));
 
 create index if not exists notifications_lifter_created_idx
   on notifications (lifter_id, created_at desc);

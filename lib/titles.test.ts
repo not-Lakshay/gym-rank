@@ -2,7 +2,7 @@
  * Run:  node lib/titles.test.ts
  */
 import assert from "node:assert/strict";
-import { pickLiftTitles } from "./titles.ts";
+import { pickLiftTitles, unclaimedTitles } from "./titles.ts";
 
 const row = (id: string, collegeSlug: string, verified = true) => ({ id, collegeSlug, verified });
 
@@ -39,6 +39,16 @@ assert.deepEqual(
 assert.deepEqual(
   pickLiftTitles({ pullups: [row("a", "lnm")], overhead_press: [row("a", "lnm")] }),
   {},
+);
+
+// Unclaimed: the top lift per college that isn't co-signed yet, and only that one.
+assert.deepEqual(
+  unclaimedTitles({
+    bench: [row("strong", "lnm", false), row("weak", "lnm", false), row("x", "iitd", true)],
+    squat: [row("a", "lnm", true)],
+    pullups: [row("p", "lnm", false)],
+  }),
+  [{ id: "strong", movement: "bench" }],
 );
 
 console.log("titles: all passed");

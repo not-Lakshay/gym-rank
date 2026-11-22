@@ -1,10 +1,11 @@
 import { sql } from "./db";
-import { getLeaderboard } from "./leaderboard";
+import { getLeaderboard, getLiftBoards } from "./leaderboard";
 import type { Movement } from "./movements";
+import { unclaimedTitles } from "./titles";
 
 export type Notification = {
   id: number;
-  kind: "cosign" | "passed" | "doubt" | "friend_request" | "friend_accepted";
+  kind: "cosign" | "passed" | "doubt" | "friend_request" | "friend_accepted" | "title_chance";
   actorName: string | null;
   actorUsername: string | null;
   actorId: string | null;
@@ -161,4 +162,28 @@ export async function notifyPassed(params: {
     `;
   }
   return passed.map((r) => r.displayName);
+}
+
+/**
+ * Tell whoever tops a college's squat, bench or deadlift tab without a
+ * co-sign that one co-sign earns them the #1 title (lib/titles.ts).
+ *
+ * Run after anything that can reorder a college's lift tabs: a lift saved,
+ * a bodyweight changed, someone joining or leaving. Once per version of
+ * the lift: a notice created since the lift was last saved means they
+ * already know, so other people's saves don't repeat it.
+ */
+export async function notifyTitleChances(collegeId: number): Promise<void> {
+  for (const { id, movement } of unclaimedTitles(await getLiftBoards({ collegeId }))) {
+    await sql`
+      insert into notifications (lifter_id, kind, movement)
+      select ${id}, 'title_chance', ${movement}
+      where not exists (
+        select 1 from notifications n
+        join lifts l on l.lifter_id = n.lifter_id and l.movement = n.movement
+        where n.lifter_id = ${id} and n.kind = 'title_chance'
+          and n.movement = ${movement} and n.created_at >= l.recorded_at
+      )
+    `;
+  }
 }
