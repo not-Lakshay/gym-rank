@@ -10,6 +10,8 @@ export type Notification = {
   actorUsername: string | null;
   actorId: string | null;
   movement: Movement | null;
+  /** The actor is now a friend: a request since accepted reads as done. */
+  actorIsFriend: boolean;
   createdAt: Date;
   seen: boolean;
 };
@@ -29,7 +31,9 @@ export async function getNotificationsFor(
 ): Promise<Notification[]> {
   const rows = await sql`
     select n.id, n.kind, n.actor_id, n.movement, n.created_at, n.seen_at,
-           a.display_name as actor_name, a.username as actor_username
+           a.display_name as actor_name, a.username as actor_username,
+           exists (select 1 from friends f
+                   where f.lifter_id = n.lifter_id and f.friend_id = n.actor_id) as actor_is_friend
     from notifications n
     left join lifters a on a.id = n.actor_id
     where n.lifter_id = ${lifterId}
@@ -44,6 +48,7 @@ export async function getNotificationsFor(
     actorUsername: (row.actor_username as string | null) ?? null,
     actorId: (row.actor_id as string | null) ?? null,
     movement: (row.movement as Movement | null) ?? null,
+    actorIsFriend: Boolean(row.actor_is_friend),
     createdAt: new Date(row.created_at as string),
     seen: row.seen_at !== null,
   }));

@@ -157,7 +157,9 @@ function Group({ title, items }: { title: string; items: Notification[] }) {
               n.seen ? "border-rule" : "border-chalk-faint bg-iron-raised"
             }`}
           >
-            <KindIcon kind={n.kind} />
+            <KindIcon
+              kind={n.kind === "friend_request" && n.actorIsFriend ? "friend_accepted" : n.kind}
+            />
             <span className={`min-w-0 flex-1 pt-1 ${n.seen ? "text-chalk-dim" : "text-chalk"}`}>
               <NoticeText notice={n} />
             </span>
@@ -232,7 +234,19 @@ function NoticeText({ notice }: { notice: Notification }) {
   if (notice.kind === "doubt") {
     return <>A gym-mate doubted your {label}. Keep more co-signs than doubts on it.</>;
   }
-  if (notice.kind === "friend_request") return <>{who} sent you a friend request.</>;
+  if (notice.kind === "friend_request") {
+    return notice.actorIsFriend ? (
+      <>
+        You and {who} are now friends. You&apos;re on each other&apos;s{" "}
+        <Link href="/friends" className="font-bold text-chalk underline underline-offset-4">
+          Friends board
+        </Link>
+        .
+      </>
+    ) : (
+      <>{who} sent you a friend request.</>
+    );
+  }
   if (notice.kind === "title_chance") {
     return (
       <>
