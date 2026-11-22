@@ -52,10 +52,17 @@ async function Poster({
     blackColor: "#0a0908",
     whiteColor: "#ffffff",
   });
+  // The address sits right under the code, for a scan that fails (glare,
+  // dim light, an old camera). The home page has the college picker.
   const qrCard = (
-    <div className="poster-qr">
-      <div dangerouslySetInnerHTML={{ __html: qr }} />
-      <p className="poster-scan">SCAN ME</p>
+    <div className="poster-qr-col">
+      <div className="poster-qr">
+        <div dangerouslySetInnerHTML={{ __html: qr }} />
+        <p className="poster-scan">SCAN ME</p>
+      </div>
+      <p className="poster-alt">
+        or open <b>{siteLabel}</b>
+      </p>
     </div>
   );
 
@@ -172,11 +179,6 @@ async function Poster({
           </>
         )}
 
-        {/* For a scan that fails: glare, dim light, an old camera. The home page has the college picker. */}
-        <p className="poster-url">
-          QR not working? Type <b>{siteLabel}</b>
-        </p>
-
         <ol className="poster-steps">
           <li>
             <b>1</b>
@@ -192,19 +194,10 @@ async function Poster({
           </li>
         </ol>
 
-        <div className="poster-chips">
-          <span style={{ "--c": "var(--gold)" } as React.CSSProperties}>
-            #1 squat · bench · deadlift titles up for grabs
-          </span>
-          <span style={{ "--c": "var(--success)" } as React.CSSProperties}>
-            Gym-mates co-sign your lifts. No fake numbers.
-          </span>
-          <span style={{ "--c": "var(--lift-bench)" } as React.CSSProperties}>
-            {v === "4"
-              ? "Weight classes: compete against lifters your weight"
-              : "Weight classes: compete with people your size"}
-          </span>
-        </div>
+        <p className="poster-note">
+          The best squat, bench and deadlift at {name} each hold the #1 title. A lift only
+          counts once someone who watched it co-signs it.
+        </p>
 
         <p className="poster-foot">
           Free · No app to download · Made by a fellow {name} lifter

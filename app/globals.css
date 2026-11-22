@@ -1410,3 +1410,88 @@ input[type="number"] {
   width: 65mm;
   height: 28mm;
 }
+
+/*
+  Poster, second pass: plain words instead of pills. The QR card and the
+  typed address below it form one column; the tease text sits closer in.
+*/
+.poster-qr-row > div:first-child {
+  flex: 1;
+  padding-left: 10mm;
+}
+.poster-qr-col {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.poster .poster-qr {
+  width: 92mm;
+}
+.poster-v3 .poster-qr {
+  width: 86mm;
+}
+.poster-alt {
+  margin-top: 3mm;
+  font-size: 12pt;
+  color: var(--chalk-dim);
+}
+.poster-alt b {
+  font-weight: 800;
+  color: var(--chalk);
+}
+.poster-note {
+  margin-top: 6mm;
+  max-width: 165mm;
+  font-size: 12.5pt;
+  line-height: 1.45;
+  color: var(--chalk-dim);
+}
+.poster .poster-qr {
+  width: 96mm;
+}
+.poster-v1 .poster-qr {
+  width: 100mm;
+}
+.poster-v3 .poster-qr {
+  width: 90mm;
+}
+/* Keep "Right now?" on one line next to the big code. */
+.poster-qr-row > div:first-child {
+  padding-left: 6mm;
+}
+.poster-v1 .poster-qr {
+  width: 96mm;
+}
+.poster-v2 .poster-tease-big {
+  font-size: 26pt;
+}
+/* Poster 1 has no picture, so its blocks take the room instead of leaving it at the bottom. */
+.poster-v1 .poster-title {
+  margin-top: 8mm;
+  font-size: 60pt;
+}
+.poster-v1 .poster-sub {
+  margin-top: 7mm;
+  font-size: 16pt;
+}
+.poster-v1 .poster-qr-row {
+  margin-top: 14mm;
+}
+.poster-v1 .poster-steps {
+  margin-top: 12mm;
+}
+.poster-v1 .poster-steps li {
+  padding: 5.5mm 4mm;
+  font-size: 13pt;
+}
+.poster-v1 .poster-note {
+  margin-top: 9mm;
+  font-size: 13.5pt;
+}
+.poster-v1 .poster-title {
+  font-size: 54pt;
+}
+.poster-v1 .poster-title {
+  font-size: 52pt;
+}
